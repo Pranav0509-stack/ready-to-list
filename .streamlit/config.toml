@@ -7,13 +7,13 @@
 
 [theme]
 base = "light"
-primaryColor = "#1E3A8A"
-backgroundColor = "#F8FAFC"
-secondaryBackgroundColor = "#E9EEF5"
-textColor = "#0F172A"
-borderColor = "#CBD5E1"
-font = "Inter Tight:https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap"
-headingFont = "Playfair Display:https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap"
+primaryColor = "#1B2A41"
+backgroundColor = "#F5F6F3"
+secondaryBackgroundColor = "#E5E9EF"
+textColor = "#111925"
+borderColor = "#C9D3E3"
+font = "Noto Sans:https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap"
+headingFont = "Spectral:https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&display=swap"
 headingFontWeights = [600, 600, 600, 600, 600, 600]
 baseRadius = "small"
 showWidgetBorder = true
@@ -21,15 +21,15 @@ showSidebarBorder = true
 chartCategoricalColors = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
 
 [theme.light]
-primaryColor = "#1E3A8A"
-backgroundColor = "#F8FAFC"
-secondaryBackgroundColor = "#E9EEF5"
-textColor = "#0F172A"
-borderColor = "#CBD5E1"
-dataframeHeaderBackgroundColor = "#E9EEF5"
+primaryColor = "#1B2A41"
+backgroundColor = "#F5F6F3"
+secondaryBackgroundColor = "#E5E9EF"
+textColor = "#111925"
+borderColor = "#C9D3E3"
+dataframeHeaderBackgroundColor = "#E5E9EF"
 
 [theme.light.sidebar]
-backgroundColor = "#EEF2F8"
+backgroundColor = "#ECEEEA"
 
 # Light only: a registry tool reads like paper. Dark tokens are kept in design-system/ready-to-list/MASTER.md.
 

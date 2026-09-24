@@ -1,12 +1,12 @@
 <title>Samay Pitch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap">
 <style>
 :root{
   --paper:#fbfbf9; --ink:#15181d; --muted:#5b616c; --rule:#dcdee3; --panel:#f1f2f4;
-  --court:#1d4f91; --ours:#2a78d6; --today:#d9602f; --soft:#e8eef7; --good:#127a4a;
-  --serif:"Noto Serif",Georgia,"Times New Roman",serif;
+  --court:#1B2A41; --ours:#3D6FD9; --today:#C08A2D; --soft:#E5E9EF; --good:#2F7454;
+  --serif:"Spectral",Georgia,"Times New Roman",serif;
   --sans:"Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 @media (prefers-color-scheme: dark){
@@ -259,6 +259,69 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
   <div class="num">9</div>
 </section>
 
+<!-- 9b -->
+<section class="slide" aria-label="What the judge sees">
+  <div class="eyebrow">The product · Samay</div>
+  <h2>What the judge sees, what the court master does</h2>
+  <div class="row">
+    <div><h3>Today</h3><p>The two sittings on a clock, then the cause list: time, case, hearing, listing chip (1st, 2nd, deferred), score, advocate, and why it is listed today. Remove, restore, approve.</p></div>
+    <div><h3>Calendar</h3><p>A month grid with every date: sittings with their case count, holidays, judge's leave, weekends. Click a day to see its list, minutes and how many of the judge's own cases it carries.</p></div>
+    <div><h3>Cases and Priority</h3><p>Every case with its score, status and flags, its last order and history. Five weights the judge can move, age never below 20, the docket re-scored live.</p></div>
+    <div><h3>Court master</h3><p>A card per judge. Add any files or a folder; Samay recognises the docket and the reference tables by their columns. Call each matter, record the outcome; the next date follows by rule.</p></div>
+  </div>
+  <p class="muted">Justice Sehgal's docket is the organisers' roster, loaded from the repository. Every number on every screen is computed from it.</p>
+  <div class="num">10</div>
+</section>
+
+<!-- 9c -->
+<section class="slide" aria-label="Prioritisation in use">
+  <div class="eyebrow">How prioritisation is used, in one day</div>
+  <h2>From 3,000 pending cases to 16 on the list</h2>
+  <div class="flow" aria-label="Day-building steps">
+    <span class="s">Due today: ~60</span><span class="a">→</span>
+    <span class="s">Process not back: held</span><span class="a">→</span>
+    <span class="s">Bail first</span><span class="a">→</span>
+    <span class="s">Quarter of minutes to 4+ years</span><span class="a">→</span>
+    <span class="s">Score × P(moves) per minute</span><span class="a">→</span>
+    <span class="s">CP-SAT packs to 95%</span><span class="a">→</span>
+    <span class="s">Grouped, timed, approved</span>
+  </div>
+  <div class="split">
+    <table aria-label="Example cases scored">
+      <thead><tr><th>Case</th><th>Situation</th><th class="n">Score</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>ST/1261/2017</td><td>9.2 years, reserved for judgment, both advocates present</td><td class="n win">91.3</td><td>Eligible</td></tr>
+        <tr><td>ST/608/2017</td><td>9.3 years, defence evidence, accused absent, last chance</td><td class="n win">69.9</td><td>Eligible</td></tr>
+        <tr><td>ST/1166/2023</td><td>2.8 years, complainant's evidence, last chance</td><td class="n">40.9</td><td>Eligible</td></tr>
+        <tr><td>ST/7/2025</td><td>1.1 years, waiting for a warrant to be served</td><td class="n">12.5</td><td>Conditional</td></tr>
+        <tr><td>ST/293/2026</td><td>0.5 years, at admission, nobody attended</td><td class="n">7.2</td><td>Conditional</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>Across the 100 cases: scores 7 to 91, average 38; cases over 4 years average 56, younger cases 30.</li>
+      <li>80 Eligible, 20 Conditional (a summons, warrant or notice is out).</li>
+      <li>Deferred cases (3rd or later listing) are held until cured, then given priority and a fixed slot: 44% move forward, against 24% for second listings under today's rules.</li>
+      <li>The judge can move the weights; the order changes, the rules do not.</li>
+    </ul>
+  </div>
+  <div class="num">11</div>
+</section>
+
+<!-- 9d -->
+<section class="slide" aria-label="What Indian judges need next">
+  <div class="eyebrow">What Indian judges need beyond this</div>
+  <h2>Built for a magistrate's cheque docket; the same engine for every bench</h2>
+  <div class="row">
+    <div><h3>A link judge on leave days</h3><p>Bail and other liberty matters go to the link judge the same day; the rest move to the next sitting, never 60 days out.</p></div>
+    <div><h3>Process return from the field</h3><p>Summons and warrant status from the process server and e-summons receipts, so "awaiting process" stops being guessed from the order sheet.</p></div>
+    <div><h3>Confirmation by WhatsApp</h3><p>Two days before, counsel confirms in one tap; parties receive their one-hour window in English and the local language.</p></div>
+    <div><h3>Per-bench configuration</h3><p>Sitting hours, blocks by hearing type, leave register, weights and locked rules in one file per judge; a High Court bench adds its own hearing types and minutes.</p></div>
+    <div><h3>Old files, summarised</h3><p>A verified cover sheet for cases over four years, so the bench does not spend the hearing re-reading the record.</p></div>
+    <div><h3>Outcomes that teach the model</h3><p>Each recorded outcome recomputes the rates; the lever strengths stop being assumptions.</p></div>
+  </div>
+  <div class="num">12</div>
+</section>
+
 <!-- 10 -->
 <section class="slide" aria-label="Model and complexity">
   <div class="eyebrow">The model · complexity level L3</div>
@@ -280,7 +343,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     </table>
   </div>
   <p class="muted">Lever strengths not in the data are stated assumptions in config, each switched off in turn to show its worth.</p>
-  <div class="num">10</div>
+  <div class="num">13</div>
 </section>
 
 <!-- 11 -->
@@ -293,7 +356,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     <div><h3>Open and offline</h3><p>Python, OR-Tools CP-SAT, scikit-learn, SQLite, Streamlit. MIT licence. No cloud AI calls.</p></div>
   </div>
   <p>To plug in: feed summons and warrant status and advocates' confirmations from DRISTI, run the planner each evening, and show the judge the draft for approval.</p>
-  <div class="num">11</div>
+  <div class="num">14</div>
 </section>
 
 <!-- 12 -->
@@ -306,14 +369,14 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     <div class="stat"><span>wasted listings</span><b>−90%</b></div>
     <div class="stat"><span>next-date gap</span><b>60 → 14 days</b></div>
   </div>
-  <div class="num">12</div>
+  <div class="num">15</div>
 </section>
 
 </div>
 
 <nav class="nav" aria-label="Slides">
   <button id="prev" type="button">Previous</button>
-  <span class="pos" id="pos">1 / 12</span>
+  <span class="pos" id="pos">1 / 15</span>
   <button id="next" type="button">Next</button>
 </nav>
 

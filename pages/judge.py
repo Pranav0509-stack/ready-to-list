@@ -35,7 +35,7 @@ minutes = data["ref"].minutes
 advocate_of = dict(zip(data["roster"].case_number, data["roster"].advocate_id))
 sc = scores.set_index("case_number")
 
-tabs = st.tabs(["Today", "Week", "Cases", "Priority", "Insight", "How Samay decides"])
+tabs = st.tabs(["Today", "Calendar", "Cases", "Priority", "Insight", "How Samay decides"])
 
 
 def timeline_chart(rows, height=190):
@@ -100,29 +100,60 @@ with tabs[0]:
         st.markdown(f"**Grouped for you**  \n{shown.case_number.map(advocate_of).nunique()} advocates for "
                     f"{len(shown)} matters; {shown.hearing_type.nunique()} kinds of hearing, called together.")
 
-# ---------------------------------------------------------------- week
+# ---------------------------------------------------------------- calendar
 with tabs[1]:
-    mondays = sorted({d - timedelta(days=d.weekday()) for d in rtl["workdays"]})
-    wk = st.selectbox("Week of", mondays, format_func=lambda x: f"{x:%d %B} to {x + timedelta(days=4):%d %B %Y}")
-    cols = st.columns(5)
-    for i, col in enumerate(cols):
-        d = wk + timedelta(days=i)
-        with col:
-            st.markdown(f"**{d:%A}**  \n{d:%d %B}")
-            if d in leave:
-                st.markdown("Judge on leave. Listed cases move to the next sitting with room.")
-            elif d in holidays:
-                st.markdown(f"Holiday: {holidays[d]}")
-            elif d not in set(rtl["workdays"]):
-                st.markdown("No sitting")
-            else:
-                dl = day_list(j, d, order)
-                st.markdown(f"{len(dl)} hearings, {float(dl.hearing_type.map(minutes).sum()):.0f} min, "
-                            f"{int(dl.case_number.isin(real_ids).sum())} of your 100")
-                st.dataframe(pd.DataFrame({"Time": dl.start, "Case": dl.case_number,
-                                           "Hearing": dl.hearing_type.map(hearing_label),
-                                           "Listing": dl.listing.map(LISTING)}),
-                             width="stretch", hide_index=True, height=440)
+    import calendar as cal
+    workset = set(rtl["workdays"])
+    count = j.groupby("date").size().to_dict()
+    months = sorted({(d.year, d.month) for d in rtl["workdays"]})
+    left, right = st.columns([1.45, 1])
+    with left:
+        pick = st.segmented_control("Month", [f"{cal.month_name[m]} {y}" for y, m in months],
+                                    default=f"{cal.month_name[months[0][1]]} {months[0][0]}", label_visibility="collapsed")
+        y, mth = next(((yy, mm) for yy, mm in months if f"{cal.month_name[mm]} {yy}" == pick), months[0])
+        sel = st.session_state.setdefault("cal_day", sitting_days[0])
+        hdr = st.columns(7)
+        for c, dn in zip(hdr, ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]):
+            c.markdown(f"<div class='cal-head'>{dn}</div>", unsafe_allow_html=True)
+        for week in cal.monthcalendar(y, mth):
+            cols = st.columns(7)
+            for c, dnum in zip(cols, week):
+                if dnum == 0:
+                    c.markdown("")
+                    continue
+                d = date(y, mth, dnum)
+                if d in leave:
+                    label, kind = f"**{dnum}** leave", "leave"
+                elif d in holidays:
+                    label, kind = f"**{dnum}** holiday", "holiday"
+                elif d.weekday() >= 5 or d not in workset:
+                    label, kind = f"**{dnum}**", "off"
+                else:
+                    label, kind = f"**{dnum}** {count.get(d, 0)} cases", "sit"
+                if c.button(label, key=f"cal_{d.isoformat()}", width="stretch",
+                            type="primary" if d == sel else "secondary"):
+                    st.session_state.cal_day = d
+                    st.rerun()
+        st.markdown("<span class='daypill sit'>Sitting</span><span class='daypill holiday'>Holiday</span>"
+                    "<span class='daypill leave'>Judge on leave</span><span class='daypill off'>Plain date: no sitting</span>",
+                    unsafe_allow_html=True)
+    with right:
+        d = st.session_state.cal_day
+        st.markdown(f"<div class='eyebrow'>{d:%A}</div>", unsafe_allow_html=True)
+        st.markdown(f"### {d:%d %B %Y}")
+        if d in leave:
+            st.markdown("Judge on leave. The cases due today move to the next sitting day with room; none takes the flat 60-day gap.")
+        elif d in holidays:
+            st.markdown(f"Holiday: {holidays[d]}. No sitting.")
+        elif d.weekday() >= 5 or d not in workset:
+            st.markdown("No sitting.")
+        else:
+            dl = day_list(j, d, order)
+            k1, k2, k3 = st.columns(3)
+            k1.metric("Hearings", len(dl))
+            k2.metric("Minutes", f"{float(dl.hearing_type.map(data['ref'].minutes).sum()):.0f} / 330")
+            k3.metric("Your 100", int(dl.case_number.isin(real_ids).sum()))
+            st.markdown(hearing_table(dl, advocate_of, height=430, show_why=False), unsafe_allow_html=True)
 
 # ---------------------------------------------------------------- cases
 with tabs[2]:
@@ -173,6 +204,10 @@ with tabs[3]:
         w = PRIO.rescale_weights(w)
         st.markdown("Applied: " + ", ".join(f"{k.replace('_', ' ')} {v:.0f}" for k, v in w.items())
                     + ". Age never below 20.")
+        st.markdown("<div class='eyebrow'>How the score is used</div>", unsafe_allow_html=True)
+        st.markdown("Each sitting day: cases due are ranked by score, weighted by how likely the hearing moves "
+                    "the case and by its minutes. Bail first, a quarter of the minutes reserved for cases over "
+                    "four years, Conditional cases held until the process returns. The packer fills 95% of the day.")
         live = PRIO.score_roster(real, data["ref"], START, weights=w)
         bands = pd.cut(live.score, [0, 20, 40, 60, 80, 100],
                        labels=["0 to 20", "20 to 40", "40 to 60", "60 to 80", "80 to 100"]).value_counts().sort_index()
@@ -185,7 +220,7 @@ with tabs[3]:
             "case_number": "Case", "score": "Score", "age_points": "Age", "readiness_points": "Readiness",
             "disposal_points": "Disposal", "churn_points": "Churn", "urgency_points": "Urgency",
             "age_years": "Years", "status": "Status", "flag_list": "Flags"}).drop(columns=["process_pending"]),
-            width="stretch", hide_index=True, height=600)
+            width="stretch", hide_index=True, height=560)
 
 # ---------------------------------------------------------------- insight
 with tabs[4]:

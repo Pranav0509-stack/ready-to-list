@@ -20,8 +20,8 @@ COURT_OF = {"Justice Sehgal": "Court 12", "Justice Dimakar": "Court 7", "Justice
 LISTING = {"first": "1st listing", "second": "2nd listing", "deferred": "Deferred (3rd+)"}
 OUTCOME = {"substantive": "Moved forward", "absence": "A party absent", "unready": "Not ready",
            "process": "Summons or warrant not back", "court": "Court could not reach it", "unclear": "Adjourned"}
-BLUE, ORANGE, INK, MUTED = "#1E3A8A", "#B45309", "#0F172A", "#64748B"
-LISTING_COLOR = {"first": "#1E3A8A", "second": "#2563EB", "deferred": "#B45309"}
+BLUE, ORANGE, INK, MUTED = "#1B2A41", "#C08A2D", "#111925", "#56627A"
+LISTING_COLOR = {"first": "#1B2A41", "second": "#3D6FD9", "deferred": "#C08A2D"}
 REFERENCE_FILES = ["hearing_type_reference.csv", "substantiveness_by_hearing_type.csv", "hearing_failure_reasons.csv",
                    "court_calendar.csv", "sample_causelist_2026-09-22.csv"]
 
@@ -31,39 +31,45 @@ section.stMain > div.block-container {padding-top: 1rem; padding-bottom: 0.4rem;
 section.stMain {overflow: hidden;}
 section.stSidebar div.block-container {padding-top: 0.6rem;}
 h1 {margin-bottom: 0; font-size: 2rem; letter-spacing: -0.01em;}
-div[data-testid="stMetric"] {background: #FFFFFF; border: 1px solid #DCE3EE; border-radius: 8px; padding: 10px 14px;}
-div[data-testid="stMetricLabel"] p {font-size: 12.5px; color: #64748B; letter-spacing: 0.01em;}
-div[data-testid="stMetricValue"] {font-size: 1.7rem; font-family: 'Playfair Display', Georgia, serif; font-weight: 600;}
+div[data-testid="stMetric"] {background: #FFFFFF; border: 1px solid #C9D3E3; border-radius: 8px; padding: 10px 14px;}
+div[data-testid="stMetricLabel"] p {font-size: 12.5px; color: #56627A; letter-spacing: 0.01em;}
+div[data-testid="stMetricValue"] {font-size: 1.7rem; font-family: 'Spectral', Georgia, serif; font-weight: 600;}
 div[data-testid="stTabs"] button p {font-size: 15px; font-weight: 500;}
-div[data-testid="stTabs"] button[aria-selected="true"] p {color: #B45309;}
-div[data-testid="stTabs"] div[data-baseweb="tab-highlight"] {background-color: #B45309;}
-.samay-logo {font-family: 'Playfair Display', Georgia, serif; font-size: 40px; font-weight: 600; color: #B45309;
+div[data-testid="stTabs"] button[aria-selected="true"] p {color: #9A6212;}
+div[data-testid="stTabs"] div[data-baseweb="tab-highlight"] {background-color: #9A6212;}
+.samay-logo {font-family: 'Spectral', Georgia, serif; font-size: 40px; font-weight: 600; color: #9A6212;
              line-height: 1; letter-spacing: -0.01em; margin: 0;}
-.samay-sub {font-size: 12.5px; color: #64748B; margin: 4px 0 12px 0;}
-.who {font-size: 15px; color: #0F172A; margin-bottom: 0;}
-.role {font-size: 12.5px; color: #64748B; margin-bottom: 10px;}
-.eyebrow {font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #64748B; font-weight: 600; margin-bottom: 2px;}
-.sub {color: #64748B; font-size: 14px; margin-top: -4px;}
-.list {height: 400px; overflow-y: auto; border: 1px solid #DCE3EE; border-radius: 8px; background: #FFFFFF;}
+.samay-sub {font-size: 12.5px; color: #56627A; margin: 4px 0 12px 0;}
+.who {font-size: 15px; color: #111925; margin-bottom: 0;}
+.role {font-size: 12.5px; color: #56627A; margin-bottom: 10px;}
+.eyebrow {font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #56627A; font-weight: 600; margin-bottom: 2px;}
+.sub {color: #56627A; font-size: 14px; margin-top: -4px;}
+.list {height: 400px; overflow-y: auto; border: 1px solid #C9D3E3; border-radius: 8px; background: #FFFFFF;}
 .list table {width: 100%; border-collapse: collapse; font-size: 14px;}
-.list th {position: sticky; top: 0; background: #F1F5F9; color: #64748B; font-weight: 600; font-size: 12px;
-          letter-spacing: 0.04em; text-transform: uppercase; text-align: left; padding: 9px 12px; border-bottom: 1px solid #DCE3EE;}
-.list td {padding: 9px 12px; border-bottom: 1px solid #EEF2F7; vertical-align: top; color: #0F172A;}
-.list tr:hover td {background: #F8FAFC;}
-.list .time {font-family: 'Playfair Display', Georgia, serif; font-size: 16px; font-weight: 600; white-space: nowrap;}
+.list th {position: sticky; top: 0; background: #ECEEEA; color: #56627A; font-weight: 600; font-size: 12px;
+          letter-spacing: 0.04em; text-transform: uppercase; text-align: left; padding: 9px 12px; border-bottom: 1px solid #C9D3E3;}
+.list td {padding: 9px 12px; border-bottom: 1px solid #E5E9EF; vertical-align: top; color: #111925;}
+.list tr:hover td {background: #F5F6F3;}
+.list .time {font-family: 'Spectral', Georgia, serif; font-size: 16px; font-weight: 600; white-space: nowrap;}
 .list .case {font-weight: 600; white-space: nowrap;}
-.list .why {color: #64748B; font-size: 13px;}
-.list .sitting td {background: #F8FAFC; color: #B45309; font-weight: 600; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;}
+.list .why {color: #56627A; font-size: 13px;}
+.list .sitting td {background: #F5F6F3; color: #9A6212; font-weight: 600; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;}
 .chip {display: inline-block; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap;}
-.chip.first {background: #E8EEF7; color: #1E3A8A;} .chip.second {background: #DBEAFE; color: #1D4ED8;}
-.chip.deferred {background: #FEF3C7; color: #92400E;} .chip.bail {background: #DCFCE7; color: #166534;}
-.chip.score {background: #F1F5F9; color: #0F172A;}
-.card {background: #FFFFFF; border: 1px solid #DCE3EE; border-radius: 10px; padding: 14px 16px; height: 100%;}
-.card h3 {font-family: 'Playfair Display', Georgia, serif; font-size: 20px; margin: 0 0 2px 0; font-weight: 600;}
-.card .muted {color: #64748B; font-size: 13px; margin-bottom: 10px;}
+.chip.first {background: #E5E9EF; color: #1B2A41;} .chip.second {background: #DBEAFE; color: #1D4ED8;}
+.chip.deferred {background: #F7ECD9; color: #9A6212;} .chip.bail {background: #E1F0E8; color: #2F7454;}
+.chip.score {background: #ECEEEA; color: #111925;}
+.card {background: #FFFFFF; border: 1px solid #C9D3E3; border-radius: 10px; padding: 14px 16px; height: 100%;}
+.card h3 {font-family: 'Spectral', Georgia, serif; font-size: 20px; margin: 0 0 2px 0; font-weight: 600;}
+.card .muted {color: #56627A; font-size: 13px; margin-bottom: 10px;}
 .card .kv {display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px;}
-.card .k {font-size: 12px; color: #64748B;} .card .v {font-family: 'Playfair Display', Georgia, serif; font-size: 22px; font-weight: 600;}
+.card .k {font-size: 12px; color: #56627A;} .card .v {font-family: 'Spectral', Georgia, serif; font-size: 22px; font-weight: 600;}
 .card .empty {color: #94A3B8; font-size: 14px; padding: 18px 0;}
+.cal-head {font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #56627A; text-align: center; font-weight: 600;}
+div[data-testid="stColumn"] button[kind="secondary"] {padding: 4px 6px; min-height: 44px;}
+div[data-testid="stColumn"] button[kind="secondary"] p {font-size: 12px; line-height: 1.25; text-align: left;}
+.daypill {display:inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; margin-right: 6px;}
+.daypill.leave {background:#F6E3E6; color:#A8253B;} .daypill.holiday {background:#F7ECD9; color:#9A6212;}
+.daypill.sit {background:#E1F0E8; color:#2F7454;} .daypill.off {background:#E5E9EF; color:#56627A;}
 </style>
 """
 
