@@ -158,6 +158,57 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
   <div class="brand">Samay</div><div class="num">3</div>
 </section>
 
+<section class="slide" aria-label="Scoring formula">
+  <div class="eyebrow">How the score is built · five factors, added</div>
+  <h2>Sₖ = 35·age + 25·readiness + 15·stage + 15·churn + 10·urgency</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Factor</th><th class="n">Max</th><th>Value, 0 to 1</th><th>Where the number comes from</th></tr></thead>
+    <tbody>
+      <tr><td>Age</td><td class="n">35</td><td>min(1, years since filing ÷ 8)</td><td>8 = this docket's mean age + 2 sd, computed once</td></tr>
+      <tr><td>Readiness</td><td class="n">25</td><td>type rate × (0.7 + 0.3 × share of needed people present)</td><td>Type rate from the organisers' table; people from the last order's "Present:" line</td></tr>
+      <tr><td>Near disposal</td><td class="n">15</td><td>stage number ÷ 10</td><td>11 stages, admission 0 to judgment 10</td></tr>
+      <tr><td>Churn</td><td class="n">15</td><td>min(1, hearings held ÷ expected − 1)</td><td>Expected = median hearings summed over stages so far</td></tr>
+      <tr><td>Urgency</td><td class="n">10</td><td>"last chance" 1.0, "for judgment" 0.8, else 0</td><td>Read from the last order</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">Added, never multiplied: an old case at a slow stage is not pushed to zero. Each case is scored on its own file; the score never compares cases.</p>
+  <div class="brand">Samay</div><div class="num">4</div>
+</section>
+
+<section class="slide" aria-label="Scoring worked">
+  <div class="eyebrow">The same formula on three real files</div>
+  <h2>91.3, 69.9 and 12.5, factor by factor</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Factor</th><th class="n">ST/1261/2017</th><th class="n">ST/608/2017</th><th class="n">ST/7/2025</th></tr></thead>
+    <tbody>
+      <tr><td>Age (35)</td><td class="n">9.2 yrs → <b>35.0</b></td><td class="n">9.4 yrs → <b>35.0</b></td><td class="n">1.1 yrs → <b>4.7</b></td></tr>
+      <tr><td>Readiness (25)</td><td class="n">judgment 100%, all present → <b>25.0</b></td><td class="n">evidence 17%, accused absent → <b>3.8</b></td><td class="n">warrant 14% → <b>3.4</b></td></tr>
+      <tr><td>Near disposal (15)</td><td class="n">arguments, 10/11 → <b>13.5</b></td><td class="n">defence evidence, 9/11 → <b>12.0</b></td><td class="n">appearance, 4/11 → <b>4.5</b></td></tr>
+      <tr><td>Churn (15)</td><td class="n">43 held, 26 expected → <b>9.8</b></td><td class="n">37 held, 23 expected → <b>9.1</b></td><td class="n">6 held, 8 expected → <b>0</b></td></tr>
+      <tr><td>Urgency (10)</td><td class="n">"for judgment" → <b>8.0</b></td><td class="n">"last chance" → <b>10.0</b></td><td class="n">none → <b>0</b></td></tr>
+      <tr><td><b>Score</b></td><td class="n"><b>91.3</b></td><td class="n"><b>69.9</b></td><td class="n"><b>12.5</b> · Conditional</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">ST/7/2025 is Conditional: its last order says "for return of warrant", so it is not listed until the warrant is back. Across the 100 cases: 80 Eligible, 20 Conditional, scores 7 to 91, average 38.</p>
+  <div class="brand">Samay</div><div class="num">5</div>
+</section>
+
+<section class="slide" aria-label="Status and weights">
+  <div class="eyebrow">Beside the score</div>
+  <h2>Status, flags, and what the judge may change</h2>
+  <div class="grid g2" style="align-items:start;flex:1">
+    <div class="card"><h3>Status and flags, from the last order</h3><ul>
+      <li><b>Conditional</b>: "return of summons", "issue NBW", "take steps" and the like. Listed only when the process is back.</li>
+      <li><b>Last chance</b>, <b>Churning</b>, <b>Backlog 4y+</b>, <b>Ageing 5y+</b>, <b>Liberty lane</b> for bail, <b>Mediation report pending</b>.</li>
+      <li>Flags never change the score; they steer the day-builder.</li></ul></div>
+    <div class="card hl"><h3>Weights the judge can move</h3><ul>
+      <li>Five sliders on the Priority page; the docket re-ranks live.</li>
+      <li><b>Age can never fall below 20.</b> Everything else rescales to 100.</li>
+      <li>Locked and not on any slider: bail first, 25% of every sitting for 4+ year cases.</li></ul></div>
+  </div>
+  <div class="brand">Samay</div><div class="num">6</div>
+</section>
+
 <section class="slide" aria-label="Filter">
   <div class="eyebrow">Step 1 · filter</div>
   <h2>A case that cannot go ahead is not listed</h2>
@@ -172,7 +223,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     <li>It is listed <b>the day the warrant returns</b>, not 60 days later.</li>
     <li>In the organisers' data, 196 of 293 failed warrant hearings were waiting on the process.</li>
   </ul>
-  <div class="brand">Samay</div><div class="num">4</div>
+  <div class="brand">Samay</div><div class="num">7</div>
 </section>
 
 <section class="slide" aria-label="Chance">
@@ -192,7 +243,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     </tbody>
   </table></div>
   <p class="muted">Rates come from the organisers' substantiveness and failure-reason tables; the last order adjusts them.</p>
-  <div class="brand">Samay</div><div class="num">5</div>
+  <div class="brand">Samay</div><div class="num">8</div>
 </section>
 
 <section class="slide" aria-label="Minutes">
@@ -206,7 +257,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     <div class="hr"><span>ST/608/2017</span><div class="ht"><div class="hf" style="width:26%"></div></div><span class="v">8 min</span></div>
   </div>
   <p class="muted">32 = the organisers' 30 minutes for an evidence or judgment hearing, plus the average overrun (hearings run long more often than short).</p>
-  <div class="brand">Samay</div><div class="num">6</div>
+  <div class="brand">Samay</div><div class="num">9</div>
 </section>
 
 <section class="slide" aria-label="Value">
@@ -224,7 +275,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     <div class="card"><h3>ST/608/2017 drops from 70 to 11</h3><p>Not because it matters less, but because it is likely to be adjourned again. Its value rises as soon as the accused's attendance is secured.</p></div>
     <div class="card"><h3>Boosts sit on top of the score</h3><p>+10 on a 2nd listing, +25 from the 3rd once the cause is cured, +15 while a case is under 6 months (NI Act s.143).</p></div>
   </div>
-  <div class="brand">Samay</div><div class="num">7</div>
+  <div class="brand">Samay</div><div class="num">10</div>
 </section>
 
 <section class="slide" aria-label="Fill order">
@@ -245,7 +296,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
   </div>
   <div class="legend"><span><i style="background:var(--gold)"></i>Old-case quota: both 2017 cases, 39 of 50 min</span><span><i style="background:var(--blue)"></i>Chosen by CP-SAT</span><span><i style="background:var(--soft)"></i>5% spare, 10.5 min</span></div>
   <p class="muted">The afternoon has 210 minutes; Samay plans 95% of it (199.5). The 2017 cases enter through the locked quota, so an old case is never squeezed out.</p>
-  <div class="brand">Samay</div><div class="num">8</div>
+  <div class="brand">Samay</div><div class="num">11</div>
 </section>
 
 <section class="slide" aria-label="Why CP-SAT">
@@ -266,7 +317,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     </div>
   </div>
   <p class="muted">Case A worth 90 (35 min), B worth 60 (20 min), C worth 55 (20 min). Google OR-Tools CP-SAT, open source. One court day plans in 83 ms.</p>
-  <div class="brand">Samay</div><div class="num">9</div>
+  <div class="brand">Samay</div><div class="num">12</div>
 </section>
 
 <section class="slide" aria-label="Times">
@@ -283,7 +334,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     <li><b>Window</b>: one hour from the half hour before, instead of waiting all day.</li>
   </ul>
   <p class="muted">Simplified: in the real list other cases sit between these.</p>
-  <div class="brand">Samay</div><div class="num">10</div>
+  <div class="brand">Samay</div><div class="num">13</div>
 </section>
 
 <section class="slide" aria-label="Next date rules">
@@ -305,7 +356,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     </tbody>
   </table></div>
   <p class="muted">Today's rule: a flat 60 days for every unfinished case. Samay's average gap: 14 days.</p>
-  <div class="brand">Samay</div><div class="num">11</div>
+  <div class="brand">Samay</div><div class="num">14</div>
 </section>
 
 <section class="slide" aria-label="Gap by next stage">
@@ -325,7 +376,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     <li>ST/1166/2023 closes complainant's evidence. Next stage is defence evidence: <b>G = 14 days</b>.</li>
     <li>ST/1261/2017: judgment delivered, no next stage. <b>Disposed</b>; the judge fixes it.</li>
   </ul>
-  <div class="brand">Samay</div><div class="num">12</div>
+  <div class="brand">Samay</div><div class="num">15</div>
 </section>
 
 <section class="slide" aria-label="Days to a date">
@@ -349,7 +400,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
       <li><b>Held cases</b> wait for their cause: a summons still out, or a 3rd-listing failure not yet cured.</li>
     </ul>
   </div>
-  <div class="brand">Samay</div><div class="num">13</div>
+  <div class="brand">Samay</div><div class="num">16</div>
 </section>
 
 <section class="slide" aria-label="Escalation">
@@ -365,7 +416,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
   </table></div>
   <p>ST/608/2017, accused absent again: next date in 7 days, now a 3rd listing. It carries <b>+25</b>, a fixed slot, and in the data 44% of deferred listings move the case against 24% of second listings.</p>
   <p class="muted">The counter resets to 1st when the purpose succeeds and the case moves to the next stage.</p>
-  <div class="brand">Samay</div><div class="num">14</div>
+  <div class="brand">Samay</div><div class="num">17</div>
 </section>
 
 <section class="slide" aria-label="Glossary">
@@ -391,7 +442,49 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
       <b>F</b><span>Gap after failure: process 21, absent 7, not ready 10, court 3, unclear 7</span>
     </div>
   </div>
-  <div class="brand">Samay</div><div class="num">15</div>
+  <div class="brand">Samay</div><div class="num">18</div>
+</section>
+
+<section class="slide" aria-label="Results">
+  <div class="eyebrow">Results · 60 working days · 330 minutes a day · 5 runs · organisers' data</div>
+  <h2>Same judge, same minutes, same cases. Only the rules differ.</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Measure</th><th class="n">Today's rules</th><th class="n">Samay</th></tr></thead>
+    <tbody>
+      <tr><td>Listed a day</td><td class="n">57</td><td class="n"><b>18</b></td></tr>
+      <tr><td>Listed cases actually heard</td><td class="n">44%</td><td class="n"><b>97%</b></td></tr>
+      <tr><td>Heard cases that move forward</td><td class="n">48%</td><td class="n"><b>79%</b></td></tr>
+      <tr><td>Hearings that move a case, per day</td><td class="n">11.9</td><td class="n"><b>13.9</b></td></tr>
+      <tr><td>Cases over 4 years heard at least once</td><td class="n">32%</td><td class="n"><b>47%</b></td></tr>
+      <tr><td>Days from listing to a real hearing</td><td class="n">23</td><td class="n"><b>2</b></td></tr>
+      <tr><td>Average gap to the next date</td><td class="n">60 days</td><td class="n"><b>14 days</b></td></tr>
+      <tr><td>Wasted listings in the quarter</td><td class="n">2,694</td><td class="n"><b>259</b></td></tr>
+      <tr><td>Cases disposed in the quarter</td><td class="n">196</td><td class="n"><b>356</b></td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">Utilisation is 94% in both arms: today's rules spend the minutes calling 32 cases a day that are sent back; Samay spends them on hearings that happen.</p>
+  <div class="brand">Samay</div><div class="num">19</div>
+</section>
+
+<section class="slide" aria-label="Results by year and lever">
+  <div class="eyebrow">One judge, one year · what each lever adds</div>
+  <h2>Scheduling nearly doubles disposals; every lever together does more</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Arm</th><th class="n">Disposed</th><th class="n">New complaints past the first stage</th><th class="n">Delay-condonation hearings</th><th class="n">Wasted listings</th></tr></thead>
+    <tbody>
+      <tr><td>Today's rules</td><td class="n">541</td><td class="n">3%</td><td class="n">407</td><td class="n">11,708</td></tr>
+      <tr><td>Scheduling only</td><td class="n">643</td><td class="n">32%</td><td class="n">290</td><td class="n">3,913</td></tr>
+      <tr><td>Scheduling + pre-filing</td><td class="n">644</td><td class="n">91%</td><td class="n">20</td><td class="n">3,939</td></tr>
+      <tr><td><b>Samay, all levers</b></td><td class="n"><b>847</b></td><td class="n"><b>92%</b></td><td class="n"><b>9</b></td><td class="n"><b>1,958</b></td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid g3">
+    <div class="stat"><span class="k">A 420-minute day</span><b>465</b><span class="from">disposed in 60 days, today 230</span></div>
+    <div class="stat"><span class="k">Deferred listings that move</span><b class="up">44%</b><span class="from">second listings 24%</span></div>
+    <div class="stat"><span class="k">Plan one court day</span><b>83 ms</b><span class="from">60 days in 5 s</span></div>
+  </div>
+  <p class="muted">All levers: scheduling, pre-filing at e-filing, confirmation two days before, fixed slots with advocate grouping, process tracking.</p>
+  <div class="brand">Samay</div><div class="num">20</div>
 </section>
 
 <section class="slide" aria-label="Fairness">
@@ -403,7 +496,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     <div class="card"><h3>A case that keeps failing rises</h3><p>+10 on the 2nd listing, +25 from the 3rd, once the reason it failed is fixed.</p></div>
     <div class="card"><h3>Nobody is called for nothing</h3><p>A case waiting on a warrant or summons is not listed until it returns.</p></div>
   </div>
-  <div class="brand">Samay</div><div class="num">16</div>
+  <div class="brand">Samay</div><div class="num">21</div>
 </section>
 
 <section class="slide" aria-label="Assumptions">
@@ -414,7 +507,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     <div class="card"><h3>Our assumptions</h3><ul><li>Hearings vary about 35% around the table's minutes</li><li>The last order's warning raises that risk 2.5 times</li><li>5% of the day kept spare, 25% for old cases</li></ul></div>
   </div>
   <p>If the day runs over, unreached cases go to the next sitting day. If it runs short, standby is called. Every outcome the court master records turns an assumption into this court's own number.</p>
-  <div class="brand">Samay</div><div class="num">17</div>
+  <div class="brand">Samay</div><div class="num">22</div>
 </section>
 
 <section class="slide" aria-label="Summary">
@@ -426,14 +519,14 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     <div class="stat"><span class="k">Hearings that move a case</span><b class="up">79%</b><span class="from">today 48%</span></div>
     <div class="stat"><span class="k">Disposed in 60 days</span><b class="up">356</b><span class="from">today 196</span></div>
   </div>
-  <div class="brand">Samay</div><div class="num">18</div>
+  <div class="brand">Samay</div><div class="num">23</div>
 </section>
 
 </div>
 
 <div class="nav" role="navigation" aria-label="Slides">
   <button type="button" id="prev" aria-label="Previous slide">← Prev</button>
-  <span class="pos" id="pos">1 / 18</span>
+  <span class="pos" id="pos">1 / 23</span>
   <button type="button" id="next" aria-label="Next slide">Next →</button>
 </div>
 
