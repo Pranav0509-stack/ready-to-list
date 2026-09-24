@@ -8,8 +8,8 @@ st.markdown("<style>section.stSidebar {display: none;}</style>", unsafe_allow_ht
 left, mid, right = st.columns([1, 1.2, 1])
 with mid:
     st.markdown("<div style='height: 14vh'></div>", unsafe_allow_html=True)
-    st.markdown("# Samay")
-    st.markdown("Court scheduling for one judge's docket.")
+    st.markdown('<div class="samay-logo" style="font-size:56px">Samay</div><div class="samay-sub">Court scheduling for one judge\'s docket</div>',
+                unsafe_allow_html=True)
     role = st.radio("Sign in as", ["Judge", "Court master"], horizontal=True)
     name = st.text_input("Name", value="Justice Sehgal" if role == "Judge" else "Court master, Court 12")
     if st.button("Sign in", type="primary", width="stretch"):

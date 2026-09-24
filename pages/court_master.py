@@ -126,8 +126,13 @@ with tabs[2]:
         outside = d2.toggle("The accused lives outside this court's area", value=True)
     res = scrutinise(tl, docs, summons, company, outside)
     with right:
-        st.markdown(f"### :{'green' if res['ready'] else 'orange'}[{res['status']}]")
-        for n in res["notes"]:
-            st.markdown(f"- {n}")
+        st.markdown(f"**Status:** {res['status']}")
+        if tl["delay_days"]:
+            st.markdown(f"Filed {tl['delay_days']} days after limitation ended. The condonation petition is filed with the "
+                        "complaint and decided at admission.")
+        if res["s225_enquiry"]:
+            st.markdown("Accused outside the court's area: s.225 enquiry affidavit with the complaint.")
+        if res["e_summons"]:
+            st.markdown("Phone or email given: summons can go electronically.")
         if res["missing"] or res["summons_missing"]:
             st.markdown("**To cure:** " + "; ".join(res["missing"] + res["summons_missing"]))

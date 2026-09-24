@@ -8,16 +8,16 @@ Each evening, for one judge and one sitting day, the scheduler decides which due
 
 | Metric | Today's rules | Samay |
 |---|---|---|
-| Utilisation % | 99.3 | 99.6 |
-| Reach rate % | 43.9 | 97.2 |
-| Substantiveness % | 47.3 | 82.2 |
-| 4+ year cases heard % | 29.0 | 48.8 |
-| Predictability, days listed to heard | 23.7 | 2.7 |
-| Substantive hearings a day | 12.5 | 14.6 |
-| Wasted listings in 60 days | 2,851 | 220 |
-| Disposed in 60 days | 191 | 368 |
+| Utilisation % | 94.3 | 94.6 |
+| Reach rate % | 44.2 | 96.9 |
+| Substantiveness % | 47.8 | 78.7 |
+| 4+ year cases heard % | 32.1 | 47.3 |
+| Predictability, days listed to heard | 23.3 | 2.1 |
+| Substantive hearings a day | 12.0 | 13.9 |
+| Wasted listings in 60 days | 2,694 | 259 |
+| Disposed in 60 days | 196 | 356 |
 
-Today's rules: 60 a day by due date, flat 60-day gap.
+Today's rules: 60 a day by due date, flat 60-day gap. Three judge-leave days fall in the 60, which is why utilisation is 94 percent in both arms.
 
 ## 2. The data it needs
 

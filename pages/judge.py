@@ -35,40 +35,46 @@ tabs = st.tabs(["Today's list", "Docket", "Priority", "Calendar", "Results", "Ho
 
 # ---------------------------------------------------------------- today's list
 with tabs[0]:
-    left, right = st.columns([1.7, 1])
+    top = st.columns([2.2, 1, 1, 1, 1])
+    day = top[0].selectbox("Court date", sitting_days, format_func=lambda x: x.strftime("%A %d %B %Y"))
+    todays = day_list(j, day, order)
+    removed = st.session_state.setdefault("removed", set())
+    shown = todays[~todays.case_number.isin(removed)]
+    planned = float(shown.hearing_type.map(minutes).sum())
+    top[1].metric("Listed", len(shown))
+    top[2].metric("Minutes", f"{planned:.0f} / 330")
+    top[3].metric("Your 100 cases", int(shown.real.sum()))
+    top[4].metric("Deferred, fixed slot", int((shown.listing == "deferred").sum()))
+    left, right = st.columns([2.6, 1])
+    with left:
+        for block in [b["name"] for b in E.DAY["blocks"]]:
+            g = shown[shown.block == block]
+            if g.empty:
+                continue
+            blk = next(b for b in E.DAY["blocks"] if b["name"] == block)
+            st.markdown(f"**{block} sitting**, {blk['start']} to {blk['end']}, {len(g)} matters")
+            st.dataframe(pd.DataFrame({
+                "Time": g.start, "Case": g.case_number,
+                "Hearing": g.hearing_type.str.replace("_", " ").str.title(),
+                "Listing": g.listing.map(LISTING), "Score": g.score,
+                "Advocate": g.case_number.map(advocate_of), "Why today": [why(r) for r in g.itertuples()]}),
+                width="stretch", hide_index=True, height=min(320, 38 + 35 * len(g)))
     with right:
-        day = st.selectbox("Court date", sitting_days, format_func=lambda x: x.strftime("%A %d %B %Y"))
-        todays = day_list(j, day, order)
-        removed = st.session_state.setdefault("removed", set())
-        shown = todays[~todays.case_number.isin(removed)]
-        planned = float(shown.hearing_type.map(minutes).sum())
-        m1, m2 = st.columns(2)
-        m1.metric("Listed", len(shown))
-        m2.metric("Minutes", f"{planned:.0f} / 330")
-        m3, m4 = st.columns(2)
-        m3.metric("Your 100 cases", int(shown.real.sum()))
-        m4.metric("Deferred, fixed slot", int((shown.listing == "deferred").sum()))
+        st.markdown("**Changes**")
         drop = st.selectbox("Remove a case", ["None"] + shown.case_number.tolist())
-        b1, b2 = st.columns(2)
-        if drop != "None" and b1.button("Remove", width="stretch"):
+        if drop != "None" and st.button("Remove", width="stretch"):
             removed.add(drop)
             st.rerun()
-        if removed and b2.button("Restore all", width="stretch"):
+        if removed and st.button("Restore all", width="stretch"):
             st.session_state.removed = set()
             st.rerun()
         approved = st.session_state.get("approved") == day
+        st.markdown("**Approval**")
         if st.button("Approve today's list", type="primary", width="stretch", disabled=approved):
             st.session_state.approved = day
             st.rerun()
         if approved:
             st.success(f"Approved for {day:%d %B}. Time windows go to advocates and parties.")
-    with left:
-        view = pd.DataFrame({
-            "Sitting": shown.block, "Time": shown.start, "Case": shown.case_number,
-            "Hearing": shown.hearing_type.str.replace("_", " ").str.title(),
-            "Listing": shown.listing.map(LISTING), "Score": shown.score,
-            "Advocate": shown.case_number.map(advocate_of), "Why today": [why(r) for r in shown.itertuples()]})
-        st.dataframe(view, width="stretch", hide_index=True, height=600)
 
 # ---------------------------------------------------------------- docket
 with tabs[1]:
@@ -131,10 +137,12 @@ with tabs[2]:
 with tabs[3]:
     used = dict(zip(rtl["daily"].date, rtl["daily"].minutes_used))
     count = j.groupby("date").size().to_dict()
-    months = sorted({(d.year, d.month) for d in rtl["workdays"]})
-    cols = st.columns(len(months))
-    for col, (y, mth) in zip(cols, months):
-        col.markdown(f"**{cal.month_name[mth]} {y}**")
+    left, right = st.columns([1.35, 1])
+    with left:
+        months = sorted({(d.year, d.month) for d in rtl["workdays"]})
+        pick_month = st.segmented_control("Month", [f"{cal.month_name[m]} {y}" for y, m in months],
+                                          default=f"{cal.month_name[months[0][1]]} {months[0][0]}")
+        y, mth = next((yy, mm) for yy, mm in months if f"{cal.month_name[mm]} {yy}" == pick_month) if pick_month else months[0]
         grid = []
         for week in cal.monthcalendar(y, mth):
             row = []
@@ -144,22 +152,33 @@ with tabs[3]:
                     continue
                 d = date(y, mth, dnum)
                 if d in leave:
-                    row.append(f"{dnum}  leave")
+                    row.append(f"{dnum}  Judge on leave")
                 elif d in holidays:
-                    row.append(f"{dnum}  holiday")
+                    row.append(f"{dnum}  {holidays[d]}")
                 elif d in count:
-                    row.append(f"{dnum}  {count[d]} cases, {used.get(d, 0):.0f} min")
+                    row.append(f"{dnum}  {count[d]} hearings, {used.get(d, 0):.0f} min")
                 else:
                     row.append(f"{dnum}")
             grid.append(row)
-        col.dataframe(pd.DataFrame(grid, columns=["Mon", "Tue", "Wed", "Thu", "Fri"]), hide_index=True,
-                      width="stretch", height=len(grid) * 35 + 40)
-    daily = rtl["daily"]
-    fig = go.Figure()
-    fig.add_bar(x=daily.date, y=daily.minutes_used, name="Minutes used", marker_color=BLUE)
-    fig.add_scatter(x=daily.date, y=[330] * len(daily), name="Sitting minutes", line=dict(color="#94A3B8", dash="dash"))
-    fig.update_layout(height=250, margin=dict(l=0, r=0, t=10, b=0), legend=dict(orientation="h", y=-0.3))
-    st.plotly_chart(fig, width="stretch")
+        st.dataframe(pd.DataFrame(grid, columns=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]),
+                     hide_index=True, width="stretch", height=len(grid) * 35 + 40)
+        daily = rtl["daily"]
+        dm = daily[[d.month == mth for d in daily.date]]
+        fig = go.Figure()
+        fig.add_bar(x=dm.date, y=dm.minutes_used, name="Minutes used", marker_color=BLUE)
+        fig.add_scatter(x=dm.date, y=[330] * len(dm), name="Sitting minutes", line=dict(color="#94A3B8", dash="dash"))
+        fig.update_layout(height=220, margin=dict(l=0, r=0, t=10, b=0), legend=dict(orientation="h", y=-0.35))
+        st.plotly_chart(fig, width="stretch")
+    with right:
+        month_days = [d for d in sitting_days if d.year == y and d.month == mth]
+        cday = st.selectbox("Hearings on", month_days, format_func=lambda x: x.strftime("%A %d %B"))
+        dl = day_list(j, cday, order)
+        st.markdown(f"**{len(dl)} hearings**, {float(dl.hearing_type.map(minutes).sum()):.0f} planned minutes, "
+                    f"{int(dl.case_number.isin(real_ids).sum())} of your 100 cases")
+        st.dataframe(pd.DataFrame({"Time": dl.start, "Sitting": dl.block, "Case": dl.case_number,
+                                   "Hearing": dl.hearing_type.str.replace("_", " ").str.title(),
+                                   "Listing": dl.listing.map(LISTING), "Score": dl.score}),
+                     width="stretch", hide_index=True, height=520)
 
 # ---------------------------------------------------------------- results
 with tabs[4]:
@@ -240,4 +259,52 @@ After a hearing that moved the case, the next date is the reference gap for the 
 ## What the court master supplies
 
 The docket file (Excel or CSV), each day's outcomes, and the registry scrutiny of new complaints: statutory dates computed at e-filing, documents, summons details, jurisdiction. A late complaint files its condonation petition with the complaint and it is heard at admission.
+
+## Every parameter Samay takes, and its value for this judge
+
+Each judge has a configuration: sitting hours, leave, weights and rules. Change the file, not the code, for another bench.
 """)
+        cfg, dayc = E.CFG, E.DAY
+        params = []
+        for b in dayc["blocks"]:
+            params.append(("Court day", f"{b['name']} sitting", f"{b['start']} to {b['end']}: " + ", ".join(p.replace("_", " ").title() for p in b["purposes"])))
+        params += [("Court day", "Opening minutes (pronouncements, mentions)", dayc["opening_minutes"]),
+                   ("Court day", "Changeover, same hearing type", f"{dayc['changeover_same']} min"),
+                   ("Court day", "Changeover, different hearing type", f"{dayc['changeover_switch']} min"),
+                   ("Court day", "An adjournment still costs", f"{dayc['adjourned_minutes']} min"),
+                   ("Court day", "Sitting filled to", f"{dayc['fill_target']:.0%} of net minutes"),
+                   ("Court day", "Spread around reference minutes", f"lognormal sigma {dayc['duration_sigma']}"),
+                   ("Judge", "Leave days", ", ".join(str(x) for x in cfg["judge_leave"]["dates"])),
+                   ("Judge", "Casual leave allowed a year", cfg["judge_leave"]["casual_leave_days_per_year"])]
+        params += [("Priority score", f"{k.replace('_', ' ').title()} weight", v) for k, v in PRIO.WEIGHTS.items()]
+        params += [("Priority score", "Full points for age at", f"{scores.attrs['full_points_age']} years (mean + 2 sd, fixed)"),
+                   ("Priority score", "Attendance floor", f"{PRIO.ATTENDANCE_FLOOR:.0%} of readiness when nobody required attends"),
+                   ("Priority score", "Age weight can never fall below", PRIO.MIN_AGE_WEIGHT),
+                   ("Protected rules", "Liberty lane", ", ".join(cfg["urgent_purposes"])),
+                   ("Protected rules", "Share of each sitting for cases over 4 years", f"{cfg['ageing_quota']:.0%}"),
+                   ("Listings", "2nd listing boost", cfg["escalation"]["second"]["priority_boost"]),
+                   ("Listings", "Deferred (3rd+) boost", f"{cfg['escalation']['deferred']['priority_boost']}, held until the last failure is cured"),
+                   ("Statute", "NI Act s.143 six-month window", f"{cfg['statutory_clock']['days']} days, boost {cfg['statutory_clock']['priority_boost']}")]
+        for g, v in cfg["next_date"]["after_failure_days"].items():
+            params.append(("Next date", f"After a failure: {g}", f"{v} days"))
+        params.append(("Next date", "Today's rules, for comparison", f"flat {cfg['next_date']['baseline_gap_days']} days"))
+        lv = cfg["levers"]
+        params += [("Readiness levers", "Process status known", f"{lv['process_tracking']['status_accuracy']:.0%} of the time"),
+                   ("Readiness levers", "T-2 confirmation removes", f"{lv['intent_check']['removed']:.0%} of not-ready failures"),
+                   ("Readiness levers", "Fixed slots and clustering remove", f"{lv['fixed_slot_cluster']['removed']:.0%} of absences"),
+                   ("Readiness levers", "Last-order signal multiplies risk by", lv["text_signals"]["boost"]),
+                   ("Pre-filing", "Removes at admission", f"{lv['prefiling']['unready_removed']:.0%} of not-ready, {lv['prefiling']['process_removed']:.0%} of process failures"),
+                   ("Pre-filing", "Summons failures removed with full contact details", f"{lv['prefiling']['summons_process_removed']:.0%}"),
+                   ("Pre-filing", "E-summons return", f"{lv['prefiling']['summons_return_days'][0]} to {lv['prefiling']['summons_return_days'][1]} working days, against 3 to 25 by post")]
+        st.dataframe(pd.DataFrame(params, columns=["Group", "Parameter", "Value"]), width="stretch", hide_index=True,
+                     height=min(900, 38 + 35 * len(params)))
+        st.markdown("**Per hearing type, from the data**")
+        ref = data["ref"]
+        st.dataframe(pd.DataFrame({"Hearing type": [t.replace("_", " ").title() for t in ref.index],
+                                   "Moves the case": (ref.p_sub * 100).round(1).astype(str) + "%",
+                                   "Minutes": ref.minutes.astype(int), "Days to next": ref.gap_days.astype(int),
+                                   "Median hearings per case": ref["Median Hearings per Case"].astype(int),
+                                   "Fails: process": (100 * (1 - ref.p_sub) * ref.share_process).round(0).astype(int).astype(str) + "%",
+                                   "Fails: absence": (100 * (1 - ref.p_sub) * ref.share_absence).round(0).astype(int).astype(str) + "%",
+                                   "Fails: not ready": (100 * (1 - ref.p_sub) * ref.share_unready).round(0).astype(int).astype(str) + "%"}),
+                     width="stretch", hide_index=True, height=38 + 35 * len(ref))

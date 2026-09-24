@@ -65,19 +65,19 @@ footer{font-size:14px;color:var(--muted);border-top:1px solid var(--rule);paddin
 <div class="wrap">
 
 <header style="display:flex;flex-direction:column;gap:14px">
-  <div class="kicker">PUCAR Scheduling Justice · Ready-to-List</div>
+  <div class="kicker">PUCAR Scheduling Justice · Samay</div>
   <h1>What scheduling alone can do for a judge's day</h1>
   <p class="lede">If we drop the pre-filing check and every input from the parties, and keep only what the registry controls when it builds the cause list, how far does that get us? We tested it on the hackathon's own data.</p>
 </header>
 
 <section class="answer" aria-label="The answer">
   <h2 style="font-size:22px">The answer</h2>
-  <p><strong>Scheduling alone nearly doubles disposals.</strong> On the organisers' data, fitting the list to the minutes and setting real next dates takes 60-day disposals from 191 to 343, against 368 with everything on, and cuts wasted listings by 84%. Readiness information (whether summons and warrants are back, counsel's confirmation, the last hearing's note) mainly raises how often a heard case moves forward: 66% with scheduling alone, 82% with everything. Over a year, pre-filing matters for new complaints: 89% get past cognizance, against 4% without it.</p>
+  <p><strong>Scheduling alone nearly doubles disposals.</strong> On the organisers' data, fitting the list to the minutes and setting real next dates takes 60-day disposals from 196 to 329, against 356 with everything on, and cuts wasted listings by 83%. Readiness information (whether summons and warrants are back, counsel's confirmation, the last hearing's note) raises how often a heard case moves forward: 65% with scheduling alone, 79% with everything. Over a year, pre-filing matters for new complaints: 91% get past cognizance, against 32% without it.</p>
   <div class="figs">
-    <div class="fig"><b>+80%</b><span>cases disposed in 60 days, scheduling only</span></div>
-    <div class="fig"><b>−84%</b><span>wasted listings, scheduling only</span></div>
+    <div class="fig"><b>+68%</b><span>cases disposed in 60 days, scheduling only</span></div>
+    <div class="fig"><b>−83%</b><span>wasted listings, scheduling only</span></div>
     <div class="fig"><b>97%</b><span>of listed cases reached, against 44% today</span></div>
-    <div class="fig"><b>4% → 89%</b><span>new complaints past cognizance in a year, adding pre-filing</span></div>
+    <div class="fig"><b>32% → 91%</b><span>new complaints past cognizance in a year, adding pre-filing</span></div>
   </div>
 </section>
 
@@ -86,7 +86,7 @@ footer{font-size:14px;color:var(--muted);border-top:1px solid var(--rule);paddin
   <h2>Four ways to run the same court</h2>
   <p>3,000 cases built from the organisers' 100-case roster with their own generator, 60 working days from 1 October 2026 on their calendar, a 330-minute day (10:30 to 12:30, lunch, 13:30 to 17:00), each run averaged over five random seeds. Hearings succeed or fail at the real rates in their data, for the real reasons.</p>
   <div class="scroll">
-  <svg class="chart" viewBox="0 0 720 230" width="100%" role="img" aria-label="Cases disposed in 60 days: today's rules 191, scheduling only 343, scheduling with fixed slots 358, full system 368">
+  <svg class="chart" viewBox="0 0 720 230" width="100%" role="img" aria-label="Cases disposed in 60 days: today's rules 196, scheduling only 329, scheduling with fixed slots 346, full system 356">
     <!-- scale: 0..400 cases across 420px starting at x=250 -->
     <g>
       <line class="axis" x1="250" y1="12" x2="250" y2="196"/>
@@ -102,20 +102,20 @@ footer{font-size:14px;color:var(--muted);border-top:1px solid var(--rule);paddin
     </g>
     <g>
       <text x="238" y="37" text-anchor="end">Today's rules</text>
-      <rect x="250" y="22" width="200.6" height="24" rx="3" fill="var(--today)"/>
-      <text x="458" y="39">191</text>
+      <rect x="250" y="22" width="205.8" height="24" rx="3" fill="var(--today)"/>
+      <text x="463" y="39">196</text>
 
       <text x="238" y="83" text-anchor="end">Scheduling only</text>
-      <rect x="250" y="68" width="360.2" height="24" rx="3" fill="var(--ours)" opacity=".55"/>
-      <text x="618" y="85">343</text>
+      <rect x="250" y="68" width="345.5" height="24" rx="3" fill="var(--ours)" opacity=".55"/>
+      <text x="603" y="85">329</text>
 
       <text x="238" y="129" text-anchor="end">+ fixed time slots</text>
-      <rect x="250" y="114" width="375.9" height="24" rx="3" fill="var(--ours)" opacity=".75"/>
-      <text x="634" y="131">358</text>
+      <rect x="250" y="114" width="363.3" height="24" rx="3" fill="var(--ours)" opacity=".75"/>
+      <text x="621" y="131">346</text>
 
       <text x="238" y="175" text-anchor="end">+ readiness information</text>
-      <rect x="250" y="160" width="386.4" height="24" rx="3" fill="var(--ours)"/>
-      <text x="644" y="177">368</text>
+      <rect x="250" y="160" width="373.8" height="24" rx="3" fill="var(--ours)"/>
+      <text x="631" y="177">356</text>
     </g>
   </svg>
   </div>
@@ -125,15 +125,15 @@ footer{font-size:14px;color:var(--muted);border-top:1px solid var(--rule);paddin
   <table>
     <thead><tr><th>Handbook metric</th><th class="n">Today's rules</th><th class="n">Scheduling only</th><th class="n">+ fixed slots</th><th class="n">+ readiness</th></tr></thead>
     <tbody>
-      <tr><td>Utilisation: court minutes used</td><td class="n">99%</td><td class="n">100%</td><td class="n">100%</td><td class="n">100%</td></tr>
-      <tr class="hl"><td>Reach: listed cases the court gets to</td><td class="n">44%</td><td class="n">97%</td><td class="n">96%</td><td class="n">97%</td></tr>
-      <tr><td>Substantiveness: reached hearings that move the case</td><td class="n">47%</td><td class="n">66%</td><td class="n">73%</td><td class="n">82%</td></tr>
-      <tr><td>Backlog: 4+ year cases heard at least once</td><td class="n">29%</td><td class="n">50%</td><td class="n">52%</td><td class="n">49%</td></tr>
-      <tr><td>Predictability: days from first listing to a real hearing</td><td class="n">24</td><td class="n">6</td><td class="n">4</td><td class="n">3</td></tr>
+      <tr><td>Utilisation: court minutes used</td><td class="n">94%</td><td class="n">95%</td><td class="n">95%</td><td class="n">95%</td></tr>
+      <tr class="hl"><td>Reach: listed cases the court gets to</td><td class="n">44%</td><td class="n">97%</td><td class="n">97%</td><td class="n">97%</td></tr>
+      <tr><td>Substantiveness: reached hearings that move the case</td><td class="n">48%</td><td class="n">65%</td><td class="n">67%</td><td class="n">79%</td></tr>
+      <tr><td>Backlog: 4+ year cases heard at least once</td><td class="n">32%</td><td class="n">43%</td><td class="n">44%</td><td class="n">47%</td></tr>
+      <tr><td>Predictability: days from first listing to a real hearing</td><td class="n">23</td><td class="n">5</td><td class="n">4</td><td class="n">2</td></tr>
       <tr><td>Next date: average gap, days</td><td class="n">60</td><td class="n">13</td><td class="n">13</td><td class="n">14</td></tr>
-      <tr><td>Hearings that moved a case, a day</td><td class="n">12.5</td><td class="n">13.5</td><td class="n">13.9</td><td class="n">14.6</td></tr>
-      <tr class="hl"><td>Wasted listings over 60 days</td><td class="n">2,851</td><td class="n">464</td><td class="n">360</td><td class="n">220</td></tr>
-      <tr><td>Cases disposed over 60 days</td><td class="n">191</td><td class="n">343</td><td class="n">358</td><td class="n">368</td></tr>
+      <tr><td>Hearings that moved a case, a day</td><td class="n">12.0</td><td class="n">13.1</td><td class="n">13.4</td><td class="n">13.9</td></tr>
+      <tr class="hl"><td>Wasted listings over 60 days</td><td class="n">2,694</td><td class="n">463</td><td class="n">439</td><td class="n">259</td></tr>
+      <tr><td>Cases disposed over 60 days</td><td class="n">196</td><td class="n">329</td><td class="n">346</td><td class="n">356</td></tr>
     </tbody>
   </table>
   </div>
@@ -145,7 +145,7 @@ footer{font-size:14px;color:var(--muted);border-top:1px solid var(--rule);paddin
   <div class="two">
     <div style="display:flex;flex-direction:column;gap:8px">
       <h3>List only what fits</h3>
-      <p>Today 60 cases are listed and the court reaches 44% of them. The rest wait all day and go home. Adding up each case's expected minutes and stopping at 95% of the day brings reach to 97%.</p>
+      <p>Today 57 cases are listed and the court reaches 44% of them. The rest wait all day and go home. Adding up each case's expected minutes and stopping at 95% of the day brings reach to 97%.</p>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <h3>Spend minutes where hearings succeed</h3>
@@ -157,7 +157,7 @@ footer{font-size:14px;color:var(--muted);border-top:1px solid var(--rule);paddin
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <h3>The cost of dropping readiness</h3>
-      <p>Without knowing whether a warrant is back, the scheduler can only judge each type by its average. All warrant-return cases wait longer, including the ones that were ready. Heard cases move forward 73% of the time rather than 82%, and wasted listings are 360 rather than 220.</p>
+      <p>Without knowing whether a warrant is back, the scheduler can only judge each type by its average. All warrant-return cases wait longer, including the ones that were ready. Heard cases move forward 67% of the time rather than 79%, and wasted listings are 439 rather than 259.</p>
     </div>
   </div>
 </section>
@@ -208,32 +208,33 @@ flowchart LR
 
 <section>
   <div class="kicker">The model</div>
-  <h2>Three predictions per case</h2>
+  <h2>Measured rates, read per case</h2>
   <div class="scroll"><table>
-    <thead><tr><th>Prediction</th><th>How</th><th class="n">Accuracy</th></tr></thead>
+    <thead><tr><th>What is estimated</th><th>How</th></tr></thead>
     <tbody>
-      <tr><td>Will both sides appear?</td><td>Logistic regression on advocate and respondent record, confirmation, bundling, clashes, fixed slot</td><td class="n">AUC 0.76</td></tr>
-      <tr><td>Will the hearing move the case?</td><td>Logistic regression on prerequisites done, preparedness, cover sheet for old cases</td><td class="n">AUC 0.87</td></tr>
-      <tr><td>How long will it take?</td><td>Case taxonomy: 10 types, sub-types, stage, paper book, parties</td><td class="n">5.5 min error, against 11.8</td></tr>
+      <tr><td>Will this hearing move the case?</td><td>The organisers' measured rate for its hearing type (plea 90%, warrant 14%), multiplied 2.5 times when the last order signals a risk ("Await warrant", "Absent: Accused", "not ready"), with each type's average held at the measured rate</td></tr>
+      <tr><td>If not, why?</td><td>The real mix of failure reasons for that type: process not back (persists until the return), a party absent, not ready, court, unclear</td></tr>
+      <tr><td>How long will it take?</td><td>The organisers' estimated minutes per type, with spread; an adjournment still costs 2 minutes</td></tr>
+      <tr><td>How does each lever change it?</td><td>Stated assumptions in config: process status known 90%, confirmation removes half of "not ready", fixed slots remove a third of absences. Each is switched off in turn to show its worth</td></tr>
     </tbody>
   </table></div>
-  <p>On the organisers' data the model is simpler and fully grounded in their files. Each hearing type succeeds at its real rate (arguments 13%, plea 90%). Failures split by the real reasons: process not back, someone absent, not ready, court issues. Today's rules on this model come close to the handbook's day without any tuning: 60 listed, 26 reached, 12.5 substantive, against the handbook's 60, 20 and 10.</p>
+  <p>Today's rules on this model come close to the handbook's day without any tuning: 57 listed, 25 reached, 12 moving the case, against the handbook's 60, 20 and 10.</p>
 </section>
 
 <section>
   <div class="kicker">Pre-filing</div>
-  <h2>Where the pre-filing check matters, and where it does not</h2>
+  <h2>The registry's scrutiny, done at e-filing</h2>
   <div class="two">
     <div style="display:flex;flex-direction:column;gap:8px">
-      <h3>High Court filings</h3>
-      <p>A petition with an unsigned vakalatnama or a short court fee fails in court. On our synthetic High Court (3 courts, 5 days), switching the check off cut effective hearings from 219 to 187 (−15%), whatever the solver. The check is never a gate: a defective filing is still accepted and only moves down the queue.</p>
+      <h3>What is checked</h3>
+      <p>For a cheque-dishonour complaint: cheque presented within 3 months, demand notice within 30 days of the return memo, 15 days for the drawer to pay, complaint within a month after that; the documents; the accused's address, phone and email so summons can go electronically; and jurisdiction, with the s.225 enquiry flagged when the accused lives outside the court's area. Nothing is refused: the result says what to cure.</p>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <h3>The organisers' trial court data</h3>
-      <p>These are cheque-dishonour complaints, and the registry's scrutiny matters most on limitation: 96 of the 100 cases went through delay-condonation hearings (3.4 hearings each, 29% moving the case). Over a year with new complaints arriving, computing limitation at e-filing and hearing condonation with admission takes new complaints past cognizance from 4% to 89%, and halves delay-condonation listings (175 to 85).</p>
+      <h3>What it changes</h3>
+      <p>In the organisers' data, 96 of 100 cases went through delay-condonation hearings (3.4 each, 29% moving the case). Computing limitation at filing and hearing condonation with admission removes that track for new complaints, and complete summons details attack the largest failure pool: a summons or warrant not back, behind 196 of 293 failed warrant hearings.</p>
     </div>
   </div>
-  <p>The practical plan: ship scheduling first, since it needs only the registry's own data and gives most of the gain. Then add readiness as the court's systems expose process status, starting with warrant and summons returns.</p>
+  <p>The practical plan: ship scheduling first, since it needs only the registry's own data and gives most of the gain. Then add readiness as the court's systems expose process status, and move the registry's scrutiny into the e-filing form.</p>
 </section>
 
 <section>
@@ -242,18 +243,18 @@ flowchart LR
   <div class="scroll"><table>
     <thead><tr><th>Layer</th><th>Choice</th><th>Why</th></tr></thead>
     <tbody>
-      <tr><td>Optimisation</td><td>Google OR-Tools: CP-SAT, with SCIP for MILP</td><td>CP-SAT sets a 60-case day optimally in under 0.1 s. A MILP was still 5% short after 30 s</td></tr>
-      <tr><td>Prediction</td><td>scikit-learn logistic regression</td><td>Trains in under a second, and a judge can read the weights</td></tr>
-      <tr><td>Simulation</td><td>Python and NumPy agents</td><td>Advocates decide to confirm, prepare and appear</td></tr>
-      <tr><td>Data</td><td>SQLite with a one-file adapter; YAML config</td><td>Their CSVs in, no other change needed. Nothing is hard-coded</td></tr>
-      <tr><td>Documents</td><td>PyMuPDF rules engine</td><td>Pre-filing check with page-level defects</td></tr>
-      <tr><td>Interface</td><td>Streamlit and Plotly</td><td>Judge, court master, calendar, simulator, accuracy and audit screens</td></tr>
+      <tr><td>Optimisation</td><td>Google OR-Tools CP-SAT</td><td>Packs each sitting to 95% of its minutes by value per minute; solves a day in about a second</td></tr>
+      <tr><td>Model</td><td>Calibrated rates per hearing type, per-case signals from the last order</td><td>The organisers' measured rates; no machine learning trained on 100 cases</td></tr>
+      <tr><td>Simulation</td><td>Python and NumPy</td><td>Parties respond to fixed slots, clustering, confirmation and short notice</td></tr>
+      <tr><td>Data</td><td>The organisers' six CSVs, or an uploaded CSV or Excel docket; YAML config</td><td>Nothing hard-coded: day structure, flow, priorities, levers, leave, calendar, registry rules</td></tr>
+      <tr><td>Registry</td><td>Statutory timeline computed from dates</td><td>Pre-filing scrutiny of a s.138 complaint at e-filing</td></tr>
+      <tr><td>Interface</td><td>Streamlit and Plotly</td><td>Today's list, Docket, Calendar, Results; upload flow; data and lever pages</td></tr>
     </tbody>
   </table></div>
 </section>
 
 <footer>
-  Numbers come from simulations on the organisers' anonymised data (scripts/run_pucar.py) and on our synthetic High Court (scripts/benchmark.py). Assumed lever strengths are stated in config/pucar.yaml. Code: <a href="https://github.com/Pranav0509-stack/foss-scheduling-hackathon/tree/team-ready-to-list/submissions/ready-to-list">submissions/ready-to-list</a>.
+  Assumed lever strengths are stated in config/pucar.yaml. Numbers are simulations on the organisers' anonymised data. Code: <a href="https://github.com/Pranav0509-stack/foss-scheduling-hackathon/tree/team-ready-to-list/submissions/ready-to-list">submissions/ready-to-list</a>.
 </footer>
 
 </div>

@@ -1,4 +1,4 @@
-<title>Ready-to-List Pitch</title>
+<title>Samay Pitch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap">
@@ -68,10 +68,10 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
 
 <!-- 1 -->
 <section class="slide" aria-label="Title">
-  <div class="eyebrow">PUCAR Scheduling Justice · FOSS United Week</div>
-  <h1>Ready-to-List</h1>
+  <div class="eyebrow">PUCAR Scheduling Justice · FOSS United Week · Samay</div>
+  <h1>Samay</h1>
   <p class="quote">We never say no to a litigant. We stop listing hearings that were never going to happen.</p>
-  <p class="muted" style="margin-top:auto">A scheduling layer for a judge's day, week and year, built on the hackathon's own data. Team ready-to-list.</p>
+  <p class="muted" style="margin-top:auto">Court scheduling for one judge's docket, built only on the hackathon's own data. Team ready-to-list.</p>
   <div class="num">1</div>
 </section>
 
@@ -160,8 +160,8 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     </table>
     <div style="display:flex;flex-direction:column;gap:14px">
       <p>Nothing is refused. A late complaint files its condonation petition with the complaint and it is heard at admission, not in a separate track.</p>
-      <div class="stat"><span>new complaints past cognizance within a year</span><b>4% → 89%</b></div>
-      <div class="stat"><span>delay-condonation listings in a year</span><b>175 → 85</b></div>
+      <div class="stat"><span>new complaints past cognizance within a year</span><b>3% → 91%</b></div>
+      <div class="stat"><span>delay-condonation listings in a year</span><b>407 → 20</b></div>
     </div>
   </div>
   <div class="num">5</div>
@@ -170,28 +170,26 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
 <!-- 6 -->
 <section class="slide" aria-label="Prioritisation and optimisation">
   <div class="eyebrow">Prioritisation and optimisation</div>
-  <h2>Protected rules first, then value per minute</h2>
+  <h2>A score for every case, then value per minute</h2>
   <div class="split">
+    <table aria-label="Priority score factors">
+      <thead><tr><th>Factor</th><th class="n">Points</th><th>From</th></tr></thead>
+      <tbody>
+        <tr><td>Case age</td><td class="n">35</td><td>Filing date; full at 8 years for this roster</td></tr>
+        <tr><td>Hearing readiness</td><td class="n">25</td><td>The type's real progress rate, less up to 30% for absent required people</td></tr>
+        <tr><td>Disposal proximity</td><td class="n">15</td><td>Position in the 11 stages</td></tr>
+        <tr><td>Hearing churn</td><td class="n">15</td><td>Hearings held against the median expected</td></tr>
+        <tr><td>Court-set urgency</td><td class="n">10</td><td>"Last chance", "for judgment" in the last order</td></tr>
+      </tbody>
+    </table>
     <ul>
-      <li>Bail and liberty matters within 2 working days <span class="tag">locked</span></li>
-      <li>A quarter of each day for cases over 4 years old <span class="tag">locked</span></li>
-      <li>Nothing listed past 95% of the day's minutes</li>
-      <li>The rest by priority × chance of moving forward, per minute</li>
-      <li>Each advocate's matters, and similar case types, grouped</li>
+      <li>Every case scored on its own details, 0 to 100. Same score in a roster of 100 or 3,000.</li>
+      <li>Bail always listed <span class="tag">locked</span>; a quarter of each sitting for 4+ year cases <span class="tag">locked</span>; age weight never below 20 <span class="tag">locked</span>.</li>
+      <li>CP-SAT packs each sitting to 95% of its minutes by score x chance of moving forward, per minute.</li>
+      <li>1st, 2nd and deferred listings treated differently; a deferred case is held until its last failure is cured.</li>
     </ul>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <h3>Why CP-SAT</h3>
-      <table aria-label="Solver comparison">
-        <thead><tr><th>Setting times for one day</th><th class="n">CP-SAT</th><th class="n">MILP</th></tr></thead>
-        <tbody>
-          <tr><td>30 hearings</td><td class="n win">optimal, &lt;0.1 s</td><td class="n">2.2% short at 30 s</td></tr>
-          <tr><td>60 hearings</td><td class="n win">optimal, &lt;0.1 s</td><td class="n">5.3% short at 30 s</td></tr>
-          <tr><td>108, three courts</td><td class="n win">0.003% short</td><td class="n">11% short</td></tr>
-        </tbody>
-      </table>
-      <p class="muted">Choosing the day: CP-SAT and MILP tie; both beat a simple priority fill by 29-42%.</p>
-    </div>
   </div>
+  <p class="muted">Worked example from the data: ST/1261/2017, 9.2 years old, reserved for judgment, both advocates present, 43 hearings against 26 expected: 91.3.</p>
   <div class="num">6</div>
 </section>
 
@@ -200,27 +198,27 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
   <div class="eyebrow">Results on the organisers' data · 3,000 cases · 60 working days</div>
   <h2>The same court, planned differently</h2>
   <table aria-label="Handbook metrics">
-    <thead><tr><th>Handbook metric</th><th class="n">Today's rules</th><th class="n">Ready-to-List</th></tr></thead>
+    <thead><tr><th>Handbook metric</th><th class="n">Today's rules</th><th class="n">Samay</th></tr></thead>
     <tbody>
       <tr><td>Reach: listed cases the court gets to</td><td class="n">44%</td><td class="n win">97%</td></tr>
-      <tr><td>Substantiveness: heard cases that move forward</td><td class="n">47%</td><td class="n win">82%</td></tr>
-      <tr><td>Backlog: 4+ year cases heard at least once</td><td class="n">29%</td><td class="n win">49%</td></tr>
-      <tr><td>Predictability: days from listing to a real hearing</td><td class="n">24</td><td class="n win">3</td></tr>
+      <tr><td>Substantiveness: heard cases that move forward</td><td class="n">48%</td><td class="n win">79%</td></tr>
+      <tr><td>Backlog: 4+ year cases heard at least once</td><td class="n">32%</td><td class="n win">47%</td></tr>
+      <tr><td>Predictability: days from listing to a real hearing</td><td class="n">23</td><td class="n win">2</td></tr>
       <tr><td>Next date: average gap, days</td><td class="n">60</td><td class="n win">14</td></tr>
-      <tr><td>Utilisation: court minutes used</td><td class="n">99.3%</td><td class="n">99.6%</td></tr>
-      <tr><td>Cases disposed</td><td class="n">191</td><td class="n win">368</td></tr>
-      <tr><td>Wasted listings (trips for nothing)</td><td class="n">2,851</td><td class="n win">220</td></tr>
+      <tr><td>Utilisation: court minutes used</td><td class="n">94%</td><td class="n">95%</td></tr>
+      <tr><td>Cases disposed</td><td class="n">196</td><td class="n win">356</td></tr>
+      <tr><td>Wasted listings (trips for nothing)</td><td class="n">2,694</td><td class="n win">259</td></tr>
     </tbody>
   </table>
-  <p class="muted">Today's rules calibrated only to the organisers' rates reproduce the handbook's day: 60 listed, 26 reached, 12.5 substantive. Averaged over five runs.</p>
+  <p class="muted">Today's rules calibrated only to the organisers' rates come close to the handbook's day: 57 listed, 25 reached, 12 substantive. Three judge-leave days fall in the quarter. Averaged over five runs.</p>
   <div class="num">7</div>
 </section>
 
 <!-- 8 -->
 <section class="slide" aria-label="Where the gain comes from">
   <div class="eyebrow">Where the gain comes from</div>
-  <h2>Scheduling alone nearly doubles disposals</h2>
-  <svg class="chart" viewBox="0 0 900 250" width="100%" role="img" aria-label="Cases disposed in 60 days: today 191, scheduling only 343, with fixed slots 358, everything 368">
+  <h2>Scheduling alone delivers most of the gain</h2>
+  <svg class="chart" viewBox="0 0 900 250" width="100%" role="img" aria-label="Cases disposed in 60 days: today 196, scheduling only 329, with fixed slots 346, everything 356">
     <line class="grid" x1="300" y1="10" x2="300" y2="215"/>
     <line class="grid" x1="440" y1="10" x2="440" y2="215" stroke-dasharray="2 5"/>
     <line class="grid" x1="580" y1="10" x2="580" y2="215" stroke-dasharray="2 5"/>
@@ -232,15 +230,15 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     <text class="lbl" x="720" y="238" text-anchor="middle" font-size="14">300</text>
     <text class="lbl" x="860" y="238" text-anchor="middle" font-size="14">400</text>
     <text x="286" y="42" text-anchor="end" font-size="17">Today's rules</text>
-    <rect x="300" y="22" width="267.4" height="30" rx="3" fill="var(--today)"/><text x="576" y="43" font-size="17">191</text>
+    <rect x="300" y="22" width="274.4" height="30" rx="3" fill="var(--today)"/><text x="583" y="43" font-size="17">196</text>
     <text x="286" y="92" text-anchor="end" font-size="17">Scheduling only</text>
-    <rect x="300" y="72" width="480.2" height="30" rx="3" fill="var(--ours)" opacity=".55"/><text x="789" y="93" font-size="17">343</text>
+    <rect x="300" y="72" width="460.6" height="30" rx="3" fill="var(--ours)" opacity=".55"/><text x="769" y="93" font-size="17">329</text>
     <text x="286" y="142" text-anchor="end" font-size="17">+ fixed time slots</text>
-    <rect x="300" y="122" width="501.2" height="30" rx="3" fill="var(--ours)" opacity=".75"/><text x="810" y="143" font-size="17">358</text>
+    <rect x="300" y="122" width="484.4" height="30" rx="3" fill="var(--ours)" opacity=".75"/><text x="793" y="143" font-size="17">346</text>
     <text x="286" y="192" text-anchor="end" font-size="17">+ readiness information</text>
-    <rect x="300" y="172" width="515.2" height="30" rx="3" fill="var(--ours)"/><text x="824" y="193" font-size="17">368</text>
+    <rect x="300" y="172" width="498.4" height="30" rx="3" fill="var(--ours)"/><text x="807" y="193" font-size="17">356</text>
   </svg>
-  <p>Fitting the list to the minutes and setting real next dates needs only the registry's own data. Readiness (process back, counsel confirmed, the last note) raises how often a heard case moves forward from 66% to 82%.</p>
+  <p>Fitting the list to the minutes and setting real next dates needs only the registry's own data. Readiness (process back, counsel confirmed, the last note) raises how often a heard case moves forward from 65% to 79% and cuts wasted listings from 463 to 259.</p>
   <div class="num">8</div>
 </section>
 
@@ -251,10 +249,10 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
   <table aria-label="Year results">
     <thead><tr><th></th><th class="n">Today's rules</th><th class="n">Scheduling only</th><th class="n">+ pre-filing</th><th class="n">Everything</th></tr></thead>
     <tbody>
-      <tr><td>Cases disposed</td><td class="n">524</td><td class="n">639</td><td class="n">639</td><td class="n win">864</td></tr>
-      <tr><td>New complaints past cognizance</td><td class="n">3%</td><td class="n">4%</td><td class="n win">89%</td><td class="n">79%</td></tr>
-      <tr><td>Delay-condonation listings</td><td class="n">455</td><td class="n">175</td><td class="n win">85</td><td class="n win">85</td></tr>
-      <tr><td>Wasted listings</td><td class="n">11,851</td><td class="n">3,216</td><td class="n">3,116</td><td class="n win">1,597</td></tr>
+      <tr><td>Cases disposed</td><td class="n">541</td><td class="n">643</td><td class="n">644</td><td class="n win">847</td></tr>
+      <tr><td>New complaints past cognizance</td><td class="n">3%</td><td class="n">32%</td><td class="n win">91%</td><td class="n win">92%</td></tr>
+      <tr><td>Delay-condonation listings</td><td class="n">407</td><td class="n">290</td><td class="n win">20</td><td class="n win">9</td></tr>
+      <tr><td>Wasted listings</td><td class="n">11,708</td><td class="n">3,913</td><td class="n">3,939</td><td class="n win">1,958</td></tr>
     </tbody>
   </table>
   <p>Plans run by day, week, month and year from the same engine. Each case's journey is traceable: every listing, the time, and what happened.</p>
@@ -264,24 +262,24 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
 <!-- 10 -->
 <section class="slide" aria-label="Model and complexity">
   <div class="eyebrow">The model · complexity level L3</div>
-  <h2>People who decide, not fixed rates</h2>
+  <h2>Measured rates, read per case, solved by CP-SAT</h2>
   <div class="split">
     <ul>
-      <li><b>L1:</b> fixed rules, CP-SAT packing, a timeline of the day.</li>
-      <li><b>L2:</b> real success rates and failure reasons per hearing type, lognormal durations, a prediction step, an override impact meter.</li>
-      <li><b>L3:</b> advocate agents decide to confirm, prepare and appear. They respond to fixed slots, bundling and cost warnings, and their choices feed the next plan.</li>
+      <li><b>Per hearing type:</b> the real chance a hearing moves the case (plea 90%, warrant 14%), and the real mix of reasons it fails, from the organisers' data.</li>
+      <li><b>Per case:</b> the last order is read. "Await warrant", "Absent: Accused" or "not ready" multiplies that risk 2.5 times, with each type's average held at its measured rate.</li>
+      <li><b>Per listing:</b> 1st, 2nd and deferred listings of the same purpose are treated differently; a deferred case is held until its last failure is cured.</li>
+      <li><b>No machine learning trained on 100 cases.</b> As the court records outcomes, the same rates are recomputed nightly.</li>
     </ul>
-    <table aria-label="Model accuracy">
-      <thead><tr><th>Prediction</th><th class="n">Accuracy</th></tr></thead>
+    <table aria-label="Complexity levels">
+      <thead><tr><th>Level</th><th>What proves it</th></tr></thead>
       <tbody>
-        <tr><td>Will both sides appear?</td><td class="n">AUC 0.76</td></tr>
-        <tr><td>Will the hearing move the case?</td><td class="n">AUC 0.87</td></tr>
-        <tr><td>How long will it take?</td><td class="n">5.5 min error vs 11.8</td></tr>
-        <tr><td>Calibration</td><td class="n">within 3-4%</td></tr>
+        <tr><td>L1 fixed rules</td><td>Bail first, ageing quota, readiness gate, CP-SAT packing</td></tr>
+        <tr><td>L2 realistic data</td><td>Real success and failure rates per type, lognormal minutes, per-lever ablation</td></tr>
+        <tr><td>L3 behaviour</td><td>Parties respond to fixed slots, clustering, confirmation and short notice; outcomes feed the next plan</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="muted">Lever strengths not in the data (for example, how often process status is known) are stated assumptions in config, and each lever is switched off in turn to show what it is worth.</p>
+  <p class="muted">Lever strengths not in the data are stated assumptions in config, each switched off in turn to show its worth.</p>
   <div class="num">10</div>
 </section>
 
@@ -300,12 +298,12 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
 
 <!-- 12 -->
 <section class="slide" aria-label="Close">
-  <div class="eyebrow">Ready-to-List</div>
+  <div class="eyebrow">Samay</div>
   <p class="quote">A judge's time planned like a surgeon's: every hearing on the list is one that can happen.</p>
   <div class="row" style="margin-top:auto">
     <div class="stat"><span>listed cases reached</span><b>44% → 97%</b></div>
-    <div class="stat"><span>cases disposed in 60 days</span><b>191 → 368</b></div>
-    <div class="stat"><span>wasted listings</span><b>−92%</b></div>
+    <div class="stat"><span>cases disposed in 60 days</span><b>196 → 356</b></div>
+    <div class="stat"><span>wasted listings</span><b>−90%</b></div>
     <div class="stat"><span>next-date gap</span><b>60 → 14 days</b></div>
   </div>
   <div class="num">12</div>

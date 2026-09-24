@@ -15,7 +15,11 @@ OUTCOME = {"substantive": "Moved forward", "absence": "A party absent", "unready
 BLUE, ORANGE = "#1E3A8A", "#B45309"
 
 CSS = """
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap">
 <style>
+.samay-logo {font-family: 'Fraunces', 'Noto Serif', Georgia, serif; font-size: 40px; font-weight: 700; letter-spacing: -0.02em;
+             color: #1E3A8A; line-height: 1; margin: 0 0 4px 0;}
+.samay-sub {font-size: 13px; color: #475569; margin-bottom: 14px;}
 section.stMain > div.block-container {padding-top: 1.2rem; padding-bottom: 0.5rem; height: 100vh; overflow: hidden;}
 section.stMain {overflow: hidden;}
 div[data-testid="stSidebarHeader"] {display: none;}
@@ -39,7 +43,8 @@ def user():
 def sidebar():
     u = user()
     with st.sidebar:
-        st.markdown("# Samay")
+        st.markdown('<div class="samay-logo">Samay</div><div class="samay-sub">Court scheduling</div>',
+                    unsafe_allow_html=True)
         if u:
             st.markdown(f"**{u['name']}**  \n{u['role']}")
             if st.button("Sign out", width="stretch"):
