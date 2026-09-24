@@ -32,7 +32,9 @@ def run(cases=3000, days=60, capacity=None, start=date(2026, 10, 1), seed=7, dat
         arms[f"Without {lever.replace('_', ' ')}"] = dict(rtl=True, levers=[x for x in E.LEVERS if x != lever])
     arms["Readiness levers only (no optimiser, no smart date)"] = dict(
         rtl=True, levers=["process_tracking", "intent_check", "fixed_slot_cluster", "text_signals"])
-    arms["Optimiser only (no readiness levers)"] = dict(rtl=True, levers=["optimiser", "smart_next_date"])
+    arms["Scheduling only (no pre-filing, no party input)"] = dict(rtl=True, levers=["optimiser", "smart_next_date"])
+    arms["Scheduling only + fixed slots and clustering"] = dict(
+        rtl=True, levers=["optimiser", "smart_next_date", "fixed_slot_cluster"])
     rows, daily, schedule = [], [], None
     for name, kw in arms.items():
         runs = []
