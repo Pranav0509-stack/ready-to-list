@@ -472,9 +472,45 @@ def _metrics(daily, cases, c, gaps, capacity, days):
     }
 
 
+REQUIRED_COLUMNS = {"case_number": "the case's number", "filing_date": "date the case was filed (YYYY-MM-DD)",
+                    "advocate_id": "the advocate's ID, used to group their matters",
+                    "current_stage": "the stage the case is at", "purpose_of_next_hearing": "what the next hearing is for"}
+
+
+def validate_roster(df: pd.DataFrame) -> list:
+    """Plain-language problems with an uploaded docket; empty list means it can be planned."""
+    problems = [f"Missing column `{c}`: {why}." for c, why in REQUIRED_COLUMNS.items() if c not in df.columns]
+    if problems:
+        return problems
+    bad_dates = pd.to_datetime(df.filing_date, errors="coerce").isna().sum()
+    if bad_dates:
+        problems.append(f"{bad_dates} rows have a filing_date that is not a date.")
+    known = set(CFG["priority"])
+    unknown = sorted(set(df.purpose_of_next_hearing.map(norm)) - known)
+    if unknown:
+        problems.append("Unknown hearing purposes: " + ", ".join(unknown) + ". Known: " + ", ".join(sorted(known)) + ".")
+    return problems
+
+
+def with_roster(data, roster: pd.DataFrame):
+    """The organisers' reference tables with a different docket (an uploaded file)."""
+    r = roster.copy()
+    if "last_hearing_summary" not in r:
+        r["last_hearing_summary"] = ""
+    if "total_hearings_held" not in r:
+        cols = [c for c in r.columns if c.startswith("hearings_")]
+        r["total_hearings_held"] = r[cols].sum(axis=1) if cols else 0
+    if "party_id" not in r:
+        r["party_id"] = [f"PARTY-{i:05d}" for i in range(len(r))]
+    r["filing_date"] = pd.to_datetime(r.filing_date).dt.strftime("%Y-%m-%d")
+    return {**data, "roster": r}
+
+
 def judge_docket(data, total=3000, seed=42):
     """One judge's docket: the 100 real sample cases plus generated cases (their generator)
     up to `total`. Generated case numbers carry a G- prefix so the real 100 stay traceable."""
+    if len(data["roster"]) >= total:
+        return {**data, "roster": data["roster"].assign(sample=True)}
     extra = scale_roster(data, total - len(data["roster"]), seed)["roster"]
     extra["case_number"] = "G-" + extra.case_number
     real = data["roster"].assign(sample=True)
@@ -489,6 +525,9 @@ def scale_roster(data, n=3000, seed=42):
     spec = importlib.util.spec_from_file_location("gen", path)
     gen = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(gen)
-    out = gen.generate(n, seed, str(data["dir"] / "roster_sample_100.csv"))
+    import tempfile
+    with tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False) as f:  # generate from whatever docket is loaded
+        data["roster"].drop(columns=["sample"], errors="ignore").to_csv(f.name, index=False)
+    out = gen.generate(n, seed, f.name)
     out["filing_date"] = out.filing_date.dt.strftime("%Y-%m-%d")
     return {**data, "roster": out}

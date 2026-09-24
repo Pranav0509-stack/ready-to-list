@@ -13,10 +13,11 @@ def page(path, title, icon, **kw):
 
 
 sections = {
-    "Demo": [page("pages/one_judge.py", "Justice Sehgal's docket", ":material/account_balance:"),
+    "Demo": [page("pages/start.py", "Start here: plan a docket", ":material/upload:", default=True),
+             page("pages/one_judge.py", "Justice Sehgal's docket", ":material/account_balance:"),
              page("pages/walkthrough.py", "Full flow, one case", ":material/route:")],
     "Court": [
-        page("pages/judge.py", "Judge dashboard", ":material/gavel:", default=True),
+        page("pages/judge.py", "Judge dashboard", ":material/gavel:"),
         page("pages/court_master.py", "Court master", ":material/fact_check:"),
         page("pages/calendar.py", "Court calendar", ":material/calendar_month:"),
         page("pages/filing.py", "Pre-filing check", ":material/upload_file:"),
