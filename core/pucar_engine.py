@@ -31,7 +31,8 @@ from core.config import ROOT, to_hhmm, to_min
 
 CFG = yaml.safe_load((ROOT / "config" / "pucar.yaml").read_text())
 DAY = CFG["court_day"]
-LEVERS = ["process_tracking", "intent_check", "fixed_slot_cluster", "text_signals", "optimiser", "smart_next_date"]
+LEVERS = ["prefiling", "process_tracking", "intent_check", "fixed_slot_cluster", "text_signals", "optimiser",
+          "smart_next_date"]
 
 
 def default_data_dir() -> Path:
@@ -103,15 +104,30 @@ def failure_rates(ref, c):
         base = (q * ref[f"share_{g}"] / tot).reindex(c.purpose).values
         sig = c.get(f"sig_{g}")
         if sig is not None:
-            s = sig.groupby(c.purpose).transform("mean").values
-            k = np.clip((1 - s * boost) / np.clip(1 - s, 1e-9, None), 0.2, 1.0)
-            base = base * np.where(sig, boost, k)
+            base = base * _signal_multiplier(sig, c.purpose, boost)
         out[g] = np.clip(base, 0, 0.95)
     pend = f_proc.reindex(c.purpose).values
-    s = c.sig_process.groupby(c.purpose).transform("mean").values
-    k = np.clip((1 - s * boost) / np.clip(1 - s, 1e-9, None), 0.2, 1.0)
-    out["process"] = np.clip(pend * np.where(c.sig_process, boost, k), 0, 0.95)
+    out["process"] = np.clip(pend * _signal_multiplier(c.sig_process, c.purpose, boost), 0, 0.95)
     return out
+
+
+def _type_rates(ref):
+    """Failure probabilities for a case with no history yet: its type's averages."""
+    out = {}
+    for t, f in ref.iterrows():
+        q = max(0.0, 1 - f.p_sub / max(0.05, 1 - (1 - f.p_sub) * f.share_process))
+        tot = max(1e-9, 1 - f.share_process)
+        out[t] = {"p_absence": q * f.share_absence / tot, "p_unready": q * f.share_unready / tot,
+                  "p_court": q * f.share_court / tot, "p_unclear": q * f.share_unclear / tot}
+    return out
+
+
+def _signal_multiplier(sig, purpose, boost):
+    """Cases whose last note signals a risk get `boost` times the risk of those that do not,
+    with each hearing type's average held at the real rate: s*m_sig + (1-s)*m_none = 1."""
+    s = sig.groupby(purpose).transform("mean").values
+    m_none = 1 / (s * boost + 1 - s)
+    return np.where(sig, boost * m_none, m_none)
 
 
 @dataclass
@@ -133,14 +149,29 @@ class Case:
     reached: int = 0
     heard: int = 0
     disposed: bool = False
+    disposed_day: int = -1
+    late: bool = False        # complaint filed after the limitation period
+    new: bool = False
+
+
+def _prefiling_process_scale(purpose):
+    pf = CFG["levers"]["prefiling"]
+    if purpose in pf["stages"]:
+        return 1 - pf["process_removed"]
+    if purpose in pf["summons_stages"]:
+        return 1 - pf["summons_process_removed"]
+    return 1.0
 
 
 def _advance(purpose, stage, flow):
-    """Next purpose after a substantive hearing: side purposes return to the stage's flow."""
-    cur = purpose if purpose in flow else (stage if stage in flow else "APPEARANCE")
+    """Next purpose after a substantive hearing. Side hearings return where config says
+    (delay condonation -> cognizance, warrant executed -> plea, reports -> the current stage)."""
     if purpose not in flow:
-        return cur
-    i = flow.index(cur)
+        back = CFG["side_return"].get(purpose, "stage")
+        if back == "stage":
+            return stage if stage in flow else "APPEARANCE"
+        return back
+    i = flow.index(purpose)
     return flow[i + 1] if i + 1 < len(flow) else None  # None = judgment pronounced, disposed
 
 
@@ -150,7 +181,7 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
     levers = set(LEVERS if levers is None else levers) if rtl else set()
     rng = np.random.default_rng(seed)
     ref, flow = data["ref"], CFG["stage_flow"]
-    wd = [d for d in data["workdays"] if d >= start][:days]
+    wd = working_days_from(data, start, days)
     days = len(wd)
     c = cases_frame(data, start)
     fr = failure_rates(ref, c)
@@ -167,13 +198,18 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
     cases = []
     for n, i in enumerate(order):
         r = c.iloc[i]
-        pending = rng.random() < fr["process"][i]
+        p_pend = fr["process"][i]
+        if "prefiling" in levers:
+            p_pend *= _prefiling_process_scale(r.purpose)
+        pending = rng.random() < p_pend
         cases.append(Case(r.id, r.purpose, r.stage, r.advocate, r.age_years * 365.25, bool(r.old),
-                          due=n * days // len(c), pending_until=int(rng.integers(3, 25)) if pending else -1,
+                          # every case already has a next date inside today's 60-day cycle
+                          due=n * min(days, CFG["next_date"]["initial_spread_working_days"]) // len(c),
+                          pending_until=int(rng.integers(3, 25)) if pending else -1,
                           p_absence=fr["absence"][i], p_unready=fr["unready"][i], p_court=fr["court"][i],
                           p_unclear=fr["unclear"][i]))
     rng = np.random.default_rng(seed + 1)   # outcome draws shared across arms
-    rows, schedule, next_gaps = [], [], []
+    rows, schedule, next_gaps, journey = [], [], [], []
     minutes_ref = ref.minutes.to_dict()
 
     def p_sub_plan(k: Case, d):
@@ -184,18 +220,31 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
             pa = pu = None
         f = ref.loc[k.purpose]
         base_other = 1 - f.p_sub / max(0.05, 1 - (1 - f.p_sub) * f.share_process)
-        if pa is None:
-            other = base_other
+        if pa is None:  # type averages only
+            tot = max(1e-9, 1 - f.share_process)
+            pa, pu = base_other * f.share_absence / tot, base_other * f.share_unready / tot
+            rest = base_other - pa - pu
         else:
-            other = min(0.95, pa + pu + k.p_court + k.p_unclear)
+            rest = k.p_court + k.p_unclear
+        fx = CFG["levers"]
         if "fixed_slot_cluster" in levers:
-            other -= (pa if pa is not None else base_other * f.share_absence) * CFG["levers"]["fixed_slot_cluster"]["removed"]
+            pa *= 1 - fx["fixed_slot_cluster"]["removed"]
         if "intent_check" in levers:
-            other -= (pu if pu is not None else base_other * f.share_unready) * CFG["levers"]["intent_check"]["removed"]
+            pu *= 1 - fx["intent_check"]["removed"]
+        if "prefiling" in levers and k.purpose in fx["prefiling"]["stages"]:
+            pu *= 1 - fx["prefiling"]["unready_removed"]
         pend = 0.0 if "process_tracking" in levers else (1 - f.p_sub) * f.share_process
-        return max(0.02, (1 - pend) * (1 - max(0.0, other)))
+        return max(0.02, (1 - pend) * (1 - min(0.98, pa + pu + rest)))
 
+    nf = CFG["new_filings"]
+    type_avg = _type_rates(ref)
+    advs = c.advocate.unique()
     for d in range(days):
+        for i in range(rng.poisson(nf["per_day"])):  # new complaints arrive every working day
+            pr = type_avg["ADMISSION"]
+            cases.append(Case(f"NEW-{d:03d}-{i}", "ADMISSION", "ADMISSION", str(rng.choice(advs)), 0.0, False,
+                              due=d + int(rng.integers(3, 10)), pending_until=-1, late=rng.random() < nf["late_share"],
+                              new=True, **pr))
         live = [k for k in cases if not k.disposed and k.due <= d]
         # Process tracking: a case whose summons/warrant has not come back is not listed
         if "process_tracking" in levers:
@@ -253,6 +302,8 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
                 start_min = t0 + used[bname] - change
                 if outcome == "substantive":
                     m = minutes_ref[k.purpose] * rng.lognormal(0, DAY["duration_sigma"])
+                    if k.purpose == "ADMISSION" and k.late and "prefiling" in levers:
+                        m += nf["admission_extra_minutes_with_prefiling"]
                     used[bname] += m
                     mins_heard += m
                     heard += 1
@@ -260,19 +311,31 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
                     if k.first_heard < 0:
                         k.first_heard = d
                     nxt = _advance(k.purpose, k.stage, CFG["stage_flow"])
+                    if k.purpose == "ADMISSION" and k.late and "prefiling" not in levers:
+                        nxt = "DELAY_CONDONATION_HEARING"  # limitation found late: a separate hearing track
                     if nxt is None:
                         k.disposed = True
+                        k.disposed_day = d
                     else:
                         if k.purpose in CFG["stage_flow"]:
                             k.stage = k.purpose
                         k.purpose = nxt
-                        if rng.random() < (1 - ref.loc[nxt].p_sub) * ref.loc[nxt].share_process:
-                            k.pending_until = d + int(rng.integers(3, 25))  # the next step needs process again
+                        p_pend = (1 - ref.loc[nxt].p_sub) * ref.loc[nxt].share_process
+                        if "prefiling" in levers:
+                            p_pend *= _prefiling_process_scale(nxt)
+                        if rng.random() < p_pend:  # the next step needs process again
+                            lo, hi = (CFG["levers"]["prefiling"]["summons_return_days"]
+                                      if "prefiling" in levers and nxt in CFG["levers"]["prefiling"]["summons_stages"]
+                                      else (3, 25))
+                            k.pending_until = d + int(rng.integers(lo, hi))
                         _reschedule(k, d, "substantive", levers, rng, next_gaps, ref=ref)
                 else:
                     used[bname] += DAY["adjourned_minutes"]
                     mins_heard += DAY["adjourned_minutes"]
                     _reschedule(k, d, outcome, levers, rng, next_gaps)
+                journey.append({"day": d, "date": wd[d], "case_number": k.id, "hearing_type": ptype,
+                                "block": bname, "start": to_hhmm(start_min), "outcome": outcome,
+                                "from_waitlist": standby})
                 if rtl and d < 10:
                     schedule.append({"date": wd[d].isoformat(), "block": bname, "expected_start": to_hhmm(start_min),
                                      "window": f"{to_hhmm((start_min // 30) * 30)}-{to_hhmm((start_min // 30) * 30 + 60)}",
@@ -284,17 +347,39 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
         rows.append({"day": d + 1, "date": wd[d], "listed": len(listed) + standby_called,
                      "called": called, "reached": reached, "heard": heard, "minutes_used": min(sum(used.values()), capacity),
                      "type_switches": switches})
-    return _metrics(pd.DataFrame(rows), cases, c, next_gaps, capacity, days), pd.DataFrame(schedule)
+    m = _metrics(pd.DataFrame(rows), cases, c, next_gaps, capacity, days)
+    m["journey"] = pd.DataFrame(journey)
+    m["cases"] = pd.DataFrame([{"case_number": k.id, "purpose_now": k.purpose, "stage_now": k.stage,
+                                "first_listed": k.first_listed, "first_heard": k.first_heard,
+                                "disposed_day": k.disposed_day, "new_filing": k.new, "late": k.late,
+                                "disposed": k.disposed, "hearings_reached": k.reached, "substantive": k.heard,
+                                "old": k.old, "advocate": k.advocate} for k in cases])
+    m["workdays"] = wd
+    return m, pd.DataFrame(schedule)
+
+
+def working_days_from(data, start, n):
+    """Their calendar first; past its end, our court calendar (config/calendar.yaml) takes over."""
+    from core.data import is_working_day
+    days = [d for d in data["workdays"] if d >= start]
+    d = (days[-1] if days else start - timedelta(days=1)) + timedelta(days=1)
+    while len(days) < n:
+        if is_working_day(d):
+            days.append(d)
+        d += timedelta(days=1)
+    return days[:n]
 
 
 def _outcome(k: Case, d, levers, rng, standby):
     if k.pending_until > d:
         return "process"
     fx = CFG["levers"]
+    pf = fx["prefiling"]
+    pu_scale = 1 - pf["unready_removed"] if ("prefiling" in levers and k.purpose in pf["stages"]) else 1
     pa = k.p_absence * (1 - fx["fixed_slot_cluster"]["removed"] if "fixed_slot_cluster" in levers else 1)
     if standby:
         pa = min(0.95, pa * 1.3)  # called at short notice from the waitlist
-    pu = k.p_unready * (1 - fx["intent_check"]["removed"] if "intent_check" in levers else 1)
+    pu = k.p_unready * (1 - fx["intent_check"]["removed"] if "intent_check" in levers else 1) * pu_scale
     u = rng.random()
     for g, p in (("absence", pa), ("unready", pu), ("court", k.p_court), ("unclear", k.p_unclear)):
         if u < p:
@@ -385,6 +470,15 @@ def _metrics(daily, cases, c, gaps, capacity, days):
         "type_switches_per_day": daily.type_switches.mean(),
         "daily": daily,
     }
+
+
+def judge_docket(data, total=3000, seed=42):
+    """One judge's docket: the 100 real sample cases plus generated cases (their generator)
+    up to `total`. Generated case numbers carry a G- prefix so the real 100 stay traceable."""
+    extra = scale_roster(data, total - len(data["roster"]), seed)["roster"]
+    extra["case_number"] = "G-" + extra.case_number
+    real = data["roster"].assign(sample=True)
+    return {**data, "roster": pd.concat([real, extra.assign(sample=False)], ignore_index=True)}
 
 
 def scale_roster(data, n=3000, seed=42):

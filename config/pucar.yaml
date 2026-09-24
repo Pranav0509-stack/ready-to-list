@@ -19,6 +19,8 @@ court_day:
 stage_flow: [ADMISSION, COGNIZANCE, APPEARANCE, PLEA, EXAMINATION_UNDER_S351_BNSS, EVIDENCE_COMPLAINANT,
              EVIDENCE_ACCUSED, ARGUMENTS, JUDGEMENT]
 side_purposes: [WARRANT, BAIL, REPORTS, APPLICATION_REVIEW, DELAY_CONDONATION_HEARING]
+# Where a side hearing leads once it succeeds ("stage" = back to the case's current stage)
+side_return: {DELAY_CONDONATION_HEARING: COGNIZANCE, WARRANT: PLEA, BAIL: PLEA, REPORTS: stage, APPLICATION_REVIEW: stage}
 priority: {BAIL: 100, JUDGEMENT: 70, ARGUMENTS: 60, EVIDENCE_ACCUSED: 50, EVIDENCE_COMPLAINANT: 50,
            EXAMINATION_UNDER_S351_BNSS: 45, PLEA: 45, COGNIZANCE: 40, ADMISSION: 40, APPEARANCE: 30,
            WARRANT: 25, DELAY_CONDONATION_HEARING: 30, REPORTS: 20, APPLICATION_REVIEW: 30}
@@ -26,10 +28,10 @@ urgent_purposes: [BAIL]
 
 # Failure reasons (their hearing_failure_reasons.csv columns) grouped by what can prevent them
 reason_groups:
-  process: [Awaiting Process / Summons / Warrant Return]
+  process: [Awaiting Process / Summons / Warrant Return, External Dependency]   # waiting on something outside the court: persists until it arrives
   absence: [Respondent Absence / Non-Compliance, Petitioner Absence / Non-Compliance, Both Parties Unready / Absent]
   unready: [Party Sought Time / Adjournment, Evidence / Filing Not Ready]
-  court: [Court Administrative Issue, Court Holiday / No Sitting, External Dependency]
+  court: [Court Administrative Issue, Court Holiday / No Sitting]
   unclear: [Unclear]
 
 # What each Ready-to-List lever does to a group of failures (share removed). Sources for the
@@ -44,6 +46,13 @@ levers:
   fixed_slot_cluster:    # a real time window and all of an advocate's matters together
     group: absence
     removed: 0.35
+  prefiling:             # the registry's scrutiny, done digitally at e-filing (see config/registry_ni138.yaml)
+    stages: [ADMISSION, DELAY_CONDONATION_HEARING, COGNIZANCE]
+    unready_removed: 0.6       # documents, affidavit, limitation computed and condonation filed with the complaint
+    process_removed: 0.5       # s.225 enquiry papers and process fee in at filing
+    summons_stages: [APPEARANCE, WARRANT]
+    summons_process_removed: 0.4   # full address, phone and email at filing: e-summons (BNSS s.64(2)) and fewer failed services
+    summons_return_days: [2, 10]   # working days for an e-summons to be served, against 3-25 by post or police
   text_signals:          # read the last hearing's note: who was absent, what is awaited
     boost: 2.5           # multiply a failure group's risk when the note signals it
 
@@ -55,7 +64,14 @@ signals:
 
 next_date:
   baseline_gap_days: 60                  # the case study's flat default
-  after_failure_days: {process: 21, absence: 7, unready: 10, court: 1, unclear: 7}
+  initial_spread_working_days: 42        # at the start, each case's next date falls somewhere in the next 60 days
+  after_failure_days: {process: 21, absence: 7, unready: 10, court: 3, unclear: 7}
+
+# New complaints arriving on this judge's file
+new_filings:
+  per_day: 2.5                 # keeps the docket about steady under today's rules
+  late_share: 0.96             # in the data, 96 of 100 cases went through delay condonation hearings
+  admission_extra_minutes_with_prefiling: 5   # condonation decided at admission when the delay is computed at filing
 
 ageing_quota: 0.25                       # locked: share of each day's minutes for 4+ year cases
 old_years: 4

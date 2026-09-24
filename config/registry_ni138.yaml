@@ -1,0 +1,40 @@
+# The registry's scrutiny of a cheque-dishonour complaint (Negotiable Instruments Act s.138),
+# done at e-filing instead of by hand after filing. Every rule and period is here.
+
+case_type: "NI Act s.138 complaint (ST)"
+
+periods:                          # days
+  cheque_validity: 90             # presented within 3 months of the cheque's date (RBI; s.138(a))
+  notice_after_intimation: 30     # demand notice within 30 days of the bank's return memo (s.138(b))
+  pay_after_notice: 15            # drawer has 15 days from receiving the notice (s.138(c))
+  complaint_after_cause: 30       # complaint within one month of the cause of action (s.142(1)(b))
+
+documents:
+  - {id: cheque, label: "Original cheque", law: "s.138", required: true}
+  - {id: return_memo, label: "Bank's return memo (reason for dishonour)", law: "s.138", required: true}
+  - {id: notice, label: "Copy of the demand notice", law: "s.138(b)", required: true}
+  - {id: postal_proof, label: "Postal receipt and acknowledgment, or tracking report", law: "s.138(b)", required: true}
+  - {id: proof_affidavit, label: "Complainant's proof affidavit", law: "s.145", required: true}
+  - {id: vakalat, label: "Vakalatnama", law: "Advocates Act", required: false}
+  - {id: s141_averments, label: "Averments on the company's officers (only if the drawer is a company)", law: "s.141", required: false}
+  - {id: process_fee, label: "Process fee and copies for summons", law: "BNSS s.227", required: true}
+
+summons_details:                  # what makes summons work first time (the biggest failure pool in the data)
+  - {id: address, label: "Accused's full address", required: true}
+  - {id: phone, label: "Accused's mobile number", required: false}
+  - {id: email, label: "Accused's email (electronic summons, BNSS s.64(2))", required: false}
+
+jurisdiction:
+  rule: "Where the payee's bank account is maintained (s.142(2)(a))"
+  outside_residence: "Accused lives beyond the court's area: enquiry under BNSS s.225 before summons"
+
+# What the data says each check prevents (organisers' data, 100 cases and ~500 hearings)
+evidence:
+  - {check: "Limitation computed at filing, condonation petition filed with the complaint",
+     prevents: "A separate Delay Condonation track: 96 of 100 cases had one, 3.37 hearings per case, only 29.3% substantive"}
+  - {check: "Documents and proof affidavit complete",
+     prevents: "Evidence / Filing Not Ready adjournments at admission and evidence stages"}
+  - {check: "Full address, phone and email for summons; process fee paid",
+     prevents: "Awaiting Process / Summons / Warrant Return: the largest failure pool, 196 of 293 failed Warrant hearings"}
+  - {check: "Jurisdiction and s.225 enquiry flagged at filing",
+     prevents: "Admission hearings spent discovering the accused lives outside the court's area"}

@@ -13,7 +13,8 @@ def page(path, title, icon, **kw):
 
 
 sections = {
-    "Demo": [page("pages/walkthrough.py", "Full flow, one case", ":material/route:")],
+    "Demo": [page("pages/one_judge.py", "Justice Sehgal's docket", ":material/account_balance:"),
+             page("pages/walkthrough.py", "Full flow, one case", ":material/route:")],
     "Court": [
         page("pages/judge.py", "Judge dashboard", ":material/gavel:", default=True),
         page("pages/court_master.py", "Court master", ":material/fact_check:"),

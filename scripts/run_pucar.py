@@ -40,7 +40,7 @@ def run(cases=3000, days=60, capacity=None, start=date(2026, 10, 1), seed=7, dat
         runs = []
         for s in range(seeds):  # average over seeds: lever effects are small next to day-to-day noise
             m, sched = E.simulate(data, start, days=days, capacity=capacity, seed=seed + 100 * s, **kw)
-            runs.append({k: v for k, v in m.items() if k != "daily"})
+            runs.append({k: v for k, v in m.items() if isinstance(v, (int, float))})  # numbers only
             if s == 0:
                 daily.append(m["daily"].assign(arm=name))
                 if name == "Ready-to-List":
