@@ -1,0 +1,83 @@
+# Judge configuration. Locked rules cannot be changed from the UI.
+
+judges:
+  J1:
+    name: Justice Sehgal
+    court: 12
+    style: sehgal
+    clustering: true
+    weekly_carry_over: true      # unheard cases return on the same weekday next week
+    overbooking: 0.0
+    blocks:
+      - name: Fresh and notice
+        start: "11:00"
+        end: "13:30"
+        purposes: [bail, habeas, stay, admission, notice]
+      - name: Old and evidence
+        start: "14:30"
+        end: "16:30"
+        purposes: [reply, evidence, arguments, final]
+  J2:
+    name: Justice Dimakar
+    court: 7
+    style: dimakar
+    clustering: true
+    case_types: [Arb.A, OP(Arb)]
+    cover_sheet_required: true   # 4+ year cases need a verified summary before arguments
+    overbooking: 0.0
+    blocks:
+      - name: Morning
+        start: "10:30"
+        end: "13:00"
+        purposes: [bail, habeas, stay, admission, notice, reply]
+      - name: Afternoon
+        start: "14:00"
+        end: "16:30"
+        purposes: [evidence, arguments, final]
+  J3:
+    name: Justice Joshi
+    court: 3
+    style: joshi
+    clustering: false
+    overbooking: 0.0
+    fresh_first: true     # his preference; the ageing quota still applies (locked)
+    blocks:
+      - name: Full day
+        start: "10:30"
+        end: "16:30"
+        purposes: [bail, habeas, stay, admission, notice, reply, evidence, arguments, final]
+
+# Protected rules. The UI shows these with a lock and never lets them be disabled.
+locked:
+  ageing_quota: 0.25        # share of daily capacity reserved for 5+ year cases
+  urgent_bypass: true       # bail, habeas corpus and stay always go straight through
+  readiness_gate: 60        # minimum readiness to enter the pool (urgent and quota exempt)
+
+fill_target: 0.95           # fill blocks to 95% of expected minutes, 5% buffer for overruns
+
+# Throughput vs disposal. The scheduler ranks cases by priority x P(effective) / minutes^balance.
+# 0 = pure priority (long final arguments and old cases first, fewest hearings)
+# 0.5 = most hearings per day (short matters crowd out final arguments)
+# 0.25 beat today's rules on every metric for all three judges in the 60-day simulation.
+balance: 0.25
+
+# Reference table: purpose, priority, minutes, ideal gap in days, prerequisite items
+hearing_types:
+  bail:      {priority: 100, duration: 5,  ideal_gap: 7,  urgent: true,  prereqs: []}
+  habeas:    {priority: 100, duration: 10, ideal_gap: 3,  urgent: true,  prereqs: []}
+  stay:      {priority: 90,  duration: 8,  ideal_gap: 14, urgent: true,  prereqs: []}
+  admission: {priority: 40,  duration: 6,  ideal_gap: 21, urgent: false, prereqs: []}
+  notice:    {priority: 30,  duration: 4,  ideal_gap: 28, urgent: false, prereqs: [service]}
+  reply:     {priority: 35,  duration: 5,  ideal_gap: 14, urgent: false, prereqs: [reply]}
+  evidence:  {priority: 50,  duration: 30, ideal_gap: 21, urgent: false, prereqs: [witness summons]}
+  arguments: {priority: 60,  duration: 30, ideal_gap: 28, urgent: false, prereqs: [written submissions]}
+  final:     {priority: 70,  duration: 60, ideal_gap: 30, urgent: false, prereqs: []}
+
+# Days each prerequisite needs before the hearing can be effective
+prereq_days:
+  service: 21
+  reply: 10
+  witness summons: 14
+  written submissions: 7
+
+stage_flow: [admission, notice, reply, evidence, arguments, final]
