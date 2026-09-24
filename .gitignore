@@ -3,3 +3,4 @@ __pycache__/
 data/court.db
 .DS_Store
 .claude/
+data/pucar/roster_3000.csv

@@ -22,6 +22,7 @@ sections = {
         page("pages/case_types.py", "Case types and judge time", ":material/category:"),
     ],
     "Proof": [
+        page("pages/pucar_data.py", "On the organisers' data", ":material/dataset:"),
         page("pages/optimizer_lab.py", "Optimisation lab", ":material/tune:"),
         page("pages/simulator.py", "Simulator", ":material/monitoring:"),
         page("pages/accuracy.py", "Model accuracy", ":material/target:"),
