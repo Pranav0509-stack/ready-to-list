@@ -1,0 +1,338 @@
+<title>Samay Optimiser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#ECEEEA; --paper:#F9FAF7; --ink:#111925; --muted:#56627A; --rule:#D3DAE5; --soft:#E5E9EF;
+  --navy:#1B2A41; --blue:#3D6FD9; --gold:#B07A1E; --goldsoft:#F4E8D2; --green:#2F7454; --greensoft:#E1F0E8; --red:#A8253B;
+  --onnavy:#FFFFFF;
+  --serif:"Spectral",Georgia,"Times New Roman",serif;
+  --sans:"Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){color-scheme:dark;
+    --bg:#0D1117; --paper:#151B24; --ink:#E8EBF0; --muted:#A3ADBF; --rule:#2B3442; --soft:#1F2733;
+    --navy:#AFC5EA; --blue:#80A5F0; --gold:#E2B46A; --goldsoft:#33291A; --green:#6CC09A; --greensoft:#18302A; --red:#E0788A;
+    --onnavy:#0D1117;}
+}
+:root[data-theme="dark"]{color-scheme:dark;
+  --bg:#0D1117; --paper:#151B24; --ink:#E8EBF0; --muted:#A3ADBF; --rule:#2B3442; --soft:#1F2733;
+  --navy:#AFC5EA; --blue:#80A5F0; --gold:#E2B46A; --goldsoft:#33291A; --green:#6CC09A; --greensoft:#18302A; --red:#E0788A;
+  --onnavy:#0D1117;}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;padding-inline:16px}
+.deck{max-width:1120px;margin:0 auto;padding-block:20px 88px;display:flex;flex-direction:column;gap:20px}
+.slide{background:var(--paper);border:1px solid var(--rule);border-radius:10px;aspect-ratio:16/9;max-width:100%;
+  padding:clamp(20px,4vw,52px);display:flex;flex-direction:column;gap:clamp(10px,1.6vw,20px);overflow:hidden;position:relative;box-sizing:border-box}
+.js .slide{display:none}.js .slide.on{display:flex}
+.num{position:absolute;right:clamp(16px,3vw,34px);bottom:clamp(12px,2vw,22px);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.brand{position:absolute;left:clamp(20px,4vw,52px);bottom:clamp(12px,2vw,22px);font-family:var(--serif);font-weight:600;color:var(--gold);font-size:15px}
+.eyebrow{font-size:clamp(10.5px,1.05vw,12.5px);letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700}
+h1,h2,h3{font-family:var(--serif);margin:0;text-wrap:balance;line-height:1.12;color:var(--ink)}
+h1{font-size:clamp(40px,7vw,88px);font-weight:600;color:var(--gold);letter-spacing:-.01em}
+h2{font-size:clamp(22px,3.1vw,38px);font-weight:600}
+h3{font-size:clamp(14px,1.55vw,18px);font-weight:600}
+p,li{font-size:clamp(13px,1.45vw,17.5px);line-height:1.5;margin:0;max-width:64ch}
+.muted{color:var(--muted)}
+.lead{font-family:var(--serif);font-size:clamp(18px,2.4vw,30px);line-height:1.3;max-width:30ch}
+.grid{display:grid;gap:clamp(10px,1.8vw,22px)}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}.slide{aspect-ratio:auto}}
+.card{border:1px solid var(--rule);border-radius:8px;padding:clamp(12px,1.6vw,18px);display:flex;flex-direction:column;gap:6px;background:var(--paper)}
+.card.hl{background:var(--navy);border-color:var(--navy)}
+.card.hl h3,.card.hl p,.card.hl .k{color:var(--onnavy)}
+.step{font-family:var(--serif);font-size:clamp(26px,3.4vw,40px);font-weight:600;color:var(--gold);line-height:1}
+.stat b{display:block;font-family:var(--serif);font-size:clamp(28px,4.4vw,54px);font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.stat .from{font-size:clamp(12px,1.2vw,14px);color:var(--muted)}
+.stat .k{font-size:clamp(12px,1.25vw,15px);color:var(--muted)}
+.stat b.up{color:var(--green)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:clamp(11.5px,1.3vw,15.5px)}
+th,td{text-align:left;padding:clamp(4px,.65vw,8px) 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:clamp(10px,1vw,12px);letter-spacing:.06em;text-transform:uppercase}
+td.n,th.n{text-align:right}
+.tw{overflow-x:auto}
+.formula{background:var(--navy);color:var(--onnavy);border-radius:8px;padding:clamp(12px,1.8vw,20px) clamp(14px,2vw,24px);font-family:ui-monospace,Menlo,monospace;font-size:clamp(12px,1.45vw,17px);line-height:1.7;overflow-x:auto;white-space:pre}
+.formula .c{color:var(--gold)}
+/* score bars */
+.bars{display:flex;flex-direction:column;gap:clamp(6px,1vw,11px)}
+.bar{display:grid;grid-template-columns:clamp(96px,13vw,150px) 1fr clamp(56px,7vw,80px);align-items:center;gap:12px;font-size:clamp(12px,1.35vw,16px)}
+.track{height:clamp(10px,1.3vw,14px);background:var(--soft);border-radius:3px;position:relative}
+.fill{position:absolute;inset:0 auto 0 0;background:var(--gold);border-radius:3px}
+.cap{position:absolute;inset:0 auto 0 0;border:1.5px solid var(--navy);border-radius:3px;background:transparent}
+.bar .v{font-variant-numeric:tabular-nums;text-align:right;font-weight:600}
+.bar .v span{color:var(--muted);font-weight:400}
+/* day strip */
+.day{display:grid;grid-template-columns:15fr 105fr 60fr 210fr;gap:3px;border-radius:6px;overflow:hidden;font-size:clamp(10.5px,1.15vw,13px)}
+.day div{padding:clamp(8px,1.2vw,14px) 8px;background:var(--navy);color:var(--onnavy);line-height:1.3}
+.day .op{background:var(--gold);color:var(--onnavy)}
+.day .lu{background:var(--soft);color:var(--muted)}
+.ticks{display:grid;grid-template-columns:15fr 105fr 60fr 210fr;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.flow .s{background:var(--soft);border-radius:6px;padding:8px 12px;font-size:clamp(12px,1.35vw,15.5px);font-weight:500}
+.flow .s.g{background:var(--goldsoft)}
+.flow .a{color:var(--muted)}
+.pill{display:inline-block;font-size:.8em;font-weight:600;padding:1px 8px;border-radius:999px;background:var(--soft);color:var(--navy)}
+.pill.g{background:var(--greensoft);color:var(--green)}
+.rows{display:flex;flex-direction:column;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.rows .r{display:grid;grid-template-columns:62px 1.3fr 1.2fr 56px;gap:10px;padding:clamp(6px,.8vw,9px) 12px;border-top:1px solid var(--rule);font-size:clamp(11.5px,1.3vw,15px);font-variant-numeric:tabular-nums;align-items:center}
+.rows .r:first-child{border-top:0}
+.rows .h{background:var(--soft);color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.rows .grp{background:var(--goldsoft);color:var(--gold);font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;grid-template-columns:1fr}
+.rows .t{font-family:var(--serif);font-weight:600}
+.quote{font-family:var(--serif);font-size:clamp(20px,3vw,38px);line-height:1.25;max-width:26ch}
+.nav{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--paper);border-top:1px solid var(--rule);display:flex;gap:10px;justify-content:center;align-items:center}
+.nav button{font:inherit;font-size:14px;background:var(--navy);color:var(--onnavy);border:0;border-radius:6px;padding:8px 18px;cursor:pointer}
+.nav button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.nav button[disabled]{opacity:.35;cursor:default}
+.nav .pos{min-width:64px;text-align:center;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.no-js .nav{display:none}
+ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
+.push{margin-top:auto}
+</style>
+
+<style>
+.funnel{display:flex;flex-direction:column;gap:clamp(6px,1vw,10px)}
+.fr{display:grid;grid-template-columns:clamp(120px,17vw,200px) 1fr;align-items:center;gap:12px;font-size:clamp(12px,1.35vw,16px)}
+.fb{height:clamp(22px,3vw,34px);border-radius:4px;background:var(--navy);color:var(--onnavy);display:flex;align-items:center;padding:0 10px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:max-content}
+.fb.g{background:var(--gold)}.fb.gr{background:var(--green)}
+.eq{font-family:ui-monospace,Menlo,monospace;font-size:clamp(13px,1.6vw,19px);background:var(--soft);border-radius:8px;padding:clamp(10px,1.4vw,16px) clamp(12px,1.8vw,20px);overflow-x:auto;white-space:pre;line-height:1.6}
+.cmp b{font-family:var(--serif)}
+</style>
+<div class="deck" id="deck">
+
+<section class="slide" aria-label="Title">
+  <div class="eyebrow">PUCAR Scheduling Justice · the optimiser</div>
+  <h1>Samay</h1>
+  <p class="lead">How many cases we list, how we fill the day, and the maths that decides it.</p>
+  <div class="grid g3 push">
+    <div class="stat"><span class="k">Cases listed a day</span><b>18</b><span class="from">today 57</span></div>
+    <div class="stat"><span class="k">Of those, heard</span><b class="up">97%</b><span class="from">today 44%</span></div>
+    <div class="stat"><span class="k">Hearings that move a case, a day</span><b class="up">13.9</b><span class="from">today 11.9</span></div>
+  </div>
+  <div class="num">1</div>
+</section>
+
+<section class="slide" aria-label="How many cases">
+  <div class="eyebrow">How many cases we schedule</div>
+  <h2>From 3,000 on file to 18 on the list</h2>
+  <div class="grid g2" style="align-items:center;flex:1">
+    <div class="funnel" role="img" aria-label="Daily funnel under Samay">
+      <div class="fr"><span>On the judge's file</span><div class="fb" style="width:100%">3,000 cases</div></div>
+      <div class="fr"><span>Listed today</span><div class="fb g" style="width:34%">18.3</div></div>
+      <div class="fr"><span>Actually heard</span><div class="fb g" style="width:32%">17.6</div></div>
+      <div class="fr"><span>Move forward</span><div class="fb gr" style="width:26%">13.9</div></div>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>A day, on average</th><th class="n">Today</th><th class="n">Samay</th></tr></thead>
+      <tbody>
+        <tr><td>Listed</td><td class="n">56.9</td><td class="n"><b>18.3</b></td></tr>
+        <tr><td>Heard</td><td class="n">25.1</td><td class="n"><b>17.6</b></td></tr>
+        <tr><td>Move forward</td><td class="n">11.9</td><td class="n"><b>13.9</b></td></tr>
+        <tr><td>Sent home unheard</td><td class="n">31.8</td><td class="n"><b>0.7</b></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p class="muted">60 working days, 3 of them judge's leave, 5 runs. Listed includes standby cases called when a day ran short.</p>
+  <div class="brand">Samay</div><div class="num">2</div>
+</section>
+
+<section class="slide" aria-label="How the day fills">
+  <div class="eyebrow">How much we fill every day</div>
+  <h2>94% of the judge's 330 minutes, with real hearings</h2>
+  <div>
+    <div class="day" aria-label="The court day">
+      <div class="op">Opening</div><div>Morning · 10.5 cases · up to 99.75 min</div><div class="lu">Lunch</div><div>Afternoon · 8.1 cases · up to 199.5 min</div>
+    </div>
+    <div class="ticks"><span>10:30</span><span>10:45</span><span>12:30</span><span>13:30 … 17:00</span></div>
+  </div>
+  <div class="grid g4">
+    <div class="stat"><span class="k">Minutes used a day</span><b>311</b><span class="from">of 330</span></div>
+    <div class="stat"><span class="k">Planned fill</span><b>95%</b><span class="from">5% kept for overruns</span></div>
+    <div class="stat"><span class="k">Cases a day</span><b>14 to 24</b><span class="from">depends on the mix</span></div>
+    <div class="stat"><span class="k">Standby per sitting</span><b>5</b><span class="from">called if a day runs short</span></div>
+  </div>
+  <p class="muted">Today's rules also use 94% of the minutes, but on 32 cases a day that are called and sent back. Samay spends the same minutes on hearings that happen.</p>
+  <div class="brand">Samay</div><div class="num">3</div>
+</section>
+
+<section class="slide" aria-label="The model">
+  <div class="eyebrow">What the optimiser is</div>
+  <h2>A 0/1 knapsack, solved by Google OR-Tools CP-SAT</h2>
+  <div class="grid g3" style="flex:1;align-content:center">
+    <div class="card"><span class="step">Bag</span><h3>The sitting's minutes</h3><p>Morning 99.75, afternoon 199.5 after the 95% fill.</p></div>
+    <div class="card"><span class="step">Items</span><h3>The ready cases</h3><p>Due today, process back, not held for an uncured failure.</p></div>
+    <div class="card hl"><span class="step">Choice</span><h3>List it: 1 or 0</h3><p>Pick the set worth the most that still fits.</p></div>
+  </div>
+  <p class="muted">Each case enters with two numbers: the chance it moves, and its expected minutes. Its value is built from them.</p>
+  <div class="brand">Samay</div><div class="num">4</div>
+</section>
+
+<section class="slide" aria-label="Chance">
+  <div class="eyebrow">Number 1 · the chance a hearing moves the case</div>
+  <h2>pₖ, from the organisers' own failure data</h2>
+  <div class="eq">pₖ = (1 − process still pending) × (1 − (absence + not ready + other))</div>
+  <div class="grid g2" style="align-items:start">
+    <ul>
+      <li><b>Start:</b> the measured rate for the hearing type and the real reasons hearings fail.</li>
+      <li><b>Last order:</b> "Await warrant" or "Absent: Accused" multiplies that risk by 2.5, rescaled so each type's average still matches the data.</li>
+      <li><b>Bounds:</b> at least 0.02; total risk capped at 0.98.</li>
+    </ul>
+    <div class="tw"><table>
+      <thead><tr><th>Lever</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td>Process tracking</td><td>Pending process → 0</td></tr>
+        <tr><td>Confirmation 2 days before</td><td>Not ready × 0.5</td></tr>
+        <tr><td>Fixed slot, advocate grouped</td><td>Absence × 0.65</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p class="muted"><b>Check:</b> with the levers off it reproduces the case study, 60 listed, 20 heard, 10 moving forward.</p>
+  <div class="brand">Samay</div><div class="num">5</div>
+</section>
+
+<section class="slide" aria-label="Minutes">
+  <div class="eyebrow">Number 2 · expected minutes</div>
+  <h2>eₖ: plan for the average, keep 5% spare</h2>
+  <div class="eq">eₖ = pₖ × mₖ × 1.063  +  (1 − pₖ) × 2  +  1</div>
+  <div class="grid g2" style="align-items:start">
+    <div class="tw"><table>
+      <thead><tr><th>Part</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>mₖ</td><td>The organisers' minutes: admission 5, appearance 10, plea 15, evidence 30</td></tr>
+        <tr><td>1.063</td><td>Average overrun: e<sup>σ²/2</sup>, σ = 0.35</td></tr>
+        <tr><td>2</td><td>Calling and adjourning a case</td></tr>
+        <tr><td>1</td><td>Calling the next case</td></tr>
+      </tbody>
+    </table></div>
+    <ul>
+      <li><b>Worked example:</b> evidence, 30 min, 50% chance → 0.5 × 31.9 + 0.5 × 2 + 1 = <b>17.9 min</b>.</li>
+      <li><b>Why lognormal:</b> a hearing can't take less than zero but can run long.</li>
+      <li><b>Why the average:</b> about 18 hearings are summed, so long and short cancel out.</li>
+      <li class="muted">σ is assumed: the data has no measured durations yet.</li>
+    </ul>
+  </div>
+  <div class="brand">Samay</div><div class="num">6</div>
+</section>
+
+<section class="slide" aria-label="Value">
+  <div class="eyebrow">Number 3 · the value of listing a case today</div>
+  <h2>vₖ: priority actually delivered</h2>
+  <div class="eq">vₖ = (Sₖ + bₖ + cₖ) × pₖ</div>
+  <div class="tw"><table>
+    <thead><tr><th>Part</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Sₖ</td><td>Samay score, 0 to 100: age 35, readiness 25, near disposal 15, churn 15, urgency 10</td></tr>
+      <tr><td>bₖ</td><td>Listing boost: 0 first time, +10 second, +25 from the third</td></tr>
+      <tr><td>cₖ</td><td>+15 while under 180 days: NI Act s.143, trial within six months</td></tr>
+      <tr><td>pₖ</td><td>The chance it moves today</td></tr>
+    </tbody>
+  </table></div>
+  <p class="quote push" style="font-size:clamp(17px,2.2vw,26px)">A case that deserves time but will not go ahead today only wastes the slot.</p>
+  <div class="brand">Samay</div><div class="num">7</div>
+</section>
+
+<section class="slide" aria-label="The solve">
+  <div class="eyebrow">The solve, per sitting</div>
+  <h2>Rules first, then CP-SAT on what is left</h2>
+  <div class="flow">
+    <span class="s g">1 · Bail, always</span><span class="a">→</span>
+    <span class="s g">2 · 4+ year cases, up to 25% (locked)</span><span class="a">→</span>
+    <span class="s">3 · CP-SAT on the remaining room R</span><span class="a">→</span>
+    <span class="s">4 · Next 5 on standby</span>
+  </div>
+<div class="formula"><span class="c">choose</span>      xₖ ∈ {0, 1}
+<span class="c">maximise</span>    Σ vₖ × eₖ<sup>0.75</sup> × xₖ
+<span class="c">subject to</span>  Σ eₖ × xₖ ≤ R</div>
+  <p class="muted">Whole numbers for CP-SAT: minutes × 10, value × 1,000 (0.1-minute precision). Top 300 candidates, 8 workers, 1-second cap. One court day: 83 ms.</p>
+  <div class="brand">Samay</div><div class="num">8</div>
+</section>
+
+<section class="slide" aria-label="Why 0.75">
+  <div class="eyebrow">The one design choice to defend</div>
+  <h2>Why value × minutes<sup>0.75</sup></h2>
+  <div class="tw"><table>
+    <thead><tr><th>Objective</th><th>Ranks per minute by</th><th>What happens</th></tr></thead>
+    <tbody>
+      <tr><td>Σ vₖ</td><td>vₖ / eₖ</td><td>Only short matters. Evidence and arguments starve; cases never reach judgment.</td></tr>
+      <tr><td>Σ vₖ × eₖ</td><td>vₖ</td><td>Length ignored. One long hearing pushes out three good short ones.</td></tr>
+      <tr><td><b>Σ vₖ × eₖ<sup>0.75</sup></b></td><td><b>vₖ / eₖ<sup>0.25</sup></b></td><td><b>Mild length penalty.</b> Short matters preferred, long hearings that dispose still compete.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">0.75 is a tuning choice, not fitted. One line to change; test 0.5, 0.75 and 1 before a live rollout.</p>
+  <div class="brand">Samay</div><div class="num">9</div>
+</section>
+
+<section class="slide" aria-label="Why CP-SAT">
+  <div class="eyebrow">Why a knapsack, and why CP-SAT</div>
+  <h2>Sorting leaves gaps. CP-SAT finds the best fit.</h2>
+  <div class="grid g2" style="align-items:start;flex:1">
+    <div>
+      <p style="margin-bottom:10px">40 minutes left:</p>
+      <div class="tw"><table>
+        <thead><tr><th>Case</th><th class="n">Worth</th><th class="n">Minutes</th></tr></thead>
+        <tbody><tr><td>A</td><td class="n">90</td><td class="n">35</td></tr><tr><td>B</td><td class="n">60</td><td class="n">20</td></tr><tr><td>C</td><td class="n">55</td><td class="n">20</td></tr></tbody>
+      </table></div>
+      <p class="cmp" style="margin-top:10px">Sort: A only, worth <b>90</b>, 5 min wasted.<br>CP-SAT: B + C, worth <b>115</b>, day full.</p>
+    </div>
+    <ul>
+      <li><b>Knapsack is the right shape:</b> one judge, one case at a time. The order doesn't change the minutes used, so the hard part is <i>which</i> cases.</li>
+      <li><b>CP-SAT:</b> in our earlier test it proved the best answer in under 0.1 s; a linear-programming solver was still 5% short at 30 s.</li>
+      <li><b>Free and open source,</b> Apache 2.0, ready for DRISTI 2.0.</li>
+    </ul>
+  </div>
+  <div class="brand">Samay</div><div class="num">10</div>
+</section>
+
+<section class="slide" aria-label="Measured and assumed">
+  <div class="eyebrow">What is measured, what is assumed</div>
+  <h2>Honest about the model</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Measured: the organisers' data</th><th>Assumed: ours, stated</th></tr></thead>
+    <tbody>
+      <tr><td>Success rate per hearing type</td><td>Duration spread σ = 0.35</td></tr>
+      <tr><td>Why hearings fail, by type</td><td>Last-order risk ×2.5</td></tr>
+      <tr><td>Minutes and next-date gap per type</td><td>Lever strengths: 50%, 35%, 90%</td></tr>
+      <tr><td>Case ages, stages, last-order text</td><td>Exponent 0.75, fill 95%, quota 25%</td></tr>
+    </tbody>
+  </table></div>
+  <p>Tested by simulating 60 working days on a 3,000-case docket, 5 runs, same cases and same random draws for both arms. The simulation uses the planner's own model, so results are the best case if the assumptions hold. Every outcome the court master records replaces an assumption with this court's real rate.</p>
+  <div class="brand">Samay</div><div class="num">11</div>
+</section>
+
+<section class="slide" aria-label="Summary">
+  <div class="eyebrow">In one line</div>
+  <p class="quote" style="margin-top:auto">Each case becomes two numbers: value, score × chance it moves; and expected minutes. CP-SAT picks the set worth the most that fits 95% of the sitting, after bail and old cases take their locked share.</p>
+  <div class="grid g3 push">
+    <div class="stat"><span class="k">Listed a day</span><b>18</b><span class="from">today 57</span></div>
+    <div class="stat"><span class="k">Minutes used</span><b>311</b><span class="from">of 330</span></div>
+    <div class="stat"><span class="k">Disposed in 60 days</span><b class="up">356</b><span class="from">today 196</span></div>
+  </div>
+  <div class="brand">Samay</div><div class="num">12</div>
+</section>
+
+</div>
+
+<div class="nav" role="navigation" aria-label="Slides">
+  <button type="button" id="prev" aria-label="Previous slide">← Prev</button>
+  <span class="pos" id="pos">1 / 12</span>
+  <button type="button" id="next" aria-label="Next slide">Next →</button>
+</div>
+
+<script>
+(function(){
+  document.documentElement.classList.add('js');
+  var s=[].slice.call(document.querySelectorAll('.slide')), i=0;
+  var h=(location.hash||'').replace('#','');
+  if(/^s\d+$/.test(h)){var n=parseInt(h.slice(1),10)-1;if(n>=0&&n<s.length)i=n;}
+  function show(n){i=Math.max(0,Math.min(s.length-1,n));s.forEach(function(x,k){x.classList.toggle('on',k===i)});
+    document.getElementById('pos').textContent=(i+1)+' / '+s.length;
+    document.getElementById('prev').disabled=i===0;document.getElementById('next').disabled=i===s.length-1;
+    try{history.replaceState(null,'','#s'+(i+1))}catch(e){}}
+  document.getElementById('prev').onclick=function(){show(i-1)};
+  document.getElementById('next').onclick=function(){show(i+1)};
+  document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();show(i+1)}
+    if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();show(i-1)}});
+  show(i);
+})();
+</script>
