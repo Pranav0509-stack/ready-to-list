@@ -1,0 +1,37 @@
+# Ready-to-List design tokens: see design-system/ready-to-list/MASTER.md (from the UI/UX Pro Max skill database).
+# Grounded in the court's own vernacular: the printed cause list. Ink on cool paper,
+# a serif for case titles and headings the way a cause list or judgment is set, a clean
+# sans for data. Noto is chosen because it covers Indian scripts, so Hindi and Malayalam
+# notices render in the same family. Colour carries meaning only: one court-blue for
+# action, the validated chart palette for data, status colours for warnings.
+
+[theme]
+base = "light"
+primaryColor = "#1B2A41"
+backgroundColor = "#F5F6F3"
+secondaryBackgroundColor = "#E5E9EF"
+textColor = "#111925"
+borderColor = "#C9D3E3"
+font = "Noto Sans:https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap"
+headingFont = "Spectral:https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&display=swap"
+headingFontWeights = [600, 600, 600, 600, 600, 600]
+baseRadius = "small"
+showWidgetBorder = true
+showSidebarBorder = true
+chartCategoricalColors = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
+
+[theme.light]
+primaryColor = "#1B2A41"
+backgroundColor = "#F5F6F3"
+secondaryBackgroundColor = "#E5E9EF"
+textColor = "#111925"
+borderColor = "#C9D3E3"
+dataframeHeaderBackgroundColor = "#E5E9EF"
+
+[theme.light.sidebar]
+backgroundColor = "#ECEEEA"
+
+# Light only: a registry tool reads like paper. Dark tokens are kept in design-system/ready-to-list/MASTER.md.
+
+[client]
+toolbarMode = "minimal"

@@ -1,0 +1,165 @@
+# Pre-filing defect rules. core/defects.py reads everything from here; no rule lives in Python.
+#
+# Product rule: never reject, just re-rank. A defective filing is never blocked. Defects lower the
+# filing score, which lowers readiness and so the queue position. Urgent matters are never pushed down.
+
+classes:
+  critical: {penalty: -15, label: Critical, color: red, icon: error}
+  major:    {penalty: -8,  label: Major,    color: orange, icon: warning}
+  minor:    {penalty: -2,  label: Minor,    color: gray, icon: info}
+
+# Guardrails
+scored_classes: [critical, major]          # minor defects are shown but cost nothing
+scored_classes_party_in_person: [critical]  # guided mode: only critical defects count
+fix_first_classes: [critical]               # what "Fix critical defects first" assumes is fixed
+min_score: 0
+
+# Case types used in the app. title_pattern detects the type from the cause-title page.
+case_types:
+  "WP(C)":      {title_pattern: 'W\.?\s?P\.?\s?\(C\)',        default_purpose: admission, court_fee: 250, limitation_days: null}
+  "OP":         {title_pattern: '\bO\.?P\.?\s+No\b',            default_purpose: admission, court_fee: 200, limitation_days: null}
+  "RSA":        {title_pattern: '\bR\.?S\.?A\.?\b',             default_purpose: admission, court_fee: 500, limitation_days: 90}
+  "MACA":       {title_pattern: '\bM\.?A\.?C\.?A\.?\b',         default_purpose: admission, court_fee: 100, limitation_days: 90}
+  "CRL.MC":     {title_pattern: 'CRL\.?\s?M\.?C\.?',            default_purpose: admission, court_fee: 10,  limitation_days: null}
+  "Arb.A":      {title_pattern: 'Arb\.?\s?A(?:ppeal)?\b',        default_purpose: admission, court_fee: 500, limitation_days: 90}
+  "OP(Arb)":    {title_pattern: 'O\.?P\.?\s?\(Arb',              default_purpose: admission, court_fee: 500, limitation_days: 120}
+  "Bail Appl.": {title_pattern: 'Bail\s+Appl',                   default_purpose: bail,      court_fee: 10,  limitation_days: null}
+  "WP(Crl.)":   {title_pattern: 'W\.?\s?P\.?\s?\(Crl',           default_purpose: habeas,    court_fee: 10,  limitation_days: null}
+# Court fee figures are illustrative flat fees in rupees for the demo, not the Kerala Court Fees Act schedule.
+# Limitation: RSA and MACA 90 days; Arb.A 90 days from the order (s.37); OP(Arb) 3 months + 30 days (s.34(3)).
+
+# Fields pulled from the text. Each pattern's first group is the value.
+extract:
+  petitioner:            {pattern: 'PETITIONERS?(?:/S)?\s*:?\s*\n\s*(?:1\.\s*)?([^,\n]+)', page: first}
+  respondent:            {pattern: 'RESPONDENTS?(?:/S)?\s*:?\s*\n\s*(?:1\.\s*)?([^,\n]+)', page: first}
+  counsel:               {pattern: 'BY\s+ADV(?:OCATE)?S?\.?\s+([^\n,]+)', page: first}
+  party_in_person:       {pattern: '(PARTY IN PERSON)', page: first}
+  cause_of_action_date:  {pattern: '(?:Cause of action arose on|Date of (?:the )?impugned (?:award|order|judgment))\s*:?\s*(\d{2}[./-]\d{2}[./-]\d{4})', page: any}
+  court_fee_paid:        {pattern: 'Court fee (?:paid|affixed)\s*:?\s*Rs\.?\s*([\d,]+)', page: any}
+  crime_number:          {pattern: 'Crime No\.?\s*([\d/]+)', page: any}
+
+# Structure markers
+page_number_pattern: 'Page\s+(\d+)\s*$'     # footer on every page
+section_heading: '^\s*{marker}\s*$'          # a section starts on a page with this heading line
+signature_pattern: '\[Signed:[^\]]+\]|Sd/-'  # typed stand-in for a wet or digital signature
+illegible_marker: '[scan unreadable]'
+annexure_heading: '^\s*ANNEXURE\s+[A-Z]?\d+'
+annexure_min_chars: 120                      # an annexure page with less text than this is treated as illegible
+
+rules:
+  - id: court_fee_short
+    class: critical
+    check: court_fee
+    title: Court fee short
+    explanation: The fee paid is less than the fee fixed for this kind of case. The registry cannot number the case until the full fee is paid.
+    fix: Pay the balance court fee and add the updated court fee line on the cause-title page.
+
+  - id: court_fee_missing
+    class: critical
+    check: court_fee_missing
+    title: Court fee not shown
+    explanation: The filing does not say how much court fee was paid.
+    fix: "Add a line such as \"Court fee paid: Rs. 250\" on the cause-title page and attach the receipt."
+
+  - id: unsigned_vakalatnama
+    class: critical
+    check: signature
+    section: VAKALATNAMA
+    skip_party_in_person: true
+    title: Vakalatnama not signed
+    explanation: The paper that lets the advocate act for you has not been signed, so the court cannot hear the advocate yet.
+    fix: Get the vakalatnama signed by the client and accepted by the advocate, then replace that page.
+
+  - id: missing_vakalatnama
+    class: critical
+    check: required_section
+    marker: VAKALATNAMA
+    skip_party_in_person: true
+    title: Vakalatnama missing
+    explanation: There is no vakalatnama, so nothing shows the advocate is authorised to file this case.
+    fix: Add a signed vakalatnama after the affidavit.
+
+  - id: missing_affidavit
+    class: critical
+    check: required_section
+    marker: AFFIDAVIT
+    title: Affidavit missing
+    explanation: Every petition needs a sworn statement that the facts in it are true. This filing has none.
+    fix: Add an affidavit sworn before a notary or oath commissioner, signed on every page.
+
+  - id: unsigned_affidavit
+    class: critical
+    check: signature
+    section: AFFIDAVIT
+    title: Affidavit not signed
+    explanation: The sworn statement has not been signed by the person swearing it.
+    fix: Get the affidavit signed and attested, then replace that page.
+
+  - id: missing_prayer
+    class: critical
+    check: required_section
+    marker: PRAYER
+    title: Prayer missing
+    explanation: The petition does not say what you are asking the court to order.
+    fix: Add a PRAYER section listing each relief sought.
+
+  - id: limitation
+    class: critical
+    check: limitation
+    excused_by: 'condon(?:e|ation) (?:of )?(?:the )?delay'
+    title: Filed after the limitation period
+    explanation: The law gives a fixed number of days to file this kind of case, and that time has passed.
+    fix: File a petition to condone the delay with an affidavit explaining each day of delay.
+
+  - id: annexure_illegible
+    class: major
+    check: annexure_legibility
+    title: Annexure illegible
+    explanation: One of the attached documents cannot be read. The judge may not be able to rely on it.
+    fix: Rescan the page at 300 dpi or attach a certified true copy.
+
+  - id: missing_synopsis
+    class: major
+    check: required_section
+    marker: SYNOPSIS
+    title: Synopsis missing
+    explanation: A short summary of the case and list of dates helps the judge read the file quickly.
+    fix: Add a SYNOPSIS with a list of dates before the petition.
+
+  - id: missing_grounds
+    class: major
+    check: required_section
+    marker: GROUNDS
+    skip_case_types: ["Bail Appl."]
+    title: Grounds missing
+    explanation: The petition does not set out the legal reasons why you should win.
+    fix: Add a GROUNDS section, one lettered ground per legal point.
+
+  - id: parties_unclear
+    class: major
+    check: parties
+    title: Parties not identified
+    explanation: The first page must clearly name who is filing and who the case is against.
+    fix: Add PETITIONER and RESPONDENTS headings on the cause-title page with full names and addresses.
+
+  - id: missing_index
+    class: minor
+    check: required_section
+    marker: INDEX
+    title: Index missing
+    explanation: An index with page numbers helps the registry and the judge find each document.
+    fix: Add an INDEX page listing every document with its page number.
+
+  - id: duplicate_page_number
+    class: minor
+    check: page_numbers_duplicate
+    title: Duplicate page number
+    explanation: Two pages carry the same number, which makes the file hard to cite.
+    fix: Renumber the pages in sequence and update the index.
+
+  - id: missing_page_number
+    class: minor
+    check: page_numbers_missing
+    title: Page not numbered
+    explanation: A page has no page number.
+    fix: Number every page at the foot, in sequence, and update the index.

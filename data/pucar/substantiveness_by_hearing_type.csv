@@ -1,0 +1,15 @@
+hearingType,Substantive Hearings (percentage probability),source
+ADMISSION,48.6,real
+COGNIZANCE,90.0,real
+DELAY_CONDONATION_HEARING,29.3,real
+APPEARANCE,40.1,real
+WARRANT,13.5,real
+PLEA,90.0,real
+EXAMINATION_UNDER_S351_BNSS,40.7,real
+EVIDENCE_COMPLAINANT,29.4,real
+EVIDENCE_ACCUSED,16.7,real
+ARGUMENTS,13.0,real
+JUDGEMENT,100.0,"estimated - a judgement hearing is by definition the case's final disposal, so treated as always substantive"
+BAIL,31.3,real
+REPORTS,8.3,real
+APPLICATION_REVIEW,85.0,"estimated - not separately observed in the pilot; assigned in line with other low-volume, purpose-driven hearings (Cognizance/Plea at 90%), slightly lower to allow for adjournment on review"

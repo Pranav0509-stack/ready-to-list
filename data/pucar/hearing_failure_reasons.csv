@@ -1,0 +1,15 @@
+hearingType,total_no,Court Administrative Issue,Court Holiday / No Sitting,Respondent Absence / Non-Compliance,Petitioner Absence / Non-Compliance,Party Sought Time / Adjournment,Evidence / Filing Not Ready,Awaiting Process / Summons / Warrant Return,External Dependency,Both Parties Unready / Absent,Unclear,source
+ADMISSION,57,0,2,2,6,3,6,29,0,0,9,real
+COGNIZANCE,3,1,0,0,0,0,0,2,0,0,0,estimated - low volume like Admission; assumed mostly awaiting-process (records/enquiry report) before cognizance is taken
+DELAY_CONDONATION_HEARING,29,0,0,0,6,7,3,5,0,4,4,real
+APPEARANCE,201,2,0,39,17,9,7,71,6,15,35,real
+WARRANT,293,6,0,1,3,1,2,196,43,2,39,real
+PLEA,5,0,0,3,0,0,1,0,0,0,1,estimated - modelled on Examination u/s.351 pattern; mostly accused/surety not ready or absent for recording of plea
+EXAMINATION_UNDER_S351_BNSS,16,0,0,2,1,2,4,3,1,1,2,real
+EVIDENCE_COMPLAINANT,129,1,0,17,25,6,35,7,0,18,20,real
+EVIDENCE_ACCUSED,15,0,0,4,1,0,8,0,0,0,2,real
+ARGUMENTS,25,6,0,2,0,10,5,0,0,0,2,"estimated - only 13% of arguments hearings were substantive in the real sample, so most are adjournments; modelled mainly on counsel needing more time and matter not being reached"
+JUDGEMENT,4,2,0,0,0,0,0,1,0,0,1,"estimated - a share of Judgement-purpose hearings are adjourned before the actual pronouncement (matter reserved, order/report awaited); the pronouncement itself is still counted substantive"
+BAIL,45,1,0,13,0,8,0,0,0,6,17,real
+REPORTS,55,0,0,4,2,0,1,0,41,1,6,real
+APPLICATION_REVIEW,3,0,0,0,0,1,1,0,0,0,1,estimated - very low volume (min/max/mean/median all 1 hearing per case); assumed a small share adjourned for objections/filing not ready

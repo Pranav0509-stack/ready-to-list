@@ -1,0 +1,98 @@
+# Running Ready-to-List on the organisers' data (Kerala district-court pilot, anonymised).
+# Every number the engine assumes beyond their CSVs is here, with the reason.
+
+court_day:
+  blocks:                                   # sitting 10:30-12:30, lunch 12:30-13:30, sitting 13:30-17:00
+    - {name: Morning, start: "10:30", end: "12:30",
+       purposes: [ADMISSION, COGNIZANCE, APPEARANCE, WARRANT, PLEA, BAIL, DELAY_CONDONATION_HEARING, REPORTS, APPLICATION_REVIEW]}
+    - {name: Afternoon, start: "13:30", end: "17:00",
+       purposes: [EXAMINATION_UNDER_S351_BNSS, EVIDENCE_COMPLAINANT, EVIDENCE_ACCUSED, ARGUMENTS, JUDGEMENT]}
+  scoring_capacity_minutes: 330             # the organisers' README scores against 420; run with --capacity 420 to compare
+  opening_minutes: 15                       # pronouncements, mentions
+  changeover_same: 1
+  changeover_switch: 3
+  adjourned_minutes: 2                      # calling a matter and adjourning it still takes time
+  fill_target: 0.95
+  duration_sigma: 0.35                      # spread around the organisers' estimated minutes
+
+# The main flow of a summary/sessions trial; side purposes return to the flow
+stage_flow: [ADMISSION, COGNIZANCE, APPEARANCE, PLEA, EXAMINATION_UNDER_S351_BNSS, EVIDENCE_COMPLAINANT,
+             EVIDENCE_ACCUSED, ARGUMENTS, JUDGEMENT]
+side_purposes: [WARRANT, BAIL, REPORTS, APPLICATION_REVIEW, DELAY_CONDONATION_HEARING]
+# Where a side hearing leads once it succeeds ("stage" = back to the case's current stage)
+side_return: {DELAY_CONDONATION_HEARING: COGNIZANCE, WARRANT: PLEA, BAIL: PLEA, REPORTS: stage, APPLICATION_REVIEW: stage}
+# Purpose weights are no longer used for ranking; the Samay score (core/priority.py, docs/PRIORITY_SCORE.md)
+# ranks cases. Kept for the hearing-type list.
+priority: {BAIL: 100, JUDGEMENT: 70, ARGUMENTS: 60, EVIDENCE_ACCUSED: 50, EVIDENCE_COMPLAINANT: 50,
+           EXAMINATION_UNDER_S351_BNSS: 45, PLEA: 45, COGNIZANCE: 40, ADMISSION: 40, APPEARANCE: 30,
+           WARRANT: 25, DELAY_CONDONATION_HEARING: 30, REPORTS: 20, APPLICATION_REVIEW: 30}
+urgent_purposes: [BAIL]
+# NI Act s.143(3): the court shall endeavour to conclude the trial within six months of filing;
+# s.143(2): hearings day to day unless an adjournment is recorded in writing. Cases still inside
+# the six-month window get a priority boost so they can finish in time (https://indiankanoon.org/doc/45362031/).
+statutory_clock: {days: 180, priority_boost: 15}
+
+# Failure reasons (their hearing_failure_reasons.csv columns) grouped by what can prevent them
+reason_groups:
+  process: [Awaiting Process / Summons / Warrant Return, External Dependency]   # waiting on something outside the court: persists until it arrives
+  absence: [Respondent Absence / Non-Compliance, Petitioner Absence / Non-Compliance, Both Parties Unready / Absent]
+  unready: [Party Sought Time / Adjournment, Evidence / Filing Not Ready]
+  court: [Court Administrative Issue, Court Holiday / No Sitting]
+  unclear: [Unclear]
+
+# What each Ready-to-List lever does to a group of failures (share removed). Sources for the
+# direction: our agent model (fixed slot +15 pts, confirmation +20 pts, bundling +10 pts show-up).
+levers:
+  process_tracking:      # list only once the process-return status says served/executed
+    group: process
+    status_accuracy: 0.9
+  intent_check:          # T-2 confirmation: unready parties say so and are not listed
+    group: unready
+    removed: 0.5
+  fixed_slot_cluster:    # a real time window and all of an advocate's matters together
+    group: absence
+    removed: 0.35
+  prefiling:             # the registry's scrutiny, done digitally at e-filing (see config/registry_ni138.yaml)
+    stages: [ADMISSION, DELAY_CONDONATION_HEARING, COGNIZANCE]
+    unready_removed: 0.6       # documents, affidavit, limitation computed and condonation filed with the complaint
+    process_removed: 0.5       # s.225 enquiry papers and process fee in at filing
+    summons_stages: [APPEARANCE, WARRANT]
+    summons_process_removed: 0.4   # full address, phone and email at filing: e-summons (BNSS s.64(2)) and fewer failed services
+    summons_return_days: [2, 10]   # working days for an e-summons to be served, against 3-25 by post or police
+  text_signals:          # read the last hearing's note: who was absent, what is awaited
+    boost: 2.5           # multiply a failure group's risk when the note signals it
+
+# Keywords in the last hearing's note, and which risk they signal
+signals:
+  process: ["warrant", "summons", "nbw", "notice", "await", "return of", "process", "steps"]
+  unready: ["not ready", "time sought", "time", "objections", "last chance", "adjourn"]
+  absence_accused: ["absent: accused"]
+
+next_date:
+  baseline_gap_days: 60                  # the case study's flat default
+  initial_spread_working_days: 42        # at the start, each case's next date falls somewhere in the next 60 days
+  after_failure_days: {process: 21, absence: 7, unready: 10, court: 3, unclear: 7}
+
+# New complaints arriving on this judge's file
+new_filings:
+  per_day: 2.5                 # keeps the docket about steady under today's rules
+  late_share: 0.96             # in the data, 96 of 100 cases went through delay condonation hearings
+  admission_extra_minutes_with_prefiling: 5   # condonation decided at admission when the delay is computed at filing
+
+# How a case is treated by the number of times it has been listed for the SAME purpose
+# (the data: Warrant averages 5.0 hearings per case, Evidence complainant 6.8)
+escalation:
+  first: {label: "1st listing", priority_boost: 0}
+  second: {label: "2nd listing", priority_boost: 10, readiness_check: true}      # readiness checked, reason code required
+  deferred: {label: "Deferred (3rd+)", priority_boost: 25, fixed_slot: true,      # never relisted until the last failure is cured
+             hold_until_cured: true, from_attempt: 3}
+
+# Judge on leave: no sitting. Under today's rules the day's cases take the flat gap; under
+# Ready-to-List they move to the next sitting day with room, never to the flat 60 days.
+judge_leave:
+  casual_leave_days_per_year: 20        # Kerala Service Rules Part I, Appendix VII (at most 20 a calendar year)
+  dates: [2026-10-09, 2026-11-13, 2026-12-04]   # demo leave days; replace from the court's leave register
+
+ageing_quota: 0.25                       # locked: share of each day's minutes for 4+ year cases
+old_years: 4
+baseline_listed_per_day: 60

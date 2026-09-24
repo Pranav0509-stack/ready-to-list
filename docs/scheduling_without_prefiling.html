@@ -1,0 +1,260 @@
+<title>Scheduling Without Pre-filing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@500;600&family=Noto+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#fbfbf9; --ink:#15181d; --muted:#5b616c; --rule:#dcdee3; --panel:#f1f2f4;
+  --court:#1d4f91; --ours:#2a78d6; --today:#d9602f; --soft:#e8eef7;
+  --good:#127a4a; --warn:#9a6400;
+  --serif:"Noto Serif",Georgia,"Times New Roman",serif;
+  --sans:"Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#121418; --ink:#eceef2; --muted:#a3a9b4; --rule:#2c3038; --panel:#1b1e24;
+    --court:#8db6ee; --ours:#4b93ea; --today:#e2774b; --soft:#1c2634; --good:#4cc38a; --warn:#e0b04a;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#121418; --ink:#eceef2; --muted:#a3a9b4; --rule:#2c3038; --panel:#1b1e24;
+  --court:#8db6ee; --ours:#4b93ea; --today:#e2774b; --soft:#1c2634; --good:#4cc38a; --warn:#e0b04a;
+}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;padding-inline:20px;padding-block:40px 80px}
+.wrap{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--serif);font-weight:600;text-wrap:balance;line-height:1.25;margin:0}
+h1{font-size:clamp(28px,5vw,40px)}
+h2{font-size:26px}
+h3{font-size:18px}
+p{margin:0;max-width:66ch}
+section{display:flex;flex-direction:column;gap:16px}
+.kicker{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.lede{font-size:19px;color:var(--ink)}
+.muted{color:var(--muted)}
+.answer{background:var(--soft);border-radius:6px;padding:22px 24px;display:flex;flex-direction:column;gap:12px}
+.answer strong{color:var(--court)}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.fig{border-top:2px solid var(--court);padding-top:10px}
+.fig b{display:block;font-family:var(--serif);font-size:30px;font-variant-numeric:tabular-nums;line-height:1.1}
+.fig span{font-size:14px;color:var(--muted)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:13px;letter-spacing:.02em}
+td.n,th.n{text-align:right;white-space:nowrap}
+tr.hl td{background:var(--panel)}
+.chart text{fill:var(--ink);font-family:var(--sans);font-size:13px}
+.chart .axis{stroke:var(--rule)}
+.chart .lbl{fill:var(--muted);font-size:12px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.steps{display:grid;gap:10px;padding:0;margin:0;list-style:none;counter-reset:s}
+.steps li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+.steps li::before{counter-increment:s;content:counter(s);font-family:var(--serif);font-weight:600;color:var(--court);font-size:18px;line-height:1.5}
+.formula{font-family:var(--serif);font-size:17px;background:var(--panel);padding:14px 16px;border-radius:4px;overflow-x:auto;white-space:nowrap}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid currentColor}
+.pill.good{color:var(--good)} .pill.warn{color:var(--warn)}
+pre.mermaid{background:var(--panel);border-radius:6px;padding:16px;overflow-x:auto;margin:0}
+a{color:var(--court)}
+footer{font-size:14px;color:var(--muted);border-top:1px solid var(--rule);padding-top:16px}
+</style>
+
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:14px">
+  <div class="kicker">PUCAR Scheduling Justice · Samay</div>
+  <h1>What scheduling alone can do for a judge's day</h1>
+  <p class="lede">If we drop the pre-filing check and every input from the parties, and keep only what the registry controls when it builds the cause list, how far does that get us? We tested it on the hackathon's own data.</p>
+</header>
+
+<section class="answer" aria-label="The answer">
+  <h2 style="font-size:22px">The answer</h2>
+  <p><strong>Scheduling alone nearly doubles disposals.</strong> On the organisers' data, fitting the list to the minutes and setting real next dates takes 60-day disposals from 196 to 329, against 356 with everything on, and cuts wasted listings by 83%. Readiness information (whether summons and warrants are back, counsel's confirmation, the last hearing's note) raises how often a heard case moves forward: 65% with scheduling alone, 79% with everything. Over a year, pre-filing matters for new complaints: 91% get past cognizance, against 32% without it.</p>
+  <div class="figs">
+    <div class="fig"><b>+68%</b><span>cases disposed in 60 days, scheduling only</span></div>
+    <div class="fig"><b>−83%</b><span>wasted listings, scheduling only</span></div>
+    <div class="fig"><b>97%</b><span>of listed cases reached, against 44% today</span></div>
+    <div class="fig"><b>32% → 91%</b><span>new complaints past cognizance in a year, adding pre-filing</span></div>
+  </div>
+</section>
+
+<section>
+  <div class="kicker">The test</div>
+  <h2>Four ways to run the same court</h2>
+  <p>3,000 cases built from the organisers' 100-case roster with their own generator, 60 working days from 1 October 2026 on their calendar, a 330-minute day (10:30 to 12:30, lunch, 13:30 to 17:00), each run averaged over five random seeds. Hearings succeed or fail at the real rates in their data, for the real reasons.</p>
+  <div class="scroll">
+  <svg class="chart" viewBox="0 0 720 230" width="100%" role="img" aria-label="Cases disposed in 60 days: today's rules 196, scheduling only 329, scheduling with fixed slots 346, full system 356">
+    <!-- scale: 0..400 cases across 420px starting at x=250 -->
+    <g>
+      <line class="axis" x1="250" y1="12" x2="250" y2="196"/>
+      <line class="axis" x1="355" y1="12" x2="355" y2="196" stroke-dasharray="2 4"/>
+      <line class="axis" x1="460" y1="12" x2="460" y2="196" stroke-dasharray="2 4"/>
+      <line class="axis" x1="565" y1="12" x2="565" y2="196" stroke-dasharray="2 4"/>
+      <line class="axis" x1="670" y1="12" x2="670" y2="196" stroke-dasharray="2 4"/>
+      <text class="lbl" x="250" y="216" text-anchor="middle">0</text>
+      <text class="lbl" x="355" y="216" text-anchor="middle">100</text>
+      <text class="lbl" x="460" y="216" text-anchor="middle">200</text>
+      <text class="lbl" x="565" y="216" text-anchor="middle">300</text>
+      <text class="lbl" x="670" y="216" text-anchor="middle">400</text>
+    </g>
+    <g>
+      <text x="238" y="37" text-anchor="end">Today's rules</text>
+      <rect x="250" y="22" width="205.8" height="24" rx="3" fill="var(--today)"/>
+      <text x="463" y="39">196</text>
+
+      <text x="238" y="83" text-anchor="end">Scheduling only</text>
+      <rect x="250" y="68" width="345.5" height="24" rx="3" fill="var(--ours)" opacity=".55"/>
+      <text x="603" y="85">329</text>
+
+      <text x="238" y="129" text-anchor="end">+ fixed time slots</text>
+      <rect x="250" y="114" width="363.3" height="24" rx="3" fill="var(--ours)" opacity=".75"/>
+      <text x="621" y="131">346</text>
+
+      <text x="238" y="175" text-anchor="end">+ readiness information</text>
+      <rect x="250" y="160" width="373.8" height="24" rx="3" fill="var(--ours)"/>
+      <text x="631" y="177">356</text>
+    </g>
+  </svg>
+  </div>
+  <p class="muted" style="font-size:14px">Cases disposed in 60 working days, out of a 3,000-case docket.</p>
+
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Handbook metric</th><th class="n">Today's rules</th><th class="n">Scheduling only</th><th class="n">+ fixed slots</th><th class="n">+ readiness</th></tr></thead>
+    <tbody>
+      <tr><td>Utilisation: court minutes used</td><td class="n">94%</td><td class="n">95%</td><td class="n">95%</td><td class="n">95%</td></tr>
+      <tr class="hl"><td>Reach: listed cases the court gets to</td><td class="n">44%</td><td class="n">97%</td><td class="n">97%</td><td class="n">97%</td></tr>
+      <tr><td>Substantiveness: reached hearings that move the case</td><td class="n">48%</td><td class="n">65%</td><td class="n">67%</td><td class="n">79%</td></tr>
+      <tr><td>Backlog: 4+ year cases heard at least once</td><td class="n">32%</td><td class="n">43%</td><td class="n">44%</td><td class="n">47%</td></tr>
+      <tr><td>Predictability: days from first listing to a real hearing</td><td class="n">23</td><td class="n">5</td><td class="n">4</td><td class="n">2</td></tr>
+      <tr><td>Next date: average gap, days</td><td class="n">60</td><td class="n">13</td><td class="n">13</td><td class="n">14</td></tr>
+      <tr><td>Hearings that moved a case, a day</td><td class="n">12.0</td><td class="n">13.1</td><td class="n">13.4</td><td class="n">13.9</td></tr>
+      <tr class="hl"><td>Wasted listings over 60 days</td><td class="n">2,694</td><td class="n">463</td><td class="n">439</td><td class="n">259</td></tr>
+      <tr><td>Cases disposed over 60 days</td><td class="n">196</td><td class="n">329</td><td class="n">346</td><td class="n">356</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <div class="kicker">Why scheduling alone works</div>
+  <h2>Three registry moves carry most of the gain</h2>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <h3>List only what fits</h3>
+      <p>Today 57 cases are listed and the court reaches 44% of them. The rest wait all day and go home. Adding up each case's expected minutes and stopping at 95% of the day brings reach to 97%.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <h3>Spend minutes where hearings succeed</h3>
+      <p>Each case is scored by its priority times its chance of moving forward, per minute. Types that rarely succeed today, such as warrant returns (13.5%) and reports (8.3%), stop crowding out evidence and judgments.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <h3>A real next date</h3>
+      <p>The gap comes from the next purpose in the organisers' table (5 to 45 days), not a flat 60. Cases come back when there is something to hear.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <h3>The cost of dropping readiness</h3>
+      <p>Without knowing whether a warrant is back, the scheduler can only judge each type by its average. All warrant-return cases wait longer, including the ones that were ready. Heard cases move forward 67% of the time rather than 79%, and wasted listings are 439 rather than 259.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="kicker">The design</div>
+  <h2>How a case moves through the system</h2>
+  <pre class="mermaid">
+flowchart LR
+  A["Roster, calendar,<br/>hearing-type table"] --> B{"Pre-filing check<br/>(optional)"}
+  B --> C["Readiness<br/>(optional)"]
+  C --> D["Priority and<br/>P(heard), minutes"]
+  D --> E["Stage 1: which day<br/>CP-SAT"]
+  E --> F["Stage 2: what time<br/>CP-SAT"]
+  F --> G["Judge approves"]
+  G --> H["Court master<br/>marks outcome"]
+  H --> I["Next date"]
+  I --> D
+  </pre>
+  <p class="muted" style="font-size:14px">The two optional boxes are what this test switched off. Everything from priority onwards is the registry's scheduling.</p>
+  <ol class="steps">
+    <li><div><b>Priority.</b> Each case gets a score from its hearing type, how long it has waited and how ready it is. Bail and other liberty matters come first, always.</div></li>
+    <li><div><b>Prediction.</b> For each case: the chance both sides appear, the chance the hearing moves the case forward, and the expected minutes. Adjourning still costs about 2 minutes.</div></li>
+    <li><div><b>Which day.</b> CP-SAT picks the best set of cases for each day across all three courts. A quarter of each day is locked for cases over 4 years old. Nothing is listed past 95% of the day's minutes.</div></li>
+    <li><div><b>What time.</b> CP-SAT sets exact start times. No advocate is due in two courtrooms at once, with 10 minutes to walk between them, and similar cases sit together.</div></li>
+    <li><div><b>Human decision.</b> The judge sees the list with a reason for each case, adds or removes cases and sees the cost first, then approves.</div></li>
+    <li><div><b>Feedback.</b> One tap records the outcome. The next date follows, and the models learn from what happened.</div></li>
+  </ol>
+</section>
+
+<section>
+  <div class="kicker">Prioritisation</div>
+  <h2>What gets listed first</h2>
+  <p>The order is fixed so the protected rules always win.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Order</th><th>Rule</th><th>Can the judge change it?</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Bail, habeas corpus and stays are heard within 2 working days</td><td><span class="pill warn">Locked</span></td></tr>
+      <tr><td>2</td><td>25% of each day's minutes go to cases over 4 or 5 years old</td><td><span class="pill warn">Locked</span></td></tr>
+      <tr><td>3</td><td>Cases below the readiness gate wait until they are ready</td><td><span class="pill warn">Locked</span></td></tr>
+      <tr><td>4</td><td>The rest by priority x chance of moving forward, per minute</td><td><span class="pill good">Weights and throughput dial</span></td></tr>
+      <tr><td>5</td><td>Group each advocate's matters, then similar case types</td><td><span class="pill good">Clustering on or off</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="formula">priority = hearing-type priority + ½ × months waited + ½ × readiness + cost of waiting for this kind of case</div>
+  <p class="muted" style="font-size:14px">The cost of waiting grows over time and jumps at legal deadlines. Bail doubles at 60 days, when default bail becomes available.</p>
+</section>
+
+<section>
+  <div class="kicker">The model</div>
+  <h2>Measured rates, read per case</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>What is estimated</th><th>How</th></tr></thead>
+    <tbody>
+      <tr><td>Will this hearing move the case?</td><td>The organisers' measured rate for its hearing type (plea 90%, warrant 14%), multiplied 2.5 times when the last order signals a risk ("Await warrant", "Absent: Accused", "not ready"), with each type's average held at the measured rate</td></tr>
+      <tr><td>If not, why?</td><td>The real mix of failure reasons for that type: process not back (persists until the return), a party absent, not ready, court, unclear</td></tr>
+      <tr><td>How long will it take?</td><td>The organisers' estimated minutes per type, with spread; an adjournment still costs 2 minutes</td></tr>
+      <tr><td>How does each lever change it?</td><td>Stated assumptions in config: process status known 90%, confirmation removes half of "not ready", fixed slots remove a third of absences. Each is switched off in turn to show its worth</td></tr>
+    </tbody>
+  </table></div>
+  <p>Today's rules on this model come close to the handbook's day without any tuning: 57 listed, 25 reached, 12 moving the case, against the handbook's 60, 20 and 10.</p>
+</section>
+
+<section>
+  <div class="kicker">Pre-filing</div>
+  <h2>The registry's scrutiny, done at e-filing</h2>
+  <div class="two">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <h3>What is checked</h3>
+      <p>For a cheque-dishonour complaint: cheque presented within 3 months, demand notice within 30 days of the return memo, 15 days for the drawer to pay, complaint within a month after that; the documents; the accused's address, phone and email so summons can go electronically; and jurisdiction, with the s.225 enquiry flagged when the accused lives outside the court's area. Nothing is refused: the result says what to cure.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <h3>What it changes</h3>
+      <p>In the organisers' data, 96 of 100 cases went through delay-condonation hearings (3.4 each, 29% moving the case). Computing limitation at filing and hearing condonation with admission removes that track for new complaints, and complete summons details attack the largest failure pool: a summons or warrant not back, behind 196 of 293 failed warrant hearings.</p>
+    </div>
+  </div>
+  <p>The practical plan: ship scheduling first, since it needs only the registry's own data and gives most of the gain. Then add readiness as the court's systems expose process status, and move the registry's scrutiny into the e-filing form.</p>
+</section>
+
+<section>
+  <div class="kicker">Tech stack</div>
+  <h2>What it runs on</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Layer</th><th>Choice</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Optimisation</td><td>Google OR-Tools CP-SAT</td><td>Packs each sitting to 95% of its minutes by value per minute; solves a day in about a second</td></tr>
+      <tr><td>Model</td><td>Calibrated rates per hearing type, per-case signals from the last order</td><td>The organisers' measured rates; no machine learning trained on 100 cases</td></tr>
+      <tr><td>Simulation</td><td>Python and NumPy</td><td>Parties respond to fixed slots, clustering, confirmation and short notice</td></tr>
+      <tr><td>Data</td><td>The organisers' six CSVs, or an uploaded CSV or Excel docket; YAML config</td><td>Nothing hard-coded: day structure, flow, priorities, levers, leave, calendar, registry rules</td></tr>
+      <tr><td>Registry</td><td>Statutory timeline computed from dates</td><td>Pre-filing scrutiny of a s.138 complaint at e-filing</td></tr>
+      <tr><td>Interface</td><td>Streamlit and Plotly</td><td>Today's list, Docket, Calendar, Results; upload flow; data and lever pages</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer>
+  Assumed lever strengths are stated in config/pucar.yaml. Numbers are simulations on the organisers' anonymised data. Code: <a href="https://github.com/Pranav0509-stack/foss-scheduling-hackathon/tree/team-ready-to-list/submissions/ready-to-list">submissions/ready-to-list</a>.
+</footer>
+
+</div>

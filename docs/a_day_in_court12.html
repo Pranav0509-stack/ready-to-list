@@ -1,0 +1,549 @@
+<title>A Day in Court 12</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#ECEEEA; --paper:#F9FAF7; --ink:#111925; --muted:#56627A; --rule:#D3DAE5; --soft:#E5E9EF;
+  --navy:#1B2A41; --blue:#3D6FD9; --gold:#B07A1E; --goldsoft:#F4E8D2; --green:#2F7454; --greensoft:#E1F0E8; --red:#A8253B;
+  --onnavy:#FFFFFF;
+  --serif:"Spectral",Georgia,"Times New Roman",serif;
+  --sans:"Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){color-scheme:dark;
+    --bg:#0D1117; --paper:#151B24; --ink:#E8EBF0; --muted:#A3ADBF; --rule:#2B3442; --soft:#1F2733;
+    --navy:#AFC5EA; --blue:#80A5F0; --gold:#E2B46A; --goldsoft:#33291A; --green:#6CC09A; --greensoft:#18302A; --red:#E0788A;
+    --onnavy:#0D1117;}
+}
+:root[data-theme="dark"]{color-scheme:dark;
+  --bg:#0D1117; --paper:#151B24; --ink:#E8EBF0; --muted:#A3ADBF; --rule:#2B3442; --soft:#1F2733;
+  --navy:#AFC5EA; --blue:#80A5F0; --gold:#E2B46A; --goldsoft:#33291A; --green:#6CC09A; --greensoft:#18302A; --red:#E0788A;
+  --onnavy:#0D1117;}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;padding-inline:16px}
+.deck{max-width:1120px;margin:0 auto;padding-block:20px 88px;display:flex;flex-direction:column;gap:20px}
+.slide{background:var(--paper);border:1px solid var(--rule);border-radius:10px;aspect-ratio:16/9;max-width:100%;
+  padding:clamp(20px,4vw,52px);display:flex;flex-direction:column;gap:clamp(10px,1.6vw,20px);overflow:hidden;position:relative;box-sizing:border-box}
+.js .slide{display:none}.js .slide.on{display:flex}
+.num{position:absolute;right:clamp(16px,3vw,34px);bottom:clamp(12px,2vw,22px);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.brand{position:absolute;left:clamp(20px,4vw,52px);bottom:clamp(12px,2vw,22px);font-family:var(--serif);font-weight:600;color:var(--gold);font-size:15px}
+.eyebrow{font-size:clamp(10.5px,1.05vw,12.5px);letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700}
+h1,h2,h3{font-family:var(--serif);margin:0;text-wrap:balance;line-height:1.12;color:var(--ink)}
+h1{font-size:clamp(40px,7vw,88px);font-weight:600;color:var(--gold);letter-spacing:-.01em}
+h2{font-size:clamp(22px,3.1vw,38px);font-weight:600}
+h3{font-size:clamp(14px,1.55vw,18px);font-weight:600}
+p,li{font-size:clamp(13px,1.45vw,17.5px);line-height:1.5;margin:0;max-width:64ch}
+.muted{color:var(--muted)}
+.lead{font-family:var(--serif);font-size:clamp(18px,2.4vw,30px);line-height:1.3;max-width:30ch}
+.grid{display:grid;gap:clamp(10px,1.8vw,22px)}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}.slide{aspect-ratio:auto}}
+.card{border:1px solid var(--rule);border-radius:8px;padding:clamp(12px,1.6vw,18px);display:flex;flex-direction:column;gap:6px;background:var(--paper)}
+.card.hl{background:var(--navy);border-color:var(--navy)}
+.card.hl h3,.card.hl p,.card.hl .k{color:var(--onnavy)}
+.step{font-family:var(--serif);font-size:clamp(26px,3.4vw,40px);font-weight:600;color:var(--gold);line-height:1}
+.stat b{display:block;font-family:var(--serif);font-size:clamp(28px,4.4vw,54px);font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.stat .from{font-size:clamp(12px,1.2vw,14px);color:var(--muted)}
+.stat .k{font-size:clamp(12px,1.25vw,15px);color:var(--muted)}
+.stat b.up{color:var(--green)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:clamp(11.5px,1.3vw,15.5px)}
+th,td{text-align:left;padding:clamp(4px,.65vw,8px) 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:clamp(10px,1vw,12px);letter-spacing:.06em;text-transform:uppercase}
+td.n,th.n{text-align:right}
+.tw{overflow-x:auto}
+.formula{background:var(--navy);color:var(--onnavy);border-radius:8px;padding:clamp(12px,1.8vw,20px) clamp(14px,2vw,24px);font-family:ui-monospace,Menlo,monospace;font-size:clamp(12px,1.45vw,17px);line-height:1.7;overflow-x:auto;white-space:pre}
+.formula .c{color:var(--gold)}
+/* score bars */
+.bars{display:flex;flex-direction:column;gap:clamp(6px,1vw,11px)}
+.bar{display:grid;grid-template-columns:clamp(96px,13vw,150px) 1fr clamp(56px,7vw,80px);align-items:center;gap:12px;font-size:clamp(12px,1.35vw,16px)}
+.track{height:clamp(10px,1.3vw,14px);background:var(--soft);border-radius:3px;position:relative}
+.fill{position:absolute;inset:0 auto 0 0;background:var(--gold);border-radius:3px}
+.cap{position:absolute;inset:0 auto 0 0;border:1.5px solid var(--navy);border-radius:3px;background:transparent}
+.bar .v{font-variant-numeric:tabular-nums;text-align:right;font-weight:600}
+.bar .v span{color:var(--muted);font-weight:400}
+/* day strip */
+.day{display:grid;grid-template-columns:15fr 105fr 60fr 210fr;gap:3px;border-radius:6px;overflow:hidden;font-size:clamp(10.5px,1.15vw,13px)}
+.day div{padding:clamp(8px,1.2vw,14px) 8px;background:var(--navy);color:var(--onnavy);line-height:1.3}
+.day .op{background:var(--gold);color:var(--onnavy)}
+.day .lu{background:var(--soft);color:var(--muted)}
+.ticks{display:grid;grid-template-columns:15fr 105fr 60fr 210fr;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.flow .s{background:var(--soft);border-radius:6px;padding:8px 12px;font-size:clamp(12px,1.35vw,15.5px);font-weight:500}
+.flow .s.g{background:var(--goldsoft)}
+.flow .a{color:var(--muted)}
+.pill{display:inline-block;font-size:.8em;font-weight:600;padding:1px 8px;border-radius:999px;background:var(--soft);color:var(--navy)}
+.pill.g{background:var(--greensoft);color:var(--green)}
+.rows{display:flex;flex-direction:column;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.rows .r{display:grid;grid-template-columns:62px 1.3fr 1.2fr 56px;gap:10px;padding:clamp(6px,.8vw,9px) 12px;border-top:1px solid var(--rule);font-size:clamp(11.5px,1.3vw,15px);font-variant-numeric:tabular-nums;align-items:center}
+.rows .r:first-child{border-top:0}
+.rows .h{background:var(--soft);color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.rows .grp{background:var(--goldsoft);color:var(--gold);font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;grid-template-columns:1fr}
+.rows .t{font-family:var(--serif);font-weight:600}
+.quote{font-family:var(--serif);font-size:clamp(20px,3vw,38px);line-height:1.25;max-width:26ch}
+.nav{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--paper);border-top:1px solid var(--rule);display:flex;gap:10px;justify-content:center;align-items:center}
+.nav button{font:inherit;font-size:14px;background:var(--navy);color:var(--onnavy);border:0;border-radius:6px;padding:8px 18px;cursor:pointer}
+.nav button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.nav button[disabled]{opacity:.35;cursor:default}
+.nav .pos{min-width:64px;text-align:center;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.no-js .nav{display:none}
+ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
+.push{margin-top:auto}
+</style>
+
+<style>
+.hb{display:flex;flex-direction:column;gap:clamp(7px,1.1vw,12px)}
+.hr{display:grid;grid-template-columns:clamp(110px,14vw,150px) 1fr clamp(64px,8vw,96px);gap:12px;align-items:center;font-size:clamp(12px,1.35vw,16px);font-variant-numeric:tabular-nums}
+.ht{height:clamp(14px,1.8vw,22px);background:var(--soft);border-radius:3px;position:relative;overflow:hidden}
+.hf{position:absolute;inset:0 auto 0 0;background:var(--navy);border-radius:3px}
+.hf.g{background:var(--gold)}.hf.gr{background:var(--green)}.hf.r{background:var(--red)}
+.hr .v{text-align:right;font-weight:600}
+.cases{display:flex;flex-direction:column;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.cases .c{display:grid;grid-template-columns:clamp(100px,13vw,140px) 1fr 50px;gap:12px;padding:clamp(8px,1vw,12px) 14px;border-top:1px solid var(--rule);font-size:clamp(12px,1.35vw,16px);align-items:center}
+.cases .c:first-child{border-top:0}
+.cases .id{font-weight:700;font-variant-numeric:tabular-nums}
+.cases .s{font-family:var(--serif);font-weight:600;font-size:1.25em;text-align:right}
+.cases .c.out{background:var(--soft);color:var(--muted)}
+.cases .c.out .id{text-decoration:line-through}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:1px}
+.tag.hold{background:var(--goldsoft);color:var(--gold)}.tag.ok{background:var(--greensoft);color:var(--green)}
+.alloc{display:flex;height:clamp(40px,5.5vw,62px);border-radius:6px;overflow:hidden;font-size:clamp(10px,1.1vw,13px);font-weight:600}
+.alloc div{display:flex;align-items:center;justify-content:center;text-align:center;padding:0 4px;color:var(--onnavy);line-height:1.2}
+.alloc .q1{background:var(--gold)}.alloc .q2{background:#C79A4B}.alloc .cs{background:var(--blue)}.alloc .ot{background:var(--navy)}.alloc .sp{background:var(--soft);color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:clamp(11px,1.15vw,13.5px);color:var(--muted)}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.box{display:flex;gap:6px;height:clamp(44px,6vw,64px);border:2px dashed var(--rule);border-radius:8px;padding:4px}
+.box div{border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--onnavy);font-weight:600;font-size:clamp(11px,1.2vw,14px)}
+.box .a{background:var(--navy)}.box .b{background:var(--gold)}.box .e{background:transparent;color:var(--red);border:1.5px solid var(--red)}
+.big{font-family:var(--serif);font-size:clamp(28px,4vw,48px);font-weight:600;line-height:1}
+.win{display:flex;flex-direction:column;gap:8px}
+.win .w{display:grid;grid-template-columns:clamp(54px,7vw,72px) 1fr auto;gap:12px;align-items:center;border:1px solid var(--rule);border-radius:8px;padding:clamp(8px,1vw,12px) 14px;font-size:clamp(12px,1.35vw,16px)}
+.win .t{font-family:var(--serif);font-weight:600;font-size:1.3em}
+.win .p{background:var(--greensoft);color:var(--green);font-weight:600;border-radius:999px;padding:2px 10px;font-size:.85em;white-space:nowrap}
+.eq{font-family:ui-monospace,Menlo,monospace;font-size:clamp(12.5px,1.5vw,18px);background:var(--soft);border-radius:8px;padding:clamp(10px,1.4vw,16px) clamp(12px,1.8vw,20px);overflow-x:auto;white-space:pre;line-height:1.65}
+.defs{display:grid;grid-template-columns:clamp(60px,7vw,90px) 1fr;gap:6px 14px;font-size:clamp(11.5px,1.3vw,15px);align-items:baseline}
+.defs b{font-family:ui-monospace,Menlo,monospace;color:var(--gold);font-weight:700}
+</style>
+<div class="deck" id="deck">
+
+<section class="slide" aria-label="Title">
+  <div class="eyebrow">Samay · how one afternoon is scheduled</div>
+  <h1>A day in Court 12</h1>
+  <p class="lead">Four cheque-dishonour cases under NI Act s.138, and exactly how Samay decides which are heard, when, and why.</p>
+  <p class="muted push">Justice Sehgal's docket, from the organisers' real data. Scores are real; chances and minutes are rounded for the example.</p>
+  <div class="num">1</div>
+</section>
+
+<section class="slide" aria-label="The idea">
+  <div class="eyebrow">The idea in one line</div>
+  <h2>Every case gets two numbers</h2>
+  <div class="grid g2" style="flex:1;align-content:center">
+    <div class="card hl"><span class="step" style="color:var(--gold)">Worth</span><h3>How much hearing it today delivers</h3><p>Its priority score times the chance the hearing actually goes ahead.</p></div>
+    <div class="card"><span class="step">Minutes</span><h3>How long it will take</h3><p>Full time if it goes ahead, about 2 minutes if it is adjourned, 1 minute to call it.</p></div>
+  </div>
+  <p class="quote" style="font-size:clamp(17px,2.2vw,26px)">The optimiser picks the cases worth the most that fit in the judge's time.</p>
+  <div class="brand">Samay</div><div class="num">2</div>
+</section>
+
+<section class="slide" aria-label="Four cases">
+  <div class="eyebrow">The afternoon's candidates</div>
+  <h2>Four cases due in the same sitting</h2>
+  <div class="cases">
+    <div class="c"><span class="id">ST/1261/2017</span><span>9 years old. <b>For judgment.</b> Both advocates present last time.</span><span class="s">91</span></div>
+    <div class="c"><span class="id">ST/608/2017</span><span>Defence evidence. <b>Accused absent</b> last time. "Last chance".</span><span class="s">70</span></div>
+    <div class="c"><span class="id">ST/1166/2023</span><span>Complainant's evidence. "Last chance".</span><span class="s">41</span></div>
+    <div class="c"><span class="id">ST/7/2025</span><span><b>Warrant issued</b>, not yet served.</span><span class="s">12</span></div>
+  </div>
+  <p class="muted">Score out of 100: age 35, readiness 25, near judgment 15, repeated hearings 15, urgency in the last order 10.</p>
+  <div class="brand">Samay</div><div class="num">3</div>
+</section>
+
+<section class="slide" aria-label="Scoring formula">
+  <div class="eyebrow">How the score is built · five factors, added</div>
+  <h2>Sₖ = 35·age + 25·readiness + 15·stage + 15·churn + 10·urgency</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Factor</th><th class="n">Max</th><th>Value, 0 to 1</th><th>Where the number comes from</th></tr></thead>
+    <tbody>
+      <tr><td>Age</td><td class="n">35</td><td>min(1, years since filing ÷ 8)</td><td>8 = this docket's mean age + 2 sd, computed once</td></tr>
+      <tr><td>Readiness</td><td class="n">25</td><td>type rate × (0.7 + 0.3 × share of needed people present)</td><td>Type rate from the organisers' table; people from the last order's "Present:" line</td></tr>
+      <tr><td>Near disposal</td><td class="n">15</td><td>stage number ÷ 10</td><td>11 stages, admission 0 to judgment 10</td></tr>
+      <tr><td>Churn</td><td class="n">15</td><td>min(1, hearings held ÷ expected − 1)</td><td>Expected = median hearings summed over stages so far</td></tr>
+      <tr><td>Urgency</td><td class="n">10</td><td>"last chance" 1.0, "for judgment" 0.8, else 0</td><td>Read from the last order</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">Added, never multiplied: an old case at a slow stage is not pushed to zero. Each case is scored on its own file; the score never compares cases.</p>
+  <div class="brand">Samay</div><div class="num">4</div>
+</section>
+
+<section class="slide" aria-label="Scoring worked">
+  <div class="eyebrow">The same formula on three real files</div>
+  <h2>91.3, 69.9 and 12.5, factor by factor</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Factor</th><th class="n">ST/1261/2017</th><th class="n">ST/608/2017</th><th class="n">ST/7/2025</th></tr></thead>
+    <tbody>
+      <tr><td>Age (35)</td><td class="n">9.2 yrs → <b>35.0</b></td><td class="n">9.4 yrs → <b>35.0</b></td><td class="n">1.1 yrs → <b>4.7</b></td></tr>
+      <tr><td>Readiness (25)</td><td class="n">judgment 100%, all present → <b>25.0</b></td><td class="n">evidence 17%, accused absent → <b>3.8</b></td><td class="n">warrant 14% → <b>3.4</b></td></tr>
+      <tr><td>Near disposal (15)</td><td class="n">arguments, 10/11 → <b>13.5</b></td><td class="n">defence evidence, 9/11 → <b>12.0</b></td><td class="n">appearance, 4/11 → <b>4.5</b></td></tr>
+      <tr><td>Churn (15)</td><td class="n">43 held, 26 expected → <b>9.8</b></td><td class="n">37 held, 23 expected → <b>9.1</b></td><td class="n">6 held, 8 expected → <b>0</b></td></tr>
+      <tr><td>Urgency (10)</td><td class="n">"for judgment" → <b>8.0</b></td><td class="n">"last chance" → <b>10.0</b></td><td class="n">none → <b>0</b></td></tr>
+      <tr><td><b>Score</b></td><td class="n"><b>91.3</b></td><td class="n"><b>69.9</b></td><td class="n"><b>12.5</b> · Conditional</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">ST/7/2025 is Conditional: its last order says "for return of warrant", so it is not listed until the warrant is back. Across the 100 cases: 80 Eligible, 20 Conditional, scores 7 to 91, average 38.</p>
+  <div class="brand">Samay</div><div class="num">5</div>
+</section>
+
+<section class="slide" aria-label="Status and weights">
+  <div class="eyebrow">Beside the score</div>
+  <h2>Status, flags, and what the judge may change</h2>
+  <div class="grid g2" style="align-items:start;flex:1">
+    <div class="card"><h3>Status and flags, from the last order</h3><ul>
+      <li><b>Conditional</b>: "return of summons", "issue NBW", "take steps" and the like. Listed only when the process is back.</li>
+      <li><b>Last chance</b>, <b>Churning</b>, <b>Backlog 4y+</b>, <b>Ageing 5y+</b>, <b>Liberty lane</b> for bail, <b>Mediation report pending</b>.</li>
+      <li>Flags never change the score; they steer the day-builder.</li></ul></div>
+    <div class="card hl"><h3>Weights the judge can move</h3><ul>
+      <li>Five sliders on the Priority page; the docket re-ranks live.</li>
+      <li><b>Age can never fall below 20.</b> Everything else rescales to 100.</li>
+      <li>Locked and not on any slider: bail first, 25% of every sitting for 4+ year cases.</li></ul></div>
+  </div>
+  <div class="brand">Samay</div><div class="num">6</div>
+</section>
+
+<section class="slide" aria-label="Filter">
+  <div class="eyebrow">Step 1 · filter</div>
+  <h2>A case that cannot go ahead is not listed</h2>
+  <div class="cases">
+    <div class="c"><span class="id">ST/1261/2017</span><span>Ready<span class="tag ok">in</span></span><span class="s">91</span></div>
+    <div class="c"><span class="id">ST/608/2017</span><span>Ready<span class="tag ok">in</span></span><span class="s">70</span></div>
+    <div class="c"><span class="id">ST/1166/2023</span><span>Ready<span class="tag ok">in</span></span><span class="s">41</span></div>
+    <div class="c out"><span class="id">ST/7/2025</span><span>Warrant not back<span class="tag hold">held</span></span><span class="s">12</span></div>
+  </div>
+  <ul>
+    <li>Listing ST/7/2025 today means calling it, finding the accused absent, and adjourning. Everyone's day wasted.</li>
+    <li>It is listed <b>the day the warrant returns</b>, not 60 days later.</li>
+    <li>In the organisers' data, 196 of 293 failed warrant hearings were waiting on the process.</li>
+  </ul>
+  <div class="brand">Samay</div><div class="num">7</div>
+</section>
+
+<section class="slide" aria-label="Chance">
+  <div class="eyebrow">Step 2 · the chance it moves forward</div>
+  <h2>Will the hearing actually happen?</h2>
+  <div class="hb" role="img" aria-label="Chance each case moves forward">
+    <div class="hr"><span>ST/1261/2017</span><div class="ht"><div class="hf gr" style="width:95%"></div></div><span class="v">about 95%</span></div>
+    <div class="hr"><span>ST/1166/2023</span><div class="ht"><div class="hf g" style="width:35%"></div></div><span class="v">about 35%</span></div>
+    <div class="hr"><span>ST/608/2017</span><div class="ht"><div class="hf r" style="width:15%"></div></div><span class="v">about 15%</span></div>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Case</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>ST/1261/2017</td><td>Judgment hearings nearly always happen, and both sides attended</td></tr>
+      <tr><td>ST/1166/2023</td><td>Complainant's evidence goes ahead about 3 times in 10</td></tr>
+      <tr><td>ST/608/2017</td><td>Defence evidence goes ahead 17% of the time; "Absent: Accused" lowers it further</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">Rates come from the organisers' substantiveness and failure-reason tables; the last order adjusts them.</p>
+  <div class="brand">Samay</div><div class="num">8</div>
+</section>
+
+<section class="slide" aria-label="Minutes">
+  <div class="eyebrow">Step 3 · expected minutes</div>
+  <h2>Plan the time each case will really use</h2>
+<div class="eq">minutes = chance × 32  +  (1 − chance) × 2  +  1
+                    full hearing     adjourned      calling it</div>
+  <div class="hb" role="img" aria-label="Expected minutes per case">
+    <div class="hr"><span>ST/1261/2017</span><div class="ht"><div class="hf" style="width:100%"></div></div><span class="v">31 min</span></div>
+    <div class="hr"><span>ST/1166/2023</span><div class="ht"><div class="hf" style="width:45%"></div></div><span class="v">14 min</span></div>
+    <div class="hr"><span>ST/608/2017</span><div class="ht"><div class="hf" style="width:26%"></div></div><span class="v">8 min</span></div>
+  </div>
+  <p class="muted">32 = the organisers' 30 minutes for an evidence or judgment hearing, plus the average overrun (hearings run long more often than short).</p>
+  <div class="brand">Samay</div><div class="num">9</div>
+</section>
+
+<section class="slide" aria-label="Value">
+  <div class="eyebrow">Step 4 · worth = score × chance</div>
+  <h2>A high score that will not happen delivers nothing</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Case</th><th class="n">Score</th><th class="n">× chance</th><th class="n">= worth today</th></tr></thead>
+    <tbody>
+      <tr><td>ST/1261/2017</td><td class="n">91</td><td class="n">0.95</td><td class="n"><b>86</b></td></tr>
+      <tr><td>ST/1166/2023</td><td class="n">41</td><td class="n">0.35</td><td class="n"><b>14</b></td></tr>
+      <tr><td>ST/608/2017</td><td class="n">70</td><td class="n">0.15</td><td class="n"><b>11</b></td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid g2">
+    <div class="card"><h3>ST/608/2017 drops from 70 to 11</h3><p>Not because it matters less, but because it is likely to be adjourned again. Its value rises as soon as the accused's attendance is secured.</p></div>
+    <div class="card"><h3>Boosts sit on top of the score</h3><p>+10 on a 2nd listing, +25 from the 3rd once the cause is cured, +15 while a case is under 6 months (NI Act s.143).</p></div>
+  </div>
+  <div class="brand">Samay</div><div class="num">10</div>
+</section>
+
+<section class="slide" aria-label="Fill order">
+  <div class="eyebrow">Step 5 · filling the afternoon, 13:30 to 17:00</div>
+  <h2>Rules first, then the optimiser</h2>
+  <div class="flow">
+    <span class="s g">1 · Bail, always</span><span class="a">→</span>
+    <span class="s g">2 · 4+ year cases: 25% locked</span><span class="a">→</span>
+    <span class="s">3 · CP-SAT fills the rest</span><span class="a">→</span>
+    <span class="s">4 · 5 on standby</span>
+  </div>
+  <div class="alloc" role="img" aria-label="How the 210-minute afternoon is used">
+    <div class="q1" style="width:14.8%">1261/2017<br>31</div>
+    <div class="q2" style="width:3.8%">608</div>
+    <div class="cs" style="width:6.7%">1166<br>14</div>
+    <div class="ot" style="width:69.7%">Other cases chosen by CP-SAT · 146 min</div>
+    <div class="sp" style="width:5%">spare</div>
+  </div>
+  <div class="legend"><span><i style="background:var(--gold)"></i>Old-case quota: both 2017 cases, 39 of 50 min</span><span><i style="background:var(--blue)"></i>Chosen by CP-SAT</span><span><i style="background:var(--soft)"></i>5% spare, 10.5 min</span></div>
+  <p class="muted">The afternoon has 210 minutes; Samay plans 95% of it (199.5). The 2017 cases enter through the locked quota, so an old case is never squeezed out.</p>
+  <div class="brand">Samay</div><div class="num">11</div>
+</section>
+
+<section class="slide" aria-label="Why CP-SAT">
+  <div class="eyebrow">Step 5 · why an optimiser, not a sort</div>
+  <h2>With 40 minutes left, sorting leaves a gap</h2>
+  <div class="grid g2" style="flex:1;align-content:center">
+    <div class="card">
+      <h3>Sort by worth</h3>
+      <div class="box"><div class="a" style="flex:35">Case A · 35 min</div><div class="e" style="flex:5">5</div></div>
+      <p>A fits; B and C no longer do.</p>
+      <span class="big">90</span>
+    </div>
+    <div class="card hl">
+      <h3>CP-SAT</h3>
+      <div class="box" style="border-color:var(--onnavy)"><div class="b" style="flex:20">B · 20</div><div class="b" style="flex:20">C · 20</div></div>
+      <p>Checks the combinations, proves the best.</p>
+      <span class="big" style="color:var(--gold)">115</span>
+    </div>
+  </div>
+  <p class="muted">Case A worth 90 (35 min), B worth 60 (20 min), C worth 55 (20 min). Google OR-Tools CP-SAT, open source. One court day plans in 83 ms.</p>
+  <div class="brand">Samay</div><div class="num">12</div>
+</section>
+
+<section class="slide" aria-label="Times">
+  <div class="eyebrow">Step 6 · a time for everyone</div>
+  <h2>Grouped by hearing type, a window for each party</h2>
+  <div class="win">
+    <div class="w"><span class="t">13:30</span><span><b>ST/608/2017</b> · defence evidence</span><span class="p">13:30 to 14:30</span></div>
+    <div class="w"><span class="t">13:39</span><span><b>ST/1166/2023</b> · complainant's evidence</span><span class="p">13:30 to 14:30</span></div>
+    <div class="w"><span class="t">13:53</span><span><b>ST/1261/2017</b> · judgment</span><span class="p">13:30 to 14:30</span></div>
+  </div>
+  <ul>
+    <li><b>Clock time</b> = sitting start + the expected minutes of the cases before it (8 + 1, then 14).</li>
+    <li><b>Order</b>: one hearing type at a time, one advocate at a time, so nobody runs between courtrooms.</li>
+    <li><b>Window</b>: one hour from the half hour before, instead of waiting all day.</li>
+  </ul>
+  <p class="muted">Simplified: in the real list other cases sit between these.</p>
+  <div class="brand">Samay</div><div class="num">13</div>
+</section>
+
+<section class="slide" aria-label="Next date rules">
+  <div class="eyebrow">Step 7 · after the hearing · the rule</div>
+  <h2>The next date follows what happened, never the calendar</h2>
+<div class="eq">gap  =  G(next stage)          if the hearing moved the case
+     =  F(reason)              if it failed
+     =  max(F(process), days until the warrant is due back)   if waiting on process
+     =  1 sitting day          if the court did not reach it, or the judge was on leave</div>
+  <div class="tw"><table>
+    <thead><tr><th>Outcome</th><th class="n">Gap, days</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Moved forward</td><td class="n">G: 5 to 45</td><td>The next step needs that long to prepare</td></tr>
+      <tr><td>Summons or warrant not back</td><td class="n">21, or the return day</td><td>No point listing before the accused can be there</td></tr>
+      <tr><td>A party absent</td><td class="n">7</td><td>Keeps pressure on attendance</td></tr>
+      <tr><td>Not ready</td><td class="n">10</td><td>Time to prepare, not enough to drift</td></tr>
+      <tr><td>Court problem</td><td class="n">3</td><td>Not the parties' fault</td></tr>
+      <tr><td>Not reached, or judge on leave</td><td class="n">next sitting</td><td>It was ready; only time ran out</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">Today's rule: a flat 60 days for every unfinished case. Samay's average gap: 14 days.</p>
+  <div class="brand">Samay</div><div class="num">14</div>
+</section>
+
+<section class="slide" aria-label="Gap by next stage">
+  <div class="eyebrow">Step 7 · G(next stage) · from the organisers' table</div>
+  <h2>When a case moves, the gap is the next stage's</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Next stage</th><th class="n">G, days</th><th>Median hearings per case</th></tr></thead>
+    <tbody>
+      <tr><td>Admission, delay condonation, application review</td><td class="n">5</td><td>1 to 3</td></tr>
+      <tr><td>Cognizance, plea, examination, evidence, arguments, bail</td><td class="n">14</td><td>1 to 5</td></tr>
+      <tr><td>Appearance, warrant, judgment</td><td class="n">21</td><td>2 to 3</td></tr>
+      <tr><td>Reports (mediation)</td><td class="n">45</td><td>3</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li>Column "Time to next hearing given this is the purpose" in <code>hearing_type_reference.csv</code>.</li>
+    <li>ST/1166/2023 closes complainant's evidence. Next stage is defence evidence: <b>G = 14 days</b>.</li>
+    <li>ST/1261/2017: judgment delivered, no next stage. <b>Disposed</b>; the judge fixes it.</li>
+  </ul>
+  <div class="brand">Samay</div><div class="num">15</div>
+</section>
+
+<section class="slide" aria-label="Days to a date">
+  <div class="eyebrow">Step 7 · turning days into a real date</div>
+  <h2>Calendar days become sitting days, and the date is a floor</h2>
+<div class="eq">due  =  today  +  max(1, round(gap × 5/7))       in sitting days
+        skip weekends, Kerala HC holidays, judge's leave</div>
+  <div class="grid g2" style="align-items:start">
+    <div class="tw"><table>
+      <thead><tr><th>Case</th><th>gap</th><th>× 5/7</th><th>Due</th></tr></thead>
+      <tbody>
+        <tr><td>ST/1166/2023</td><td>14</td><td>10 sittings</td><td>about 2 weeks</td></tr>
+        <tr><td>ST/608/2017</td><td>7</td><td>5 sittings</td><td>1 week</td></tr>
+        <tr><td>ST/7/2025</td><td>max(21, 30)</td><td>21 sittings</td><td>the warrant's return day</td></tr>
+        <tr><td>Not reached</td><td>1</td><td>1 sitting</td><td>tomorrow</td></tr>
+      </tbody>
+    </table></div>
+    <ul>
+      <li><b>5/7</b>: a court sits about 5 days in 7.</li>
+      <li><b>A floor, not a promise.</b> On that day the case joins the due pool. If it does not fit, it stays due and competes tomorrow with a higher value. It is never pushed 60 days out.</li>
+      <li><b>Held cases</b> wait for their cause: a summons still out, or a 3rd-listing failure not yet cured.</li>
+    </ul>
+  </div>
+  <div class="brand">Samay</div><div class="num">16</div>
+</section>
+
+<section class="slide" aria-label="Escalation">
+  <div class="eyebrow">Step 7 · what a failure does to the next listing</div>
+  <h2>Each failure raises the case, once its cause is cured</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Listing for the same purpose</th><th class="n">Boost b</th><th>What else changes</th></tr></thead>
+    <tbody>
+      <tr><td>1st</td><td class="n">0</td><td>Normal</td></tr>
+      <tr><td>2nd</td><td class="n">+10</td><td>Readiness checked two days before; a reason code is required to adjourn</td></tr>
+      <tr><td>3rd and later (deferred)</td><td class="n">+25</td><td>Fixed time slot; held until the last failure is cured</td></tr>
+    </tbody>
+  </table></div>
+  <p>ST/608/2017, accused absent again: next date in 7 days, now a 3rd listing. It carries <b>+25</b>, a fixed slot, and in the data 44% of deferred listings move the case against 24% of second listings.</p>
+  <p class="muted">The counter resets to 1st when the purpose succeeds and the case moves to the next stage.</p>
+  <div class="brand">Samay</div><div class="num">17</div>
+</section>
+
+<section class="slide" aria-label="Glossary">
+  <div class="eyebrow">Every term, defined</div>
+  <h2>The symbols on these slides</h2>
+  <div class="grid g2" style="align-items:start">
+    <div class="defs">
+      <b>Sₖ</b><span>Priority score, 0 to 100: age 35, readiness 25, near disposal 15, churn 15, urgency 10</span>
+      <b>pₖ</b><span>Chance this hearing moves the case: type rate × attendance signal × levers; 0.02 to 0.98</span>
+      <b>mₖ</b><span>Organisers' minutes for the hearing type: 5, 10, 15 or 30</span>
+      <b>σ</b><span>Spread of real durations around mₖ, lognormal, 0.35 (assumed)</span>
+      <b>1.063</b><span>e<sup>σ²/2</sup>: mean overrun factor, so 30 min plans as 31.9</span>
+      <b>eₖ</b><span>Expected minutes = pₖ × mₖ × 1.063 + (1 − pₖ) × 2 + 1</span>
+      <b>bₖ</b><span>Listing boost: 0, +10, +25 by listing number for the same purpose</span>
+    </div>
+    <div class="defs">
+      <b>cₖ</b><span>+15 while the case is under 180 days (NI Act s.143, six months)</span>
+      <b>vₖ</b><span>Worth today = (Sₖ + bₖ + cₖ) × pₖ</span>
+      <b>C</b><span>Sitting capacity: (minutes − 15 opening in the morning) × 0.95</span>
+      <b>R</b><span>Room left for CP-SAT after bail and the 25% old-case quota</span>
+      <b>xₖ</b><span>1 if listed today, 0 if not; CP-SAT maximises Σ vₖ eₖ<sup>0.75</sup> xₖ with Σ eₖ xₖ ≤ R</span>
+      <b>G</b><span>Gap after success: the next stage's days from the organisers' table</span>
+      <b>F</b><span>Gap after failure: process 21, absent 7, not ready 10, court 3, unclear 7</span>
+    </div>
+  </div>
+  <div class="brand">Samay</div><div class="num">18</div>
+</section>
+
+<section class="slide" aria-label="Results">
+  <div class="eyebrow">Results · 60 working days · 330 minutes a day · 5 runs · organisers' data</div>
+  <h2>Same judge, same minutes, same cases. Only the rules differ.</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Measure</th><th class="n">Today's rules</th><th class="n">Samay</th></tr></thead>
+    <tbody>
+      <tr><td>Listed a day</td><td class="n">57</td><td class="n"><b>18</b></td></tr>
+      <tr><td>Listed cases actually heard</td><td class="n">44%</td><td class="n"><b>97%</b></td></tr>
+      <tr><td>Heard cases that move forward</td><td class="n">48%</td><td class="n"><b>79%</b></td></tr>
+      <tr><td>Hearings that move a case, per day</td><td class="n">11.9</td><td class="n"><b>13.9</b></td></tr>
+      <tr><td>Cases over 4 years heard at least once</td><td class="n">32%</td><td class="n"><b>47%</b></td></tr>
+      <tr><td>Days from listing to a real hearing</td><td class="n">23</td><td class="n"><b>2</b></td></tr>
+      <tr><td>Average gap to the next date</td><td class="n">60 days</td><td class="n"><b>14 days</b></td></tr>
+      <tr><td>Wasted listings in the quarter</td><td class="n">2,694</td><td class="n"><b>259</b></td></tr>
+      <tr><td>Cases disposed in the quarter</td><td class="n">196</td><td class="n"><b>356</b></td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">Utilisation is 94% in both arms: today's rules spend the minutes calling 32 cases a day that are sent back; Samay spends them on hearings that happen.</p>
+  <div class="brand">Samay</div><div class="num">19</div>
+</section>
+
+<section class="slide" aria-label="Results by year and lever">
+  <div class="eyebrow">One judge, one year · what each lever adds</div>
+  <h2>Scheduling nearly doubles disposals; every lever together does more</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Arm</th><th class="n">Disposed</th><th class="n">New complaints past the first stage</th><th class="n">Delay-condonation hearings</th><th class="n">Wasted listings</th></tr></thead>
+    <tbody>
+      <tr><td>Today's rules</td><td class="n">541</td><td class="n">3%</td><td class="n">407</td><td class="n">11,708</td></tr>
+      <tr><td>Scheduling only</td><td class="n">643</td><td class="n">32%</td><td class="n">290</td><td class="n">3,913</td></tr>
+      <tr><td>Scheduling + pre-filing</td><td class="n">644</td><td class="n">91%</td><td class="n">20</td><td class="n">3,939</td></tr>
+      <tr><td><b>Samay, all levers</b></td><td class="n"><b>847</b></td><td class="n"><b>92%</b></td><td class="n"><b>9</b></td><td class="n"><b>1,958</b></td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid g3">
+    <div class="stat"><span class="k">A 420-minute day</span><b>465</b><span class="from">disposed in 60 days, today 230</span></div>
+    <div class="stat"><span class="k">Deferred listings that move</span><b class="up">44%</b><span class="from">second listings 24%</span></div>
+    <div class="stat"><span class="k">Plan one court day</span><b>83 ms</b><span class="from">60 days in 5 s</span></div>
+  </div>
+  <p class="muted">All levers: scheduling, pre-filing at e-filing, confirmation two days before, fixed slots with advocate grouping, process tracking.</p>
+  <div class="brand">Samay</div><div class="num">20</div>
+</section>
+
+<section class="slide" aria-label="Fairness">
+  <div class="eyebrow">Why this is fair to litigants</div>
+  <h2>Four protections built in</h2>
+  <div class="grid g2" style="flex:1;align-content:center">
+    <div class="card"><h3>Old cases cannot be buried</h3><p>Age carries the most points, 35, and 25% of every sitting is locked for cases over 4 years.</p></div>
+    <div class="card"><h3>New cheque cases are not forgotten</h3><p>+15 while under 6 months, because s.143 asks for trial within six months.</p></div>
+    <div class="card"><h3>A case that keeps failing rises</h3><p>+10 on the 2nd listing, +25 from the 3rd, once the reason it failed is fixed.</p></div>
+    <div class="card"><h3>Nobody is called for nothing</h3><p>A case waiting on a warrant or summons is not listed until it returns.</p></div>
+  </div>
+  <div class="brand">Samay</div><div class="num">21</div>
+</section>
+
+<section class="slide" aria-label="Assumptions">
+  <div class="eyebrow">Said openly</div>
+  <h2>What we measured, what we assumed</h2>
+  <div class="grid g2" style="align-items:start">
+    <div class="card"><h3>From the organisers' data</h3><ul><li>How often each hearing type moves a case</li><li>Why hearings fail, by type</li><li>Minutes and next-date gap per type</li><li>Case ages, stages and the last order's text</li></ul></div>
+    <div class="card"><h3>Our assumptions</h3><ul><li>Hearings vary about 35% around the table's minutes</li><li>The last order's warning raises that risk 2.5 times</li><li>5% of the day kept spare, 25% for old cases</li></ul></div>
+  </div>
+  <p>If the day runs over, unreached cases go to the next sitting day. If it runs short, standby is called. Every outcome the court master records turns an assumption into this court's own number.</p>
+  <div class="brand">Samay</div><div class="num">22</div>
+</section>
+
+<section class="slide" aria-label="Summary">
+  <div class="eyebrow">In one line</div>
+  <p class="quote" style="margin-top:auto">Hear the cases that deserve time and will actually happen, as many as truly fit, with bail first and old cases protected.</p>
+  <div class="grid g4 push">
+    <div class="stat"><span class="k">Listed a day</span><b>18</b><span class="from">today 57</span></div>
+    <div class="stat"><span class="k">Of those, heard</span><b class="up">97%</b><span class="from">today 44%</span></div>
+    <div class="stat"><span class="k">Hearings that move a case</span><b class="up">79%</b><span class="from">today 48%</span></div>
+    <div class="stat"><span class="k">Disposed in 60 days</span><b class="up">356</b><span class="from">today 196</span></div>
+  </div>
+  <div class="brand">Samay</div><div class="num">23</div>
+</section>
+
+</div>
+
+<div class="nav" role="navigation" aria-label="Slides">
+  <button type="button" id="prev" aria-label="Previous slide">← Prev</button>
+  <span class="pos" id="pos">1 / 23</span>
+  <button type="button" id="next" aria-label="Next slide">Next →</button>
+</div>
+
+<script>
+(function(){
+  document.documentElement.classList.add('js');
+  var s=[].slice.call(document.querySelectorAll('.slide')), i=0;
+  var h=(location.hash||'').replace('#','');
+  if(/^s\d+$/.test(h)){var n=parseInt(h.slice(1),10)-1;if(n>=0&&n<s.length)i=n;}
+  function show(n){i=Math.max(0,Math.min(s.length-1,n));s.forEach(function(x,k){x.classList.toggle('on',k===i)});
+    document.getElementById('pos').textContent=(i+1)+' / '+s.length;
+    document.getElementById('prev').disabled=i===0;document.getElementById('next').disabled=i===s.length-1;
+    try{history.replaceState(null,'','#s'+(i+1))}catch(e){}}
+  document.getElementById('prev').onclick=function(){show(i-1)};
+  document.getElementById('next').onclick=function(){show(i+1)};
+  document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();show(i+1)}
+    if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();show(i-1)}});
+  show(i);
+})();
+</script>

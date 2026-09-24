@@ -1,0 +1,407 @@
+<title>Samay Pitch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#fbfbf9; --ink:#15181d; --muted:#5b616c; --rule:#dcdee3; --panel:#f1f2f4;
+  --court:#1B2A41; --ours:#3D6FD9; --today:#C08A2D; --soft:#E5E9EF; --good:#2F7454;
+  --serif:"Spectral",Georgia,"Times New Roman",serif;
+  --sans:"Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){color-scheme:dark;
+    --paper:#121418; --ink:#eceef2; --muted:#a3a9b4; --rule:#2c3038; --panel:#1b1e24;
+    --court:#8db6ee; --ours:#4b93ea; --today:#e2774b; --soft:#1c2634; --good:#4cc38a;}
+}
+:root[data-theme="dark"]{color-scheme:dark;
+  --paper:#121418; --ink:#eceef2; --muted:#a3a9b4; --rule:#2c3038; --panel:#1b1e24;
+  --court:#8db6ee; --ours:#4b93ea; --today:#e2774b; --soft:#1c2634; --good:#4cc38a;}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);margin:0;padding-inline:16px}
+.deck{max-width:1100px;margin:0 auto;padding-block:20px 90px;display:flex;flex-direction:column;gap:20px}
+.slide{background:var(--paper);border:1px solid var(--rule);border-radius:8px;aspect-ratio:16/9;max-width:100%;
+  padding:clamp(20px,4.2vw,52px);display:flex;flex-direction:column;gap:clamp(10px,1.6vw,20px);overflow:hidden;position:relative}
+.js .slide{display:none}
+.js .slide.on{display:flex}
+.num{position:absolute;right:clamp(16px,3vw,36px);bottom:clamp(12px,2vw,24px);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:clamp(11px,1.1vw,13px);letter-spacing:.08em;text-transform:uppercase;color:var(--court);font-weight:600}
+h1,h2,h3{font-family:var(--serif);margin:0;text-wrap:balance;line-height:1.15}
+h1{font-size:clamp(30px,5.2vw,64px);font-weight:700}
+h2{font-size:clamp(22px,3.2vw,40px);font-weight:600}
+h3{font-size:clamp(15px,1.6vw,19px);font-weight:600}
+p,li{font-size:clamp(14px,1.55vw,19px);line-height:1.5;margin:0;max-width:62ch}
+.muted{color:var(--muted)}
+.big{font-family:var(--serif);font-size:clamp(34px,6vw,76px);font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.row{display:grid;gap:clamp(12px,2vw,28px);grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.stat{border-top:3px solid var(--court);padding-top:10px;display:flex;flex-direction:column;gap:6px}
+.stat.today{border-color:var(--today)}
+.stat span{font-size:clamp(12px,1.25vw,15px);color:var(--muted)}
+.stat b{font-family:var(--serif);font-size:clamp(24px,3.6vw,44px);font-variant-numeric:tabular-nums;line-height:1.05}
+.split{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(16px,3vw,40px);align-items:start;flex:1;min-height:0}
+@media (max-width:760px){.split{grid-template-columns:1fr}.slide{aspect-ratio:auto}}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:clamp(12px,1.35vw,16px)}
+th,td{text-align:left;padding:clamp(4px,.7vw,8px) 8px;border-bottom:1px solid var(--rule)}
+th{color:var(--muted);font-weight:600;font-size:clamp(11px,1.1vw,13px)}
+td.n,th.n{text-align:right}
+td.win{color:var(--court);font-weight:600}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.flow .s{background:var(--soft);border-radius:6px;padding:8px 12px;font-size:clamp(12px,1.35vw,16px);font-weight:500}
+.flow .s.opt{background:transparent;border:1px dashed var(--court)}
+.flow .a{color:var(--muted)}
+.quote{font-family:var(--serif);font-size:clamp(20px,3vw,36px);line-height:1.3;max-width:28ch}
+.chart text{fill:var(--ink);font-family:var(--sans)}
+.chart .lbl{fill:var(--muted)}
+.chart .grid{stroke:var(--rule)}
+.nav{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
+  background:var(--paper);border-top:1px solid var(--rule);display:flex;gap:10px;justify-content:center;align-items:center}
+.nav button{font:inherit;font-size:14px;background:var(--court);color:var(--paper);border:0;border-radius:6px;padding:8px 16px;cursor:pointer}
+.nav button:focus-visible{outline:3px solid var(--ours);outline-offset:2px}
+.nav button[disabled]{opacity:.4;cursor:default}
+.nav .pos{min-width:70px;text-align:center;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.no-js .nav{display:none}
+ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
+.tag{display:inline-block;font-size:12px;font-weight:600;color:var(--court);border:1px solid currentColor;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:2px}
+</style>
+
+<div class="deck" id="deck">
+
+<!-- 1 -->
+<section class="slide" aria-label="Title">
+  <div class="eyebrow">PUCAR Scheduling Justice · FOSS United Week · Samay</div>
+  <h1>Samay</h1>
+  <p class="quote">We never say no to a litigant. We stop listing hearings that were never going to happen.</p>
+  <p class="muted" style="margin-top:auto">Court scheduling for one judge's docket, built only on the hackathon's own data. Team ready-to-list.</p>
+  <div class="num">1</div>
+</section>
+
+<!-- 2 -->
+<section class="slide" aria-label="The problem">
+  <div class="eyebrow">The problem</div>
+  <h2>A full day that moves almost nothing</h2>
+  <div class="row" style="margin-top:8px">
+    <div class="stat today"><span>listed a day</span><b>60</b></div>
+    <div class="stat today"><span>actually heard</span><b>20</b></div>
+    <div class="stat today"><span>move the case forward</span><b>10</b></div>
+    <div class="stat today"><span>default gap to the next date</span><b>60 days</b></div>
+  </div>
+  <p>Justice Sehgal holds 3,000 cases. Litigants lose a day's work waiting, advocates run between courtrooms, and old cases come up with nobody on the same page. High Courts carry 63.66 lakh pending cases, about 8,500 per working judge.</p>
+  <p class="muted">Source: the case study in the hackathon handbook.</p>
+  <div class="num">2</div>
+</section>
+
+<!-- 3 -->
+<section class="slide" aria-label="What the data says">
+  <div class="eyebrow">What the organisers' data says</div>
+  <h2>100 cheque-dishonour complaints, read file by file</h2>
+  <div class="split">
+    <ul>
+      <li><b>96 of 100</b> cases went through delay-condonation hearings: 3.4 each, 29% move the case.</li>
+      <li><b>36%</b> of failed hearings wait on a summons or warrant; 196 of 293 failed warrant hearings.</li>
+      <li>The accused was absent at the last hearing in <b>84</b> cases.</li>
+      <li>A full case needs about <b>40 hearings</b> and 848 judge-minutes: <b>1.6 years</b> at purpose-based gaps, <b>6.6 years</b> at a flat 60 days.</li>
+      <li>The real sample day lists 90 matters needing <b>4.4 times</b> the minutes a day has.</li>
+    </ul>
+    <table aria-label="Share of hearings that move the case, by type">
+      <thead><tr><th>Hearing type</th><th class="n">Moves the case</th><th class="n">Minutes</th></tr></thead>
+      <tbody>
+        <tr><td>Plea</td><td class="n">90%</td><td class="n">15</td></tr>
+        <tr><td>Admission</td><td class="n">49%</td><td class="n">5</td></tr>
+        <tr><td>Appearance</td><td class="n">40%</td><td class="n">10</td></tr>
+        <tr><td>Evidence, complainant</td><td class="n">29%</td><td class="n">30</td></tr>
+        <tr><td>Evidence, accused</td><td class="n">17%</td><td class="n">30</td></tr>
+        <tr><td>Warrant</td><td class="n">14%</td><td class="n">10</td></tr>
+        <tr><td>Arguments</td><td class="n">13%</td><td class="n">30</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="num">3</div>
+</section>
+
+<!-- 4 -->
+<section class="slide" aria-label="The flow">
+  <div class="eyebrow">What we built</div>
+  <h2>One flow, from the docket file to the next date</h2>
+  <div class="flow" aria-label="Flow">
+    <span class="s">Upload the docket</span><span class="a">→</span>
+    <span class="s opt">Registry pre-filing</span><span class="a">→</span>
+    <span class="s opt">Readiness</span><span class="a">→</span>
+    <span class="s">Which day (CP-SAT)</span><span class="a">→</span>
+    <span class="s">What time (CP-SAT)</span><span class="a">→</span>
+    <span class="s">Judge approves</span><span class="a">→</span>
+    <span class="s">Court master, one tap</span><span class="a">→</span>
+    <span class="s">Next date</span>
+  </div>
+  <div class="row">
+    <div><h3>For the judge</h3><p>A draft list that fits the day, a reason for every case, and the cost of any change before approving.</p></div>
+    <div><h3>For the court master</h3><p>One tap per outcome; the next date follows from what the case needs, with tasks sent to both sides.</p></div>
+    <div><h3>For advocates and litigants</h3><p>A one-hour window instead of a whole day, with an advocate's matters grouped together.</p></div>
+  </div>
+  <p class="muted">Dashed steps use information from outside the list: new filings and each case's readiness. Everything else is the registry's own scheduling.</p>
+  <div class="num">4</div>
+</section>
+
+<!-- 5 -->
+<section class="slide" aria-label="Pre-filing">
+  <div class="eyebrow">Pre-filing: the registry's scrutiny, done at e-filing</div>
+  <h2>Compute limitation on day one, not in three hearings</h2>
+  <div class="split">
+    <table aria-label="Statutory checks">
+      <thead><tr><th>Check</th><th>Rule</th></tr></thead>
+      <tbody>
+        <tr><td>Cheque presented</td><td>within 3 months of its date</td></tr>
+        <tr><td>Demand notice</td><td>within 30 days of the return memo, s.138(b)</td></tr>
+        <tr><td>Time to pay</td><td>15 days after notice, s.138(c)</td></tr>
+        <tr><td>Complaint filed</td><td>within a month of cause of action, s.142</td></tr>
+        <tr><td>Proof affidavit, documents</td><td>s.145; cheque, memo, notice, postal proof</td></tr>
+        <tr><td>Summons details</td><td>address, phone, email (e-summons, BNSS s.64)</td></tr>
+        <tr><td>Jurisdiction</td><td>s.142(2); s.225 enquiry if the accused lives outside</td></tr>
+      </tbody>
+    </table>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <p>Nothing is refused. A late complaint files its condonation petition with the complaint and it is heard at admission, not in a separate track.</p>
+      <div class="stat"><span>new complaints past cognizance within a year</span><b>3% → 91%</b></div>
+      <div class="stat"><span>delay-condonation listings in a year</span><b>407 → 20</b></div>
+    </div>
+  </div>
+  <div class="num">5</div>
+</section>
+
+<!-- 6 -->
+<section class="slide" aria-label="Prioritisation and optimisation">
+  <div class="eyebrow">Prioritisation and optimisation</div>
+  <h2>A score for every case, then value per minute</h2>
+  <div class="split">
+    <table aria-label="Priority score factors">
+      <thead><tr><th>Factor</th><th class="n">Points</th><th>From</th></tr></thead>
+      <tbody>
+        <tr><td>Case age</td><td class="n">35</td><td>Filing date; full at 8 years for this roster</td></tr>
+        <tr><td>Hearing readiness</td><td class="n">25</td><td>The type's real progress rate, less up to 30% for absent required people</td></tr>
+        <tr><td>Disposal proximity</td><td class="n">15</td><td>Position in the 11 stages</td></tr>
+        <tr><td>Hearing churn</td><td class="n">15</td><td>Hearings held against the median expected</td></tr>
+        <tr><td>Court-set urgency</td><td class="n">10</td><td>"Last chance", "for judgment" in the last order</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>Every case scored on its own details, 0 to 100. Same score in a roster of 100 or 3,000.</li>
+      <li>Bail always listed <span class="tag">locked</span>; a quarter of each sitting for 4+ year cases <span class="tag">locked</span>; age weight never below 20 <span class="tag">locked</span>.</li>
+      <li>CP-SAT packs each sitting to 95% of its minutes by score x chance of moving forward, per minute.</li>
+      <li>1st, 2nd and deferred listings treated differently; a deferred case is held until its last failure is cured.</li>
+    </ul>
+  </div>
+  <p class="muted">Worked example from the data: ST/1261/2017, 9.2 years old, reserved for judgment, both advocates present, 43 hearings against 26 expected: 91.3.</p>
+  <div class="num">6</div>
+</section>
+
+<!-- 7 -->
+<section class="slide" aria-label="Results, 60 days">
+  <div class="eyebrow">Results on the organisers' data · 3,000 cases · 60 working days</div>
+  <h2>The same court, planned differently</h2>
+  <table aria-label="Handbook metrics">
+    <thead><tr><th>Handbook metric</th><th class="n">Today's rules</th><th class="n">Samay</th></tr></thead>
+    <tbody>
+      <tr><td>Reach: listed cases the court gets to</td><td class="n">44%</td><td class="n win">97%</td></tr>
+      <tr><td>Substantiveness: heard cases that move forward</td><td class="n">48%</td><td class="n win">79%</td></tr>
+      <tr><td>Backlog: 4+ year cases heard at least once</td><td class="n">32%</td><td class="n win">47%</td></tr>
+      <tr><td>Predictability: days from listing to a real hearing</td><td class="n">23</td><td class="n win">2</td></tr>
+      <tr><td>Next date: average gap, days</td><td class="n">60</td><td class="n win">14</td></tr>
+      <tr><td>Utilisation: court minutes used</td><td class="n">94%</td><td class="n">95%</td></tr>
+      <tr><td>Cases disposed</td><td class="n">196</td><td class="n win">356</td></tr>
+      <tr><td>Wasted listings (trips for nothing)</td><td class="n">2,694</td><td class="n win">259</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">Today's rules calibrated only to the organisers' rates come close to the handbook's day: 57 listed, 25 reached, 12 substantive. Three judge-leave days fall in the quarter. Averaged over five runs.</p>
+  <div class="num">7</div>
+</section>
+
+<!-- 8 -->
+<section class="slide" aria-label="Where the gain comes from">
+  <div class="eyebrow">Where the gain comes from</div>
+  <h2>Scheduling alone delivers most of the gain</h2>
+  <svg class="chart" viewBox="0 0 900 250" width="100%" role="img" aria-label="Cases disposed in 60 days: today 196, scheduling only 329, with fixed slots 346, everything 356">
+    <line class="grid" x1="300" y1="10" x2="300" y2="215"/>
+    <line class="grid" x1="440" y1="10" x2="440" y2="215" stroke-dasharray="2 5"/>
+    <line class="grid" x1="580" y1="10" x2="580" y2="215" stroke-dasharray="2 5"/>
+    <line class="grid" x1="720" y1="10" x2="720" y2="215" stroke-dasharray="2 5"/>
+    <line class="grid" x1="860" y1="10" x2="860" y2="215" stroke-dasharray="2 5"/>
+    <text class="lbl" x="300" y="238" text-anchor="middle" font-size="14">0</text>
+    <text class="lbl" x="440" y="238" text-anchor="middle" font-size="14">100</text>
+    <text class="lbl" x="580" y="238" text-anchor="middle" font-size="14">200</text>
+    <text class="lbl" x="720" y="238" text-anchor="middle" font-size="14">300</text>
+    <text class="lbl" x="860" y="238" text-anchor="middle" font-size="14">400</text>
+    <text x="286" y="42" text-anchor="end" font-size="17">Today's rules</text>
+    <rect x="300" y="22" width="274.4" height="30" rx="3" fill="var(--today)"/><text x="583" y="43" font-size="17">196</text>
+    <text x="286" y="92" text-anchor="end" font-size="17">Scheduling only</text>
+    <rect x="300" y="72" width="460.6" height="30" rx="3" fill="var(--ours)" opacity=".55"/><text x="769" y="93" font-size="17">329</text>
+    <text x="286" y="142" text-anchor="end" font-size="17">+ fixed time slots</text>
+    <rect x="300" y="122" width="484.4" height="30" rx="3" fill="var(--ours)" opacity=".75"/><text x="793" y="143" font-size="17">346</text>
+    <text x="286" y="192" text-anchor="end" font-size="17">+ readiness information</text>
+    <rect x="300" y="172" width="498.4" height="30" rx="3" fill="var(--ours)"/><text x="807" y="193" font-size="17">356</text>
+  </svg>
+  <p>Fitting the list to the minutes and setting real next dates needs only the registry's own data. Readiness (process back, counsel confirmed, the last note) raises how often a heard case moves forward from 65% to 79% and cuts wasted listings from 463 to 259.</p>
+  <div class="num">8</div>
+</section>
+
+<!-- 9 -->
+<section class="slide" aria-label="A year for one judge">
+  <div class="eyebrow">One judge for a year · the 100 real cases inside a 3,000-case docket · new complaints daily</div>
+  <h2>A year of Justice Sehgal's court</h2>
+  <table aria-label="Year results">
+    <thead><tr><th></th><th class="n">Today's rules</th><th class="n">Scheduling only</th><th class="n">+ pre-filing</th><th class="n">Everything</th></tr></thead>
+    <tbody>
+      <tr><td>Cases disposed</td><td class="n">541</td><td class="n">643</td><td class="n">644</td><td class="n win">847</td></tr>
+      <tr><td>New complaints past cognizance</td><td class="n">3%</td><td class="n">32%</td><td class="n win">91%</td><td class="n win">92%</td></tr>
+      <tr><td>Delay-condonation listings</td><td class="n">407</td><td class="n">290</td><td class="n win">20</td><td class="n win">9</td></tr>
+      <tr><td>Wasted listings</td><td class="n">11,708</td><td class="n">3,913</td><td class="n">3,939</td><td class="n win">1,958</td></tr>
+    </tbody>
+  </table>
+  <p>Plans run by day, week, month and year from the same engine. Each case's journey is traceable: every listing, the time, and what happened.</p>
+  <div class="num">9</div>
+</section>
+
+<!-- 9b -->
+<section class="slide" aria-label="What the judge sees">
+  <div class="eyebrow">The product · Samay</div>
+  <h2>What the judge sees, what the court master does</h2>
+  <div class="row">
+    <div><h3>Today</h3><p>The two sittings on a clock, then the cause list: time, case, hearing, listing chip (1st, 2nd, deferred), score, advocate, and why it is listed today. Remove, restore, approve.</p></div>
+    <div><h3>Calendar</h3><p>A month grid with every date: sittings with their case count, holidays, judge's leave, weekends. Click a day to see its list, minutes and how many of the judge's own cases it carries.</p></div>
+    <div><h3>Cases and Priority</h3><p>Every case with its score, status and flags, its last order and history. Five weights the judge can move, age never below 20, the docket re-scored live.</p></div>
+    <div><h3>Court master</h3><p>A card per judge. Add any files or a folder; Samay recognises the docket and the reference tables by their columns. Call each matter, record the outcome; the next date follows by rule.</p></div>
+  </div>
+  <p class="muted">Justice Sehgal's docket is the organisers' roster, loaded from the repository. Every number on every screen is computed from it.</p>
+  <div class="num">10</div>
+</section>
+
+<!-- 9c -->
+<section class="slide" aria-label="Prioritisation in use">
+  <div class="eyebrow">How prioritisation is used, in one day</div>
+  <h2>From 3,000 pending cases to 16 on the list</h2>
+  <div class="flow" aria-label="Day-building steps">
+    <span class="s">Due today: ~60</span><span class="a">→</span>
+    <span class="s">Process not back: held</span><span class="a">→</span>
+    <span class="s">Bail first</span><span class="a">→</span>
+    <span class="s">Quarter of minutes to 4+ years</span><span class="a">→</span>
+    <span class="s">Score × P(moves) per minute</span><span class="a">→</span>
+    <span class="s">CP-SAT packs to 95%</span><span class="a">→</span>
+    <span class="s">Grouped, timed, approved</span>
+  </div>
+  <div class="split">
+    <table aria-label="Example cases scored">
+      <thead><tr><th>Case</th><th>Situation</th><th class="n">Score</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>ST/1261/2017</td><td>9.2 years, reserved for judgment, both advocates present</td><td class="n win">91.3</td><td>Eligible</td></tr>
+        <tr><td>ST/608/2017</td><td>9.3 years, defence evidence, accused absent, last chance</td><td class="n win">69.9</td><td>Eligible</td></tr>
+        <tr><td>ST/1166/2023</td><td>2.8 years, complainant's evidence, last chance</td><td class="n">40.9</td><td>Eligible</td></tr>
+        <tr><td>ST/7/2025</td><td>1.1 years, waiting for a warrant to be served</td><td class="n">12.5</td><td>Conditional</td></tr>
+        <tr><td>ST/293/2026</td><td>0.5 years, at admission, nobody attended</td><td class="n">7.2</td><td>Conditional</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>Across the 100 cases: scores 7 to 91, average 38; cases over 4 years average 56, younger cases 30.</li>
+      <li>80 Eligible, 20 Conditional (a summons, warrant or notice is out).</li>
+      <li>Deferred cases (3rd or later listing) are held until cured, then given priority and a fixed slot: 44% move forward, against 24% for second listings under today's rules.</li>
+      <li>The judge can move the weights; the order changes, the rules do not.</li>
+    </ul>
+  </div>
+  <div class="num">11</div>
+</section>
+
+<!-- 9d -->
+<section class="slide" aria-label="What Indian judges need next">
+  <div class="eyebrow">What Indian judges need beyond this</div>
+  <h2>Built for a magistrate's cheque docket; the same engine for every bench</h2>
+  <div class="row">
+    <div><h3>A link judge on leave days</h3><p>Bail and other liberty matters go to the link judge the same day; the rest move to the next sitting, never 60 days out.</p></div>
+    <div><h3>Process return from the field</h3><p>Summons and warrant status from the process server and e-summons receipts, so "awaiting process" stops being guessed from the order sheet.</p></div>
+    <div><h3>Confirmation by WhatsApp</h3><p>Two days before, counsel confirms in one tap; parties receive their one-hour window in English and the local language.</p></div>
+    <div><h3>Per-bench configuration</h3><p>Sitting hours, blocks by hearing type, leave register, weights and locked rules in one file per judge; a High Court bench adds its own hearing types and minutes.</p></div>
+    <div><h3>Old files, summarised</h3><p>A verified cover sheet for cases over four years, so the bench does not spend the hearing re-reading the record.</p></div>
+    <div><h3>Outcomes that teach the model</h3><p>Each recorded outcome recomputes the rates; the lever strengths stop being assumptions.</p></div>
+  </div>
+  <div class="num">12</div>
+</section>
+
+<!-- 10 -->
+<section class="slide" aria-label="Model and complexity">
+  <div class="eyebrow">The model · complexity level L3</div>
+  <h2>Measured rates, read per case, solved by CP-SAT</h2>
+  <div class="split">
+    <ul>
+      <li><b>Per hearing type:</b> the real chance a hearing moves the case (plea 90%, warrant 14%), and the real mix of reasons it fails, from the organisers' data.</li>
+      <li><b>Per case:</b> the last order is read. "Await warrant", "Absent: Accused" or "not ready" multiplies that risk 2.5 times, with each type's average held at its measured rate.</li>
+      <li><b>Per listing:</b> 1st, 2nd and deferred listings of the same purpose are treated differently; a deferred case is held until its last failure is cured.</li>
+      <li><b>No machine learning trained on 100 cases.</b> As the court records outcomes, the same rates are recomputed nightly.</li>
+    </ul>
+    <table aria-label="Complexity levels">
+      <thead><tr><th>Level</th><th>What proves it</th></tr></thead>
+      <tbody>
+        <tr><td>L1 fixed rules</td><td>Bail first, ageing quota, readiness gate, CP-SAT packing</td></tr>
+        <tr><td>L2 realistic data</td><td>Real success and failure rates per type, lognormal minutes, per-lever ablation</td></tr>
+        <tr><td>L3 behaviour</td><td>Parties respond to fixed slots, clustering, confirmation and short notice; outcomes feed the next plan</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">Lever strengths not in the data are stated assumptions in config, each switched off in turn to show its worth.</p>
+  <div class="num">13</div>
+</section>
+
+<!-- 11 -->
+<section class="slide" aria-label="Integration">
+  <div class="eyebrow">Built to go into DRISTI 2.0</div>
+  <h2>One judge now, every court next</h2>
+  <div class="row">
+    <div><h3>Scales by configuration</h3><p>The unit is one judge's docket. A court's sittings, hearing flow, priorities and registry checks are YAML files. A new bench is a new file, not new code.</p></div>
+    <div><h3>Takes the data as it is</h3><p>The organisers' CSVs in, unchanged; upload a CSV or Excel docket and the app checks it and plans it.</p></div>
+    <div><h3>Open and offline</h3><p>Python, OR-Tools CP-SAT, scikit-learn, SQLite, Streamlit. MIT licence. No cloud AI calls.</p></div>
+  </div>
+  <p>To plug in: feed summons and warrant status and advocates' confirmations from DRISTI, run the planner each evening, and show the judge the draft for approval.</p>
+  <div class="num">14</div>
+</section>
+
+<!-- 12 -->
+<section class="slide" aria-label="Close">
+  <div class="eyebrow">Samay</div>
+  <p class="quote">A judge's time planned like a surgeon's: every hearing on the list is one that can happen.</p>
+  <div class="row" style="margin-top:auto">
+    <div class="stat"><span>listed cases reached</span><b>44% → 97%</b></div>
+    <div class="stat"><span>cases disposed in 60 days</span><b>196 → 356</b></div>
+    <div class="stat"><span>wasted listings</span><b>−90%</b></div>
+    <div class="stat"><span>next-date gap</span><b>60 → 14 days</b></div>
+  </div>
+  <div class="num">15</div>
+</section>
+
+</div>
+
+<nav class="nav" aria-label="Slides">
+  <button id="prev" type="button">Previous</button>
+  <span class="pos" id="pos">1 / 15</span>
+  <button id="next" type="button">Next</button>
+</nav>
+
+<script>
+(function(){
+  var root=document.documentElement; root.classList.add('js');
+  var slides=[].slice.call(document.querySelectorAll('.slide')), i=0;
+  var start=parseInt((location.hash||'').replace('#s',''),10);
+  if(start>=1&&start<=slides.length) i=start-1;
+  var pos=document.getElementById('pos'), prev=document.getElementById('prev'), next=document.getElementById('next');
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach(function(s,k){s.classList.toggle('on',k===i)});
+    pos.textContent=(i+1)+' / '+slides.length; prev.disabled=i===0; next.disabled=i===slides.length-1;
+  }
+  prev.addEventListener('click',function(){show(i-1)});
+  next.addEventListener('click',function(){show(i+1)});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();show(i+1)}
+    if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();show(i-1)}
+    if(e.key==='Home')show(0); if(e.key==='End')show(slides.length-1);
+  });
+  var x0=null;
+  document.addEventListener('touchstart',function(e){x0=e.touches[0].clientX},{passive:true});
+  document.addEventListener('touchend',function(e){if(x0===null)return;var dx=e.changedTouches[0].clientX-x0;if(Math.abs(dx)>50)show(i+(dx<0?1:-1));x0=null},{passive:true});
+  show(i);
+})();
+</script>

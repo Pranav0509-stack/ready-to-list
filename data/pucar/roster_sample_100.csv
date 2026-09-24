@@ -1,0 +1,285 @@
+case_number,filing_number,filing_date,advocate_id,party_id,current_stage,last_hearing_summary,purpose_of_next_hearing,hearings_admission,hearings_delay_condonation_hearing,hearings_cognizance,hearings_appearance,hearings_warrant,hearings_plea,hearings_examination_under_s351_bnss,hearings_evidence_complainant,hearings_evidence_accused,hearings_arguments,hearings_judgement,hearings_bail,hearings_reports,hearings_application_review,total_hearings_held
+ST/819/2023,KL-000761-2023,2023-01-09,ADV-005,PARTY-00001,Evidence Accused,"Present: Complainant, Complainant's Advocate, Accused Advocate
+Absent: Accused
+For defence evidence, last chance.",Evidence Accused,2,4,1,2,8,1,4,9,4,0,0,0,0,0,35
+ST/1028/2023,KL-000183-2023,2023-06-01,ADV-028,PARTY-00002,Evidence Complainant,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Application taken up for review; other side to file objections.",Evidence Complainant,2,3,1,5,7,2,2,4,0,0,0,0,0,1,27
+ST/792/2024,KL-000738-2024,2024-08-04,ADV-037,PARTY-00003,Examination Under S351 Bnss,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+Await warrant. For return of warrant.",Examination Under S351 Bnss,3,4,1,4,7,2,2,0,0,0,0,0,0,0,23
+ST/522/2023,KL-001721-2023,2023-10-19,ADV-025,PARTY-00004,Evidence Complainant,"Present: Complainant, Complainant's Advocate
+Absent: Accused, Accused Advocate
+Complainant present; examined-in-chief by proof affidavit. Exhibits marked. Accused's counsel not ready for cross-examination; adjourned for cross-examination.",Evidence Complainant,3,2,1,4,5,3,3,5,0,0,0,0,0,0,26
+ST/576/2024,KL-000887-2024,2024-09-06,ADV-028,PARTY-00005,Appearance,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Issue NBW to accused. Take steps. For return of warrant.",Warrant,3,4,1,3,0,0,0,0,0,0,0,0,0,0,11
+ST/655/2025,KL-001421-2025,2025-07-14,ADV-022,PARTY-00006,Warrant,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Complainant is continuously absent. Steps not taken even after repeated direction. Complainant shall be present.",Bail,2,4,1,4,3,0,0,0,0,0,0,0,0,0,14
+ST/947/2022,KL-000393-2022,2022-03-03,ADV-003,PARTY-00007,Evidence Complainant,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Complainant absent despite sufficient opportunity; case posted for complainant's evidence on a last-chance basis.",Evidence Complainant,3,2,1,3,7,1,3,3,0,0,0,0,0,0,23
+ST/697/2021,KL-001313-2021,2021-12-18,ADV-011,PARTY-00008,Evidence Accused,"Present: Complainant, Complainant's Advocate, Accused Advocate
+Absent: Accused
+Witness shall be present.",Evidence Accused,2,4,1,4,3,1,4,5,3,0,0,0,0,0,27
+ST/934/2024,KL-001112-2024,2024-04-06,ADV-021,PARTY-00009,Warrant,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Complainant is continuously absent. Steps not taken even after repeated direction. Complainant shall be present.",Plea,2,4,1,3,1,0,0,0,0,0,0,0,0,0,11
+ST/387/2020,KL-000464-2020,2020-03-07,ADV-012,PARTY-00010,Evidence Complainant,"Present: Complainant, Complainant's Advocate
+Absent: Accused, Accused Advocate
+Complainant present; examined-in-chief by proof affidavit. Exhibits marked. Accused's counsel not ready for cross-examination; adjourned for cross-examination.",Evidence Complainant,1,5,1,3,3,2,3,3,0,0,0,0,0,0,21
+ST/92/2026,KL-000546-2026,2026-04-30,ADV-028,PARTY-00011,Delay Condonation Hearing,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+Notice served against accused. For objection and hearing.",Delay Condonation Hearing,3,2,0,0,0,0,0,0,0,0,0,0,0,0,5
+ST/617/2022,KL-000739-2022,2022-09-05,ADV-036,PARTY-00012,Arguments,"Present: Complainant's Advocate, Accused Advocate
+Absent: Accused, Complainant
+Heard from the side of the complainant. For the hearing of the accused.",Judgement,1,4,2,3,3,1,2,5,6,2,0,0,0,0,29
+ST/1278/2018,KL-000263-2018,2018-06-11,ADV-011,PARTY-00013,Judgement,"Present: Accused, Accused Advocate
+Absent: Complainant, Complainant's Advocate
+Accused found guilty and convicted u/s.138 of the NI Act. Sentenced to imprisonment till the rising of the court and directed to pay compensation to the complainant, in default to undergo simple imprisonment. Sentence suspended for a short period on application.",Judgement,2,4,2,3,6,2,3,1,6,5,1,0,0,0,35
+ST/7/2025,KL-001618-2025,2025-09-05,ADV-023,PARTY-00014,Appearance,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Issue NBW to accused. Take steps. For return of warrant.",Warrant,2,2,1,1,0,0,0,0,0,0,0,0,0,0,6
+ST/262/2022,KL-001596-2022,2022-09-18,ADV-026,PARTY-00015,Evidence Accused,"Present: Complainant's Advocate, Accused, Accused Advocate
+Absent: Complainant
+Accused present. Accused is examined in chief as DW1. Exhibits marked. For further evidence of the accused.",Evidence Accused,2,4,2,3,4,3,3,7,4,0,0,0,4,0,36
+ST/1227/2025,KL-001717-2025,2025-03-01,ADV-042,PARTY-00016,Evidence Complainant,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Complainant absent despite sufficient opportunity; case posted for complainant's evidence on a last-chance basis.",Evidence Accused,1,5,1,5,7,2,3,3,0,0,0,0,0,0,27
+ST/545/2024,KL-000610-2024,2024-10-28,ADV-011,PARTY-00017,Plea,"Present: Complainant's Advocate, Accused, Accused Advocate
+Absent: Complainant
+Accused present with sureties. Particulars of the offence u/s.138 of NI Act read over and explained. Accused pleaded not guilty and claimed trial. Case to proceed as a summons case.",Examination Under S351 Bnss,1,4,1,2,4,1,0,0,0,0,0,0,0,0,13
+ST/979/2022,KL-000626-2022,2022-12-07,ADV-027,PARTY-00018,Evidence Accused,"Present: Complainant, Complainant's Advocate, Accused Advocate
+Absent: Accused
+For defence evidence, last chance.",Arguments,2,5,1,3,4,2,2,8,4,0,0,0,0,0,31
+ST/770/2023,KL-000763-2023,2023-06-24,ADV-042,PARTY-00019,Evidence Complainant,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Complainant absent despite sufficient opportunity; case posted for complainant's evidence on a last-chance basis.",Evidence Accused,1,2,1,3,5,2,5,3,0,0,0,0,0,0,22
+ST/367/2023,KL-000602-2023,2023-03-22,ADV-009,PARTY-00020,Judgement,"Present: Accused Advocate
+Absent: Complainant's Advocate, Accused, Complainant
+Produce the order of the Hon'ble District Court, if any.",Judgement,1,4,1,2,6,2,1,6,8,5,2,0,4,0,42
+ST/872/2025,KL-000869-2025,2025-02-18,ADV-017,PARTY-00021,Plea,"Present: Complainant's Advocate, Accused, Accused Advocate
+Absent: Complainant
+Accused present with sureties. Particulars of the offence u/s.138 of NI Act read over and explained. Accused pleaded not guilty and claimed trial. Case to proceed as a summons case.",Examination Under S351 Bnss,3,3,1,2,5,1,0,0,0,0,0,0,0,0,15
+ST/219/2017,KL-001305-2017,2017-05-26,ADV-020,PARTY-00022,Arguments,"Present: Complainant's Advocate, Accused Advocate
+Absent: Accused, Complainant
+Heard from the side of the complainant. For the hearing of the accused.",Judgement,1,6,1,3,7,2,3,9,11,1,0,0,0,0,44
+ST/652/2020,KL-000502-2020,2020-03-06,ADV-012,PARTY-00023,Evidence Complainant,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Complainant absent despite sufficient opportunity; case posted for complainant's evidence on a last-chance basis.",Reports,3,5,1,2,2,2,3,4,0,0,0,0,0,0,22
+ST/572/2017,KL-001654-2017,2017-11-18,ADV-022,PARTY-00024,Judgement,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+Accused shall be present. For judgment.",Reports,3,4,1,4,5,2,3,8,7,5,2,0,0,0,44
+ST/1015/2023,KL-001081-2023,2023-01-21,ADV-033,PARTY-00025,Evidence Accused,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+For reporting progress in mediation, last chance.",Evidence Accused,2,1,1,3,7,3,3,2,2,0,0,0,1,0,25
+ST/1166/2023,KL-000443-2023,2023-12-06,ADV-017,PARTY-00026,Evidence Complainant,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+For reporting progress in mediation, last chance.",Evidence Complainant,2,4,1,1,6,1,1,4,0,0,0,0,1,0,21
+ST/1118/2021,KL-001660-2021,2021-02-02,ADV-022,PARTY-00027,Evidence Complainant,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+For the evidence of the complainant.",Evidence Accused,2,4,1,5,4,3,3,3,0,0,0,0,0,0,25
+ST/416/2024,KL-001210-2024,2024-07-21,ADV-008,PARTY-00028,Appearance,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Await summons. For return of summons.",Warrant,1,1,2,1,0,0,0,0,0,0,0,0,0,0,5
+ST/1046/2023,KL-001411-2023,2023-12-27,ADV-011,PARTY-00029,Evidence Complainant,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Complainant absent despite sufficient opportunity; case posted for complainant's evidence on a last-chance basis.",Evidence Complainant,1,5,1,2,6,2,2,5,0,0,0,0,0,0,24
+ST/645/2023,KL-001154-2023,2023-04-09,ADV-009,PARTY-00030,Evidence Accused,"Present: Complainant, Complainant's Advocate, Accused Advocate
+Absent: Accused
+Witness shall be present.",Arguments,1,4,1,4,4,1,4,5,2,0,0,0,0,0,26
+ST/341/2017,KL-001797-2017,2017-08-13,ADV-037,PARTY-00031,Evidence Accused,"Present: Complainant's Advocate, Accused, Accused Advocate
+Absent: Complainant
+Accused present. Accused is examined in chief as DW1. Exhibits marked. For further evidence of the accused.",Evidence Accused,2,4,2,3,3,2,3,6,3,0,0,0,0,0,28
+ST/1266/2023,KL-000298-2023,2023-03-26,ADV-003,PARTY-00032,Judgement,"Present: Accused Advocate
+Absent: Complainant's Advocate, Accused, Complainant
+Produce the order of the Hon'ble District Court, if any.",Judgement,2,2,1,4,7,2,3,8,6,5,2,0,0,0,42
+ST/804/2023,KL-000639-2023,2023-04-21,ADV-033,PARTY-00033,Judgement,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+Judgment pronounced; accused acquitted, benefit of doubt extended.",Application Review,3,4,2,4,4,2,4,6,4,4,3,0,0,0,40
+ST/1261/2017,KL-000224-2017,2017-07-13,ADV-021,PARTY-00034,Arguments,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+Heard. For judgment.",Judgement,3,4,2,4,3,2,2,9,12,2,0,0,0,0,43
+ST/1343/2026,KL-000293-2026,2026-05-16,ADV-044,PARTY-00035,Appearance,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+For the appearance of the parties.",Warrant,2,4,2,1,0,0,0,0,0,0,0,0,0,0,9
+ST/181/2025,KL-000399-2025,2025-08-04,ADV-034,PARTY-00036,Warrant,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Complainant is continuously absent. Steps not taken even after repeated direction. Complainant shall be present.",Plea,1,4,1,3,1,0,0,0,0,0,0,0,0,0,10
+ST/803/2026,KL-000894-2026,2026-02-11,ADV-020,PARTY-00037,Admission,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+225 affidavit filed. No delay in filing the complaint. The accused resides outside the jurisdiction of this court, hence enquiry conducted u/s.225 of BNSS. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file as ST. Issue summons to accused. Take steps. For return of summons.",Admission,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1
+ST/917/2021,KL-001766-2021,2021-12-16,ADV-015,PARTY-00038,Evidence Accused,"Present: Complainant's Advocate, Accused, Accused Advocate
+Absent: Complainant
+Accused present. Accused is examined in chief as DW1. Exhibits marked. For further evidence of the accused.",Arguments,1,4,1,4,5,2,3,8,3,0,0,0,0,0,31
+ST/1012/2025,KL-001562-2025,2025-05-12,ADV-030,PARTY-00039,Examination Under S351 Bnss,"Present: Complainant's Advocate, Accused, Accused Advocate
+Absent: Complainant
+Accused filed application. For objection and hearing.",Evidence Complainant,2,3,1,1,6,1,1,0,0,0,0,0,0,0,15
+ST/485/2021,KL-000143-2021,2021-11-19,ADV-045,PARTY-00040,Judgement,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Application taken up for review; other side to file objections.",Judgement,2,4,1,4,7,2,1,9,9,3,1,0,0,1,44
+ST/465/2025,KL-000589-2025,2025-06-29,ADV-010,PARTY-00041,Evidence Complainant,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Complainant absent despite sufficient opportunity; case posted for complainant's evidence on a last-chance basis.",Evidence Accused,2,3,1,4,1,1,3,5,0,0,0,0,5,0,25
+ST/571/2023,KL-000303-2023,2023-02-28,ADV-027,PARTY-00042,Evidence Complainant,"Present: Complainant, Complainant's Advocate
+Absent: Accused, Accused Advocate
+Complainant present; examined-in-chief by proof affidavit. Exhibits marked. Accused's counsel not ready for cross-examination; adjourned for cross-examination.",Reports,2,3,1,5,5,1,1,2,0,0,0,0,0,1,21
+ST/555/2023,KL-001392-2023,2023-11-17,ADV-008,PARTY-00043,Appearance,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+For the appearance of the parties.",Warrant,2,1,1,3,0,0,0,0,0,0,0,0,0,0,7
+ST/977/2024,KL-000894-2024,2024-11-08,ADV-027,PARTY-00044,Evidence Complainant,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+For the evidence of the complainant.",Evidence Accused,3,4,1,4,6,1,4,4,0,0,0,0,0,0,27
+ST/739/2022,KL-000234-2022,2022-12-18,ADV-022,PARTY-00045,Evidence Accused,"Present: Complainant's Advocate, Accused, Accused Advocate
+Absent: Complainant
+Accused present. Accused is examined in chief as DW1. Exhibits marked. For further evidence of the accused.",Evidence Accused,3,5,1,3,6,2,3,8,2,0,0,0,0,0,33
+ST/554/2021,KL-001684-2021,2021-12-11,ADV-010,PARTY-00046,Judgement,"Present: Accused Advocate
+Absent: Complainant's Advocate, Accused, Complainant
+Produce the order of the Hon'ble District Court, if any.",Application Review,2,5,2,5,5,1,2,5,6,3,1,0,0,0,37
+ST/1048/2025,KL-000064-2025,2025-12-18,ADV-038,PARTY-00047,Delay Condonation Hearing,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Issue DCA notice to accused. Take steps. For return of notice.",Delay Condonation Hearing,3,1,0,0,0,0,0,0,0,0,0,0,0,0,4
+ST/374/2024,KL-001413-2024,2024-09-21,ADV-001,PARTY-00048,Examination Under S351 Bnss,"Present: Complainant's Advocate, Accused, Accused Advocate
+Absent: Complainant
+Accused filed application. For objection and hearing.",Evidence Complainant,2,5,1,2,7,2,1,0,0,0,0,0,0,0,20
+ST/789/2022,KL-000515-2022,2022-08-22,ADV-039,PARTY-00049,Judgement,"Present: Accused, Accused Advocate
+Absent: Complainant, Complainant's Advocate
+Accused found guilty and convicted u/s.138 of the NI Act. Sentenced to imprisonment till the rising of the court and directed to pay compensation to the complainant, in default to undergo simple imprisonment. Sentence suspended for a short period on application.",Judgement,2,4,1,3,6,1,4,10,9,2,1,0,0,0,43
+ST/1198/2026,KL-001423-2026,2026-08-25,ADV-043,PARTY-00050,Delay Condonation Hearing,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Notice is returned as addressee out of India. Hence notice can be deemed to be served. For objection and hearing.",Delay Condonation Hearing,2,1,0,0,0,0,0,0,0,0,0,0,0,0,3
+ST/628/2022,KL-000107-2022,2022-11-05,ADV-012,PARTY-00051,Judgement,"Present: Accused, Accused Advocate
+Absent: Complainant, Complainant's Advocate
+Accused found guilty and convicted u/s.138 of the NI Act. Sentenced to imprisonment till the rising of the court and directed to pay compensation to the complainant, in default to undergo simple imprisonment. Sentence suspended for a short period on application.",Reports,2,3,1,5,5,1,3,10,9,4,1,0,0,0,44
+ST/363/2026,KL-000694-2026,2026-03-28,ADV-044,PARTY-00052,Cognizance,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Delay condonation application allowed. Enquiry u/s.225 of BNSS dispensed with as accused resides within jurisdiction. Heard. Perused the records. Satisfied that there is sufficient ground to proceed. Hence the court took cognizance of the aforesaid offence and the case is taken on file as ST. Issue summons to accused.",Appearance,3,2,1,0,0,0,0,0,0,0,0,0,0,0,6
+ST/950/2023,KL-001358-2023,2023-03-09,ADV-001,PARTY-00053,Judgement,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+Judgment pronounced; accused acquitted, benefit of doubt extended.",Application Review,1,4,2,3,4,1,3,6,8,2,1,0,0,0,35
+ST/356/2016,KL-000678-2016,2016-11-07,ADV-032,PARTY-00054,Arguments,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+Heard. For further hearing.",Judgement,1,4,1,3,3,2,2,13,6,1,0,0,0,0,36
+ST/344/2023,KL-000415-2023,2023-04-01,ADV-013,PARTY-00055,Judgement,"Present: Accused Advocate
+Absent: Complainant's Advocate, Accused, Complainant
+Produce the order of the Hon'ble District Court, if any.",Application Review,1,2,1,5,7,2,3,1,7,3,1,0,0,0,33
+ST/330/2025,KL-000251-2025,2025-03-08,ADV-036,PARTY-00056,Warrant,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Issue NBW to accused. Take steps. For return of warrant.",Warrant,3,4,1,4,3,0,0,0,0,0,0,0,0,0,15
+ST/1230/2025,KL-000958-2025,2025-02-13,ADV-008,PARTY-00057,Appearance,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+For the appearance of the parties.",Application Review,3,3,1,1,0,0,0,0,0,0,0,0,0,0,8
+ST/954/2021,KL-000830-2021,2021-02-05,ADV-016,PARTY-00058,Judgement,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+Accused shall be present. For judgment.",Application Review,2,3,2,4,7,2,2,5,3,4,2,0,0,0,36
+ST/884/2023,KL-001697-2023,2023-02-06,ADV-034,PARTY-00059,Evidence Accused,"Present: Complainant, Complainant's Advocate, Accused Advocate
+Absent: Accused
+Witness shall be present.",Evidence Accused,2,4,1,2,3,2,5,7,2,0,0,0,0,0,28
+ST/1244/2025,KL-001539-2025,2025-03-28,ADV-031,PARTY-00060,Evidence Complainant,"Present: Complainant, Complainant's Advocate, Accused Advocate
+Absent: Accused
+For reporting progress in mediation.",Evidence Complainant,1,3,1,1,5,2,4,2,0,0,0,0,5,0,24
+ST/1178/2026,KL-001775-2026,2026-03-24,ADV-012,PARTY-00061,Admission,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Accused filed affidavit u/s.225 of BNSS. No delay in filing the complaint. Enquiry conducted u/s.225 of BNSS. Heard. Perused the records. Satisfied that there is sufficient ground to proceed for the offence u/s.138 of NI Act. Case taken on file as ST. Issue summons to accused. Take steps. For return of summons.",Admission,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1
+ST/629/2022,KL-000353-2022,2022-10-12,ADV-032,PARTY-00062,Evidence Accused,"Present: Complainant, Complainant's Advocate, Accused Advocate
+Absent: Accused
+Witness shall be present.",Arguments,1,4,2,3,3,2,4,7,3,0,0,0,0,0,29
+ST/1283/2022,KL-001013-2022,2022-09-28,ADV-020,PARTY-00063,Judgement,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+Judgment pronounced; accused acquitted, benefit of doubt extended.",Application Review,4,2,1,2,6,2,5,9,8,3,1,0,0,0,43
+ST/1187/2026,KL-001123-2026,2026-02-02,ADV-001,PARTY-00064,Appearance,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Summons served. For the appearance of the accused.",Warrant,3,1,1,1,0,0,0,0,0,0,0,0,0,0,6
+ST/177/2024,KL-001205-2024,2024-03-10,ADV-006,PARTY-00065,Examination Under S351 Bnss,"Present: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Power of attorney holder for the complainant present. Accused is examined u/s.351(1)(b) of BNSS. Accused filed witness schedule. Allowed. Issue summons to witness. Take steps. For return of summons.",Evidence Complainant,1,5,1,2,3,2,1,0,0,0,0,0,0,0,15
+ST/69/2022,KL-000577-2022,2022-10-09,ADV-023,PARTY-00066,Evidence Accused,"Present: Complainant, Complainant's Advocate, Accused Advocate
+Absent: Accused
+For defence evidence, last chance.",Evidence Accused,3,3,1,4,5,1,1,6,3,0,0,0,0,0,27
+ST/293/2026,KL-000083-2026,2026-04-01,ADV-037,PARTY-00067,Admission,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Await notice. For return of notice.",Delay Condonation Hearing,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1
+ST/199/2022,KL-001770-2022,2022-04-11,ADV-037,PARTY-00068,Evidence Complainant,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+For the evidence of the complainant.",Evidence Accused,2,4,1,2,3,1,3,3,0,0,0,0,0,0,19
+ST/551/2023,KL-001521-2023,2023-12-02,ADV-004,PARTY-00069,Evidence Complainant,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Application taken up for review; other side to file objections.",Evidence Complainant,2,4,2,3,6,2,3,3,0,0,0,0,0,1,26
+ST/176/2026,KL-000648-2026,2026-08-13,ADV-010,PARTY-00070,Appearance,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Await summons. For return of summons.",Appearance,1,3,1,1,0,0,0,0,0,0,0,0,0,0,6
+ST/481/2020,KL-001031-2020,2020-07-21,ADV-004,PARTY-00071,Evidence Accused,"Present: Complainant, Complainant's Advocate, Accused Advocate
+Absent: Accused
+For defence evidence, last chance.",Evidence Accused,3,4,1,5,6,1,4,7,3,0,0,0,0,0,34
+ST/733/2025,KL-001243-2025,2025-07-23,ADV-041,PARTY-00072,Appearance,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Issue NBW to accused. Take steps. For return of warrant.",Application Review,3,4,2,1,0,0,0,0,0,0,0,0,0,0,10
+ST/702/2026,KL-000004-2026,2026-07-13,ADV-011,PARTY-00073,Admission,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+225 affidavit filed. No delay in filing the complaint. The accused resides outside the jurisdiction of this court, hence enquiry conducted u/s.225 of BNSS. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file as ST. Issue summons to accused. Take steps. For return of summons.",Delay Condonation Hearing,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1
+ST/164/2023,KL-000643-2023,2023-10-14,ADV-030,PARTY-00074,Appearance,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Issue NBW to accused. Take steps. For return of warrant.",Warrant,2,2,2,2,0,0,0,0,0,0,0,0,0,0,8
+ST/1284/2018,KL-000024-2018,2018-08-17,ADV-040,PARTY-00075,Evidence Accused,"Present: Complainant, Complainant's Advocate, Accused Advocate
+Absent: Accused
+For defence evidence.",Arguments,2,4,2,3,4,2,3,5,3,0,0,0,0,0,28
+ST/655/2021,KL-000740-2021,2021-03-19,ADV-044,PARTY-00076,Judgement,"Present: Accused Advocate
+Absent: Complainant's Advocate, Accused, Complainant
+Produce the order of the Hon'ble District Court, if any.",Reports,2,4,1,5,2,1,4,6,5,5,1,0,0,0,36
+ST/1355/2023,KL-000350-2023,2023-04-12,ADV-022,PARTY-00077,Evidence Complainant,"Present: Complainant, Complainant's Advocate
+Absent: Accused, Accused Advocate
+Complainant present; examined-in-chief by proof affidavit. Exhibits marked. Accused's counsel not ready for cross-examination; adjourned for cross-examination.",Evidence Complainant,3,7,1,4,2,2,4,3,0,0,0,0,0,0,26
+ST/1109/2025,KL-001616-2025,2025-09-27,ADV-019,PARTY-00078,Delay Condonation Hearing,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+Notice served against accused. For objection and hearing.",Delay Condonation Hearing,3,2,0,0,0,0,0,0,0,0,0,0,0,0,5
+ST/1272/2023,KL-001665-2023,2023-11-23,ADV-025,PARTY-00079,Appearance,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Issue NBW to accused. Take steps. For return of warrant.",Reports,2,6,1,2,0,0,0,0,0,0,0,0,0,0,11
+ST/434/2022,KL-000904-2022,2022-05-29,ADV-021,PARTY-00080,Evidence Complainant,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Complainant absent despite sufficient opportunity; case posted for complainant's evidence on a last-chance basis.",Application Review,2,4,2,4,6,2,3,4,0,0,0,0,0,0,27
+ST/1295/2025,KL-000930-2025,2025-05-08,ADV-007,PARTY-00081,Appearance,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Issue NBW to accused. Take steps. For return of warrant.",Warrant,3,4,2,2,0,0,0,0,0,0,0,0,0,0,11
+ST/940/2022,KL-000484-2022,2022-08-22,ADV-002,PARTY-00082,Evidence Accused,"Present: Complainant's Advocate, Accused, Accused Advocate
+Absent: Complainant
+Accused present. Accused is examined in chief as DW1. Exhibits marked. For further evidence of the accused.",Evidence Accused,2,5,1,3,4,1,1,8,4,0,0,0,0,0,29
+ST/1115/2021,KL-000880-2021,2021-11-07,ADV-004,PARTY-00083,Arguments,"Present: Complainant's Advocate, Accused Advocate
+Absent: Accused, Complainant
+Heard from the side of the complainant. For the hearing of the accused.",Judgement,2,1,1,1,2,2,4,7,5,2,0,0,0,0,27
+ST/1113/2022,KL-000155-2022,2022-02-23,ADV-025,PARTY-00084,Arguments,"Present: Complainant's Advocate, Accused Advocate
+Absent: Accused, Complainant
+Heard from the side of the complainant. For the hearing of the accused.",Arguments,3,3,1,4,7,1,3,6,7,2,0,0,0,0,37
+ST/1147/2021,KL-001315-2021,2021-12-31,ADV-011,PARTY-00085,Evidence Complainant,"Present: Complainant, Complainant's Advocate
+Absent: Accused, Accused Advocate
+Complainant present; examined-in-chief by proof affidavit. Exhibits marked. Accused's counsel not ready for cross-examination; adjourned for cross-examination.",Evidence Complainant,3,4,1,6,5,3,2,3,0,0,0,0,0,0,27
+ST/135/2022,KL-000974-2022,2022-10-23,ADV-038,PARTY-00086,Evidence Complainant,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+For the evidence of the complainant.",Evidence Accused,2,3,1,3,4,1,4,1,0,0,0,0,0,0,19
+ST/679/2024,KL-000838-2024,2024-12-17,ADV-027,PARTY-00087,Appearance,"Present: Complainant, Accused
+Absent: Complainant's Advocate, Accused Advocate
+Both complainant and accused present; parties referred for mediation.",Warrant,2,4,1,1,0,0,0,0,0,0,0,0,0,0,8
+ST/514/2023,KL-001227-2023,2023-09-23,ADV-019,PARTY-00088,Arguments,"Present: Complainant's Advocate, Accused Advocate
+Absent: Accused, Complainant
+Heard from the side of the complainant. For the hearing of the accused.",Judgement,2,2,2,5,5,1,1,10,10,1,0,0,0,0,39
+ST/313/2023,KL-001214-2023,2023-02-03,ADV-016,PARTY-00089,Arguments,"Present: Accused Advocate
+Absent: Complainant, Complainant's Advocate, Accused
+Heard. For judgment.",Arguments,2,3,1,4,3,1,2,12,9,3,0,0,0,0,40
+ST/1156/2024,KL-000849-2024,2024-12-06,ADV-037,PARTY-00090,Warrant,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+CMP allowed. Issue by hand warrant to accused. Take steps. For return of warrant.",Plea,1,5,2,4,1,0,0,0,0,0,0,0,0,0,13
+ST/1269/2025,KL-000601-2025,2025-07-11,ADV-034,PARTY-00091,Appearance,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Summons served. For the appearance of the accused.",Appearance,2,3,1,1,0,0,0,0,0,0,0,0,0,0,7
+ST/608/2017,KL-000693-2017,2017-05-19,ADV-013,PARTY-00092,Evidence Accused,"Present: Complainant, Complainant's Advocate, Accused Advocate
+Absent: Accused
+For defence evidence, last chance.",Evidence Accused,2,5,1,2,5,1,4,7,2,0,0,0,8,0,37
+ST/459/2023,KL-000387-2023,2023-10-17,ADV-005,PARTY-00093,Appearance,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Summons served. For the appearance of the accused.",Appearance,2,1,1,2,0,0,0,0,0,0,0,0,0,1,7
+ST/262/2025,KL-000712-2025,2025-03-23,ADV-026,PARTY-00094,Appearance,"Present: Complainant, Accused
+Absent: Complainant's Advocate, Accused Advocate
+Both complainant and accused present; parties referred for mediation.",Warrant,1,3,1,1,0,0,0,0,0,0,0,0,0,0,6
+ST/565/2026,KL-001726-2026,2026-03-30,ADV-024,PARTY-00095,Delay Condonation Hearing,"Present: Complainant's Advocate
+Absent: Complainant, Accused, Accused Advocate
+Issue DCA notice to accused. Take steps. For return of notice.",Cognizance,2,2,0,0,0,0,0,0,0,0,0,0,0,0,4
+ST/831/2022,KL-000332-2022,2022-08-03,ADV-021,PARTY-00096,Arguments,"Present: Complainant's Advocate, Accused Advocate
+Absent: Complainant, Accused
+Heard. For further hearing.",Judgement,1,4,2,3,4,1,3,8,11,1,0,0,0,0,38
+ST/990/2025,KL-000257-2025,2025-02-25,ADV-029,PARTY-00097,Warrant,"Absent: Complainant, Complainant's Advocate, Accused, Accused Advocate
+Issue NBW to accused. Take steps. For return of warrant.",Plea,2,3,1,3,3,0,0,0,0,0,0,0,0,0,12
+ST/29/2022,KL-000594-2022,2022-12-06,ADV-009,PARTY-00098,Evidence Accused,"Present: Complainant, Complainant's Advocate, Accused Advocate
+Absent: Accused
+For defence evidence, last chance.",Arguments,3,2,2,3,3,2,3,8,4,0,0,0,0,0,30
+ST/1340/2026,KL-001724-2026,2026-06-28,ADV-001,PARTY-00099,Appearance,"Present: Complainant, Accused
+Absent: Complainant's Advocate, Accused Advocate
+Both complainant and accused present; parties referred for mediation.",Appearance,2,3,2,1,0,0,0,0,0,0,0,0,0,0,8
+ST/178/2017,KL-000853-2017,2017-02-20,ADV-002,PARTY-00100,Judgement,"Present: Accused Advocate
+Absent: Complainant's Advocate, Accused, Complainant
+Produce the order of the Hon'ble District Court, if any.",Reports,2,4,1,3,2,2,5,7,7,3,1,0,0,0,37

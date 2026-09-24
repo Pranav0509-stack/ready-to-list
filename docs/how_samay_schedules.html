@@ -1,0 +1,316 @@
+<title>How Samay Schedules</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#ECEEEA; --paper:#F9FAF7; --ink:#111925; --muted:#56627A; --rule:#D3DAE5; --soft:#E5E9EF;
+  --navy:#1B2A41; --blue:#3D6FD9; --gold:#B07A1E; --goldsoft:#F4E8D2; --green:#2F7454; --greensoft:#E1F0E8; --red:#A8253B;
+  --onnavy:#FFFFFF;
+  --serif:"Spectral",Georgia,"Times New Roman",serif;
+  --sans:"Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){color-scheme:dark;
+    --bg:#0D1117; --paper:#151B24; --ink:#E8EBF0; --muted:#A3ADBF; --rule:#2B3442; --soft:#1F2733;
+    --navy:#AFC5EA; --blue:#80A5F0; --gold:#E2B46A; --goldsoft:#33291A; --green:#6CC09A; --greensoft:#18302A; --red:#E0788A;
+    --onnavy:#0D1117;}
+}
+:root[data-theme="dark"]{color-scheme:dark;
+  --bg:#0D1117; --paper:#151B24; --ink:#E8EBF0; --muted:#A3ADBF; --rule:#2B3442; --soft:#1F2733;
+  --navy:#AFC5EA; --blue:#80A5F0; --gold:#E2B46A; --goldsoft:#33291A; --green:#6CC09A; --greensoft:#18302A; --red:#E0788A;
+  --onnavy:#0D1117;}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;padding-inline:16px}
+.deck{max-width:1120px;margin:0 auto;padding-block:20px 88px;display:flex;flex-direction:column;gap:20px}
+.slide{background:var(--paper);border:1px solid var(--rule);border-radius:10px;aspect-ratio:16/9;max-width:100%;
+  padding:clamp(20px,4vw,52px);display:flex;flex-direction:column;gap:clamp(10px,1.6vw,20px);overflow:hidden;position:relative;box-sizing:border-box}
+.js .slide{display:none}.js .slide.on{display:flex}
+.num{position:absolute;right:clamp(16px,3vw,34px);bottom:clamp(12px,2vw,22px);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.brand{position:absolute;left:clamp(20px,4vw,52px);bottom:clamp(12px,2vw,22px);font-family:var(--serif);font-weight:600;color:var(--gold);font-size:15px}
+.eyebrow{font-size:clamp(10.5px,1.05vw,12.5px);letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700}
+h1,h2,h3{font-family:var(--serif);margin:0;text-wrap:balance;line-height:1.12;color:var(--ink)}
+h1{font-size:clamp(40px,7vw,88px);font-weight:600;color:var(--gold);letter-spacing:-.01em}
+h2{font-size:clamp(22px,3.1vw,38px);font-weight:600}
+h3{font-size:clamp(14px,1.55vw,18px);font-weight:600}
+p,li{font-size:clamp(13px,1.45vw,17.5px);line-height:1.5;margin:0;max-width:64ch}
+.muted{color:var(--muted)}
+.lead{font-family:var(--serif);font-size:clamp(18px,2.4vw,30px);line-height:1.3;max-width:30ch}
+.grid{display:grid;gap:clamp(10px,1.8vw,22px)}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}.slide{aspect-ratio:auto}}
+.card{border:1px solid var(--rule);border-radius:8px;padding:clamp(12px,1.6vw,18px);display:flex;flex-direction:column;gap:6px;background:var(--paper)}
+.card.hl{background:var(--navy);border-color:var(--navy)}
+.card.hl h3,.card.hl p,.card.hl .k{color:var(--onnavy)}
+.step{font-family:var(--serif);font-size:clamp(26px,3.4vw,40px);font-weight:600;color:var(--gold);line-height:1}
+.stat b{display:block;font-family:var(--serif);font-size:clamp(28px,4.4vw,54px);font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.stat .from{font-size:clamp(12px,1.2vw,14px);color:var(--muted)}
+.stat .k{font-size:clamp(12px,1.25vw,15px);color:var(--muted)}
+.stat b.up{color:var(--green)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:clamp(11.5px,1.3vw,15.5px)}
+th,td{text-align:left;padding:clamp(4px,.65vw,8px) 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:clamp(10px,1vw,12px);letter-spacing:.06em;text-transform:uppercase}
+td.n,th.n{text-align:right}
+.tw{overflow-x:auto}
+.formula{background:var(--navy);color:var(--onnavy);border-radius:8px;padding:clamp(12px,1.8vw,20px) clamp(14px,2vw,24px);font-family:ui-monospace,Menlo,monospace;font-size:clamp(12px,1.45vw,17px);line-height:1.7;overflow-x:auto;white-space:pre}
+.formula .c{color:var(--gold)}
+/* score bars */
+.bars{display:flex;flex-direction:column;gap:clamp(6px,1vw,11px)}
+.bar{display:grid;grid-template-columns:clamp(96px,13vw,150px) 1fr clamp(56px,7vw,80px);align-items:center;gap:12px;font-size:clamp(12px,1.35vw,16px)}
+.track{height:clamp(10px,1.3vw,14px);background:var(--soft);border-radius:3px;position:relative}
+.fill{position:absolute;inset:0 auto 0 0;background:var(--gold);border-radius:3px}
+.cap{position:absolute;inset:0 auto 0 0;border:1.5px solid var(--navy);border-radius:3px;background:transparent}
+.bar .v{font-variant-numeric:tabular-nums;text-align:right;font-weight:600}
+.bar .v span{color:var(--muted);font-weight:400}
+/* day strip */
+.day{display:grid;grid-template-columns:15fr 105fr 60fr 210fr;gap:3px;border-radius:6px;overflow:hidden;font-size:clamp(10.5px,1.15vw,13px)}
+.day div{padding:clamp(8px,1.2vw,14px) 8px;background:var(--navy);color:var(--onnavy);line-height:1.3}
+.day .op{background:var(--gold);color:var(--onnavy)}
+.day .lu{background:var(--soft);color:var(--muted)}
+.ticks{display:grid;grid-template-columns:15fr 105fr 60fr 210fr;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.flow .s{background:var(--soft);border-radius:6px;padding:8px 12px;font-size:clamp(12px,1.35vw,15.5px);font-weight:500}
+.flow .s.g{background:var(--goldsoft)}
+.flow .a{color:var(--muted)}
+.pill{display:inline-block;font-size:.8em;font-weight:600;padding:1px 8px;border-radius:999px;background:var(--soft);color:var(--navy)}
+.pill.g{background:var(--greensoft);color:var(--green)}
+.rows{display:flex;flex-direction:column;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.rows .r{display:grid;grid-template-columns:62px 1.3fr 1.2fr 56px;gap:10px;padding:clamp(6px,.8vw,9px) 12px;border-top:1px solid var(--rule);font-size:clamp(11.5px,1.3vw,15px);font-variant-numeric:tabular-nums;align-items:center}
+.rows .r:first-child{border-top:0}
+.rows .h{background:var(--soft);color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.rows .grp{background:var(--goldsoft);color:var(--gold);font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;grid-template-columns:1fr}
+.rows .t{font-family:var(--serif);font-weight:600}
+.quote{font-family:var(--serif);font-size:clamp(20px,3vw,38px);line-height:1.25;max-width:26ch}
+.nav{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--paper);border-top:1px solid var(--rule);display:flex;gap:10px;justify-content:center;align-items:center}
+.nav button{font:inherit;font-size:14px;background:var(--navy);color:var(--onnavy);border:0;border-radius:6px;padding:8px 18px;cursor:pointer}
+.nav button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.nav button[disabled]{opacity:.35;cursor:default}
+.nav .pos{min-width:64px;text-align:center;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.no-js .nav{display:none}
+ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
+.push{margin-top:auto}
+</style>
+
+<div class="deck" id="deck">
+
+<section class="slide" aria-label="Title">
+  <div class="eyebrow">PUCAR Scheduling Justice · FOSS United Week</div>
+  <h1>Samay</h1>
+  <p class="lead">How a judge's day is decided: who is heard, in what order, and at what time.</p>
+  <div class="grid g3 push">
+    <div class="stat"><span class="k">Listed cases heard</span><b class="up">97%</b><span class="from">today 44%</span></div>
+    <div class="stat"><span class="k">Hearings that move the case</span><b class="up">79%</b><span class="from">today 48%</span></div>
+    <div class="stat"><span class="k">Cases disposed in 60 days</span><b class="up">356</b><span class="from">today 196</span></div>
+  </div>
+  <div class="num">1</div>
+</section>
+
+<section class="slide" aria-label="Samay in three steps">
+  <div class="eyebrow">In three steps</div>
+  <h2>Score every case. Pack the day. Give everyone a time.</h2>
+  <div class="grid g3" style="flex:1;align-content:center">
+    <div class="card"><span class="step">1</span><h3>Score</h3><p>Every case out of 100: how old, whether its people will come, how close to judgment, how often it came back, whether the court said "last chance".</p></div>
+    <div class="card"><span class="step">2</span><h3>Pack</h3><p>Fill each sitting like a bag: the cases most likely to move forward, until 95% of the minutes are used.</p></div>
+    <div class="card"><span class="step">3</span><h3>Time</h3><p>A clock time and a one-hour window for every party, and a next date set by what happened, never a flat 60 days.</p></div>
+  </div>
+  <p class="muted">Built only on the organisers' real data: 100 cheque-dishonour cases and their reference tables, scaled to a 3,000-case docket.</p>
+  <div class="brand">Samay</div><div class="num">2</div>
+</section>
+
+<section class="slide" aria-label="Two questions">
+  <div class="eyebrow">Two different questions</div>
+  <h2>The score decides who gets in. Grouping decides the order.</h2>
+  <div class="grid g2" style="flex:1;align-content:center">
+    <div class="card hl"><h3>Who is listed today?</h3><p>The priority score and the optimiser. Only cases likely to move forward, and only as many as the minutes allow.</p></div>
+    <div class="card"><h3>In what order are they called?</h3><p>Sitting, then one hearing type at a time, then one advocate at a time. Not the score: once listed, 97% are heard anyway.</p></div>
+  </div>
+  <div class="brand">Samay</div><div class="num">3</div>
+</section>
+
+<section class="slide" aria-label="The priority score">
+  <div class="eyebrow">The priority score, 0 to 100</div>
+  <h2>ST/1261/2017 scores 91.3</h2>
+  <div class="grid g2" style="align-items:center;flex:1">
+    <div class="bars" role="img" aria-label="Factor points for ST/1261/2017">
+      <div class="bar"><span>Age</span><div class="track"><div class="cap" style="width:100%"></div><div class="fill" style="width:100%"></div></div><span class="v">35 <span>/ 35</span></span></div>
+      <div class="bar"><span>Readiness</span><div class="track"><div class="cap" style="width:71.4%"></div><div class="fill" style="width:71.4%"></div></div><span class="v">25 <span>/ 25</span></span></div>
+      <div class="bar"><span>Near disposal</span><div class="track"><div class="cap" style="width:42.9%"></div><div class="fill" style="width:38.6%"></div></div><span class="v">13.5 <span>/ 15</span></span></div>
+      <div class="bar"><span>Churn</span><div class="track"><div class="cap" style="width:42.9%"></div><div class="fill" style="width:28%"></div></div><span class="v">9.8 <span>/ 15</span></span></div>
+      <div class="bar"><span>Urgency</span><div class="track"><div class="cap" style="width:28.6%"></div><div class="fill" style="width:22.9%"></div></div><span class="v">8 <span>/ 10</span></span></div>
+    </div>
+    <ul>
+      <li><b>Age:</b> 9.2 years; full points at 8 years.</li>
+      <li><b>Readiness:</b> a judgment hearing, both advocates present last time.</li>
+      <li><b>Near disposal:</b> stage 10 of 11, arguments.</li>
+      <li><b>Churn:</b> more hearings than expected by this stage.</li>
+      <li><b>Urgency:</b> "for judgment" in the last order.</li>
+      <li class="muted">Summons or warrant still out: Conditional, not listed until it returns. Age weight can never go below 20.</li>
+    </ul>
+  </div>
+  <div class="brand">Samay</div><div class="num">4</div>
+</section>
+
+<section class="slide" aria-label="Why low scores appear first">
+  <div class="eyebrow">Why a score of 33 opens the day</div>
+  <h2>The list reads by time, not by score</h2>
+  <div class="grid g2" style="align-items:start;flex:1">
+    <div class="rows" aria-label="Start of the 1 October list">
+      <div class="r h"><span>Time</span><span>Case</span><span>Hearing</span><span>Score</span></div>
+      <div class="r grp"><span>Morning sitting, 10:30 to 12:30</span></div>
+      <div class="r"><span class="t">10:45</span><span>ST/1230/2025</span><span>Application review</span><span class="pill">33</span></div>
+      <div class="r"><span class="t">10:53</span><span>G-ST/506/2021</span><span>Application review</span><span class="pill">56</span></div>
+      <div class="r"><span class="t">11:05</span><span>G-ST/1897/2021</span><span>Application review</span><span class="pill">73</span></div>
+      <div class="r"><span class="t">11:16</span><span>G-ST/131/2025</span><span>Application review</span><span class="pill">33</span></div>
+      <div class="r"><span class="t">11:28</span><span>G-ST/2620/2026</span><span>Cognizance</span><span class="pill">26</span></div>
+    </div>
+    <ul>
+      <li><b>Getting in is what matters.</b> Every case here will be heard; calling 73 before 33 changes nothing.</li>
+      <li><b>One hearing type at a time,</b> so the judge does not switch context; one advocate at a time, so nobody runs between courtrooms.</li>
+      <li><b>Mornings take short matters only.</b> A 5-minute application that goes ahead 85% of the time is the best use of a morning, even at 33.</li>
+      <li><b>New cases carry +15</b> for the NI Act s.143 six-month clock, which the table does not show.</li>
+    </ul>
+  </div>
+  <div class="brand">Samay</div><div class="num">5</div>
+</section>
+
+<section class="slide" aria-label="The optimiser">
+  <div class="eyebrow">The optimiser · Google OR-Tools CP-SAT</div>
+  <h2>For every ready case, one yes or no: list it today?</h2>
+<div class="formula"><span class="c">value</span>      = (score + listing boost + s.143 boost) × chance the hearing moves the case
+<span class="c">maximise</span>   Σ value × minutes<sup>0.75</sup>
+<span class="c">so that</span>    Σ expected minutes ≤ 95% of the sitting</div>
+  <div class="flow" aria-label="Order of filling">
+    <span class="s g">1 · Bail, always</span><span class="a">→</span>
+    <span class="s g">2 · Cases over 4 years, up to 25% of minutes (locked)</span><span class="a">→</span>
+    <span class="s">3 · CP-SAT picks the rest</span><span class="a">→</span>
+    <span class="s">4 · Five on standby</span>
+  </div>
+  <p class="muted">Minutes<sup>0.75</sup> stops the day filling with only five-minute matters, so a 30-minute evidence hearing still competes.</p>
+  <div class="brand">Samay</div><div class="num">6</div>
+</section>
+
+<section class="slide" aria-label="Why CP-SAT">
+  <div class="eyebrow">Why this optimiser</div>
+  <h2>It finds the best list, fast, and it is free</h2>
+  <div class="grid g4" style="flex:1;align-content:center">
+    <div class="card"><h3>Right shape</h3><p>A yes or no per case under a minutes limit is exactly the problem CP-SAT is built for.</p></div>
+    <div class="card"><h3>Best, not good</h3><p>In our earlier test it proved the best list in under 0.1 s; a linear-programming solver was still 5% short at 30 s.</p></div>
+    <div class="card"><h3>Beats sorting</h3><p>A sorted list overflows with long hearings or leaves the afternoon empty. The optimiser balances both.</p></div>
+    <div class="card"><h3>Open source</h3><p>Apache 2.0. Goes straight into DRISTI 2.0 with no licence.</p></div>
+  </div>
+  <div class="grid g3">
+    <div class="stat"><span class="k">Plan one court day, about 3,000 pending</span><b>83 ms</b></div>
+    <div class="stat"><span class="k">Plan 60 court days</span><b>5 s</b></div>
+    <div class="stat"><span class="k">Score 100 cases</span><b>3 ms</b></div>
+  </div>
+  <div class="brand">Samay</div><div class="num">7</div>
+</section>
+
+<section class="slide" aria-label="How time is worked out">
+  <div class="eyebrow">How it works out the time</div>
+  <h2>Every minute of the day is accounted for</h2>
+  <div>
+    <div class="day" aria-label="The court day">
+      <div class="op">Opening</div><div>Morning · short matters · 105 min</div><div class="lu">Lunch</div><div>Afternoon · evidence, arguments, judgment · 210 min</div>
+    </div>
+    <div class="ticks"><span>10:30</span><span>10:45</span><span>12:30</span><span>13:30 … 17:00</span></div>
+  </div>
+  <div class="grid g2" style="align-items:start">
+    <div class="tw"><table>
+      <thead><tr><th>Hearing type</th><th class="n">Minutes</th></tr></thead>
+      <tbody>
+        <tr><td>Admission</td><td class="n">5</td></tr>
+        <tr><td>Appearance, warrant</td><td class="n">10</td></tr>
+        <tr><td>Plea, bail</td><td class="n">15</td></tr>
+        <tr><td>Evidence, arguments, judgment</td><td class="n">30</td></tr>
+      </tbody>
+    </table></div>
+    <ul>
+      <li><b>Expected minutes</b> = chance it goes ahead × minutes × 1.063 + chance adjourned × 2 + 1. Evidence at 50%: <b>17.9 min</b>.</li>
+      <li><b>Clock time</b> = sitting start + 15 min opening + the cases before it. So the day opens at 10:45.</li>
+      <li><b>Window</b>: from the half hour before, for one hour. Expected 11:16 gives 11:00 to 12:00.</li>
+      <li><b>Runs over</b>: to the next sitting day. <b>Runs short</b>: standby is called.</li>
+    </ul>
+  </div>
+  <div class="brand">Samay</div><div class="num">8</div>
+</section>
+
+<section class="slide" aria-label="Parameters">
+  <div class="eyebrow">Every parameter, in one file per bench</div>
+  <h2>The rules the judge can see, and the ones that are locked</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Parameter</th><th>Value</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Fill target</td><td>95% of each sitting</td><td>Room when a hearing runs long</td></tr>
+      <tr><td>Ageing quota <span class="pill g">locked</span></td><td>25% of minutes to 4+ year cases</td><td>Old cases are never starved</td></tr>
+      <tr><td>2nd listing</td><td>+10</td><td>A case that failed once rises</td></tr>
+      <tr><td>3rd+ listing</td><td>+25, held until the cause is fixed</td><td>Stops endless adjournment</td></tr>
+      <tr><td>s.143 clock</td><td>+15 while under 180 days</td><td>NI Act: trial within six months</td></tr>
+      <tr><td>Last-order risk</td><td>×2.5</td><td>"Await warrant", "Absent: Accused"</td></tr>
+      <tr><td>Adjourned case</td><td>costs 2 min</td><td>Calling and adjourning still takes time</td></tr>
+      <tr><td>Changeover</td><td>1 min, 3 when the type changes</td><td>Judge switching context</td></tr>
+      <tr><td>Next date after failure</td><td>7 absent, 10 not ready, 21 process</td><td>Matched to the reason, never a flat 60</td></tr>
+    </tbody>
+  </table></div>
+  <div class="brand">Samay</div><div class="num">9</div>
+</section>
+
+<section class="slide" aria-label="Pre-filling">
+  <div class="eyebrow">Adding pre-filing</div>
+  <h2>The registry's checks, done at e-filing</h2>
+  <p>Dates and delay computed, documents checked, full summons details taken. Nothing is refused. One judge, one year:</p>
+  <div class="tw"><table>
+    <thead><tr><th></th><th class="n">Scheduling only</th><th class="n">+ pre-filing</th><th class="n">All levers</th></tr></thead>
+    <tbody>
+      <tr><td>New complaints past the first stage</td><td class="n">32%</td><td class="n"><b>91%</b></td><td class="n">92%</td></tr>
+      <tr><td>Separate delay-condonation hearings</td><td class="n">290</td><td class="n"><b>20</b></td><td class="n">9</td></tr>
+      <tr><td>Cases disposed</td><td class="n">643</td><td class="n">644</td><td class="n"><b>847</b></td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">Today's rules dispose of 541 a year. All levers: scheduling, pre-filing, confirmation two days before, fixed slots, process tracking.</p>
+  <p class="quote push" style="font-size:clamp(18px,2.4vw,28px)">Scheduling fixes the judge's day. Pre-filing fixes what arrives at the door.</p>
+  <div class="brand">Samay</div><div class="num">10</div>
+</section>
+
+<section class="slide" aria-label="Results">
+  <div class="eyebrow">Results · 60 working days · 330 minutes a day · 5 runs</div>
+  <h2>Against the brief's five measures</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Measure</th><th class="n">Today's rules</th><th class="n">Samay</th></tr></thead>
+    <tbody>
+      <tr><td>Predictability: days from listing to a real hearing</td><td class="n">23</td><td class="n"><b>2</b></td></tr>
+      <tr><td>Substantiveness: heard cases that move forward</td><td class="n">48%</td><td class="n"><b>79%</b></td></tr>
+      <tr><td>Backlog: cases over 4 years heard at least once</td><td class="n">32%</td><td class="n"><b>47%</b></td></tr>
+      <tr><td>Next date: average gap</td><td class="n">60 days</td><td class="n"><b>14 days</b></td></tr>
+      <tr><td>Utilisation, with wasted listings</td><td class="n">94% · 2,694 wasted</td><td class="n"><b>95% · 259 wasted</b></td></tr>
+    </tbody>
+  </table></div>
+  <p class="quote push" style="font-size:clamp(18px,2.4vw,28px)">The score decides who deserves time. CP-SAT decides who fits. Grouping decides the order. Expected minutes decide the clock.</p>
+  <div class="brand">Samay</div><div class="num">11</div>
+</section>
+
+</div>
+
+<div class="nav" role="navigation" aria-label="Slides">
+  <button type="button" id="prev" aria-label="Previous slide">← Prev</button>
+  <span class="pos" id="pos">1 / 11</span>
+  <button type="button" id="next" aria-label="Next slide">Next →</button>
+</div>
+
+<script>
+(function(){
+  document.documentElement.classList.add('js');
+  var s=[].slice.call(document.querySelectorAll('.slide')), i=0;
+  var h=(location.hash||'').replace('#','');
+  if(/^s\d+$/.test(h)){var n=parseInt(h.slice(1),10)-1;if(n>=0&&n<s.length)i=n;}
+  function show(n){i=Math.max(0,Math.min(s.length-1,n));s.forEach(function(x,k){x.classList.toggle('on',k===i)});
+    document.getElementById('pos').textContent=(i+1)+' / '+s.length;
+    document.getElementById('prev').disabled=i===0;document.getElementById('next').disabled=i===s.length-1;
+    try{history.replaceState(null,'','#s'+(i+1))}catch(e){}}
+  document.getElementById('prev').onclick=function(){show(i-1)};
+  document.getElementById('next').onclick=function(){show(i+1)};
+  document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();show(i+1)}
+    if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();show(i-1)}});
+  show(i);
+})();
+</script>

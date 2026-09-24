@@ -1,10 +1,12 @@
-# Ready-to-List
+# Samay
 
-Cause-list and hearing-day tools for the judge and the court master. The AI recommends and the judge decides.
+Product name Samay; team name ready-to-list.
 
-"We never say no to a litigant. We just stop listing hearings that were never going to happen."
+A scheduling layer for one judge's docket, built on the PUCAR "Scheduling Justice" hackathon data: 100 real
+cheque-dishonour cases (NI Act s.138) from a Kerala magistrate court, their hearing-type table, their measured
+substantiveness and failure-reason rates, and their calendar. Nothing in the product runs on dummy data.
 
-Built for "Scheduling Justice", the PUCAR hackathon at FOSS United Week. The hackathon manual is the source of truth; the team's build bible maps every feature to it (see `docs/BIBLE.md`).
+"We never say no to a litigant. We stop listing hearings that were never going to happen."
 
 ## Run
 
@@ -14,53 +16,44 @@ python3 -m venv .venv
 .venv/bin/streamlit run app.py
 ```
 
-The first run builds `data/court.db`: a synthetic court with 3 benches, 2,700 pending cases and 150 advocates. To load the organisers' CSVs instead, put them in `data/raw/` and edit `COLUMN_MAP` in `core/data.py`. Nothing else changes. The sidebar has a "Reset demo data" button.
+The organisers' files are read from `data/pucar/` (or from `../../data/` when this folder sits inside their repo).
 
-## Screens
+## What is in the app
 
-| Screen | For | What it does |
-|---|---|---|
-| Judge dashboard | Judge | KPIs, a timeline of the day by block, a reason for each listing, override with a live impact meter, Approve. Config tab with locked rules. Docket health tab. Case drawer with the summary cover sheet. |
-| Court master | Court master | One-tap outcome (effective / heard, not effective / adjourned + reason code), live ETAs, next-date suggestion with the reason, Confirm or Change. |
-| Simulator | Panel | 60 days of today's rules vs Ready-to-List, same roster and seed, with the five judging metrics. |
-| Model accuracy | Panel | Time-based holdout, calibration, backtest of real cause lists, learning curve. |
-| Audit log | Everyone | Every AI decision and every human override. |
+| Page | What it does |
+|---|---|
+| Ready-to-List (prototype) | One judge, four screens: Today's list with time windows, listing number and a reason per case, remove and approve; Docket with readiness read from the last order; Calendar with holidays, leave and load; Results on the five case-study measures |
+| Upload a docket | Upload a CSV or Excel roster, get it checked, read readiness, plan a week to a year, see what changes |
+| Data, lifecycle, registry intake | Every file and column, the case lifecycle from the data, the registry's pre-filing scrutiny of a complaint, each case's file, plans by day, week, month and year |
+| Which lever does what | Each Ready-to-List lever switched off in turn |
+| Scheduler and model | The plain-language design note (`docs/HOW_IT_WORKS.md`) |
 
-## Core services (`core/`)
+## How the scheduling works
 
-| Module | Function | Does |
-|---|---|---|
-| `readiness.py` | `case_frame`, `readiness`, `run_nudges` | Score 0-100 (filing 30, prerequisites 40, counsel confirmed 20, summary verified 10), state, priority, T-2 intent check |
-| `predict.py` | `Predictor.predict` | Logistic regression for P(show) and P(effective), trained on past hearings; expected minutes |
-| `scheduler.py` | `build_causelist`, `impact`, `approve` | Urgent bypass, then the ageing quota, then a CP-SAT knapsack per block (priority × P(effective), filled to 95%), advocate clustering into 1-hour windows, waitlist |
-| `nextdate.py` | `next_date`, `record_outcome`, `confirm_next_date` | today + max(ideal gap, prerequisite time), then the first day with capacity, skipping holidays, the judge's leave and the advocate's other listings |
-| `simulate.py` | `run`, `summary` | Agent simulation (diligent / busy / chronic adjourner advocates) |
-| `summary.py` | `summarise` | Cover sheet for old cases. The LLM output is cached for the demo |
-| `evaluate.py` | `holdout`, `backtest_causelists`, `learning_curve` | Model accuracy against naive baselines |
+Each case first gets a Samay priority score from 0 to 100 on its own details (age 35, readiness 25, disposal proximity 15, hearing churn 15, court-set urgency 10; `docs/PRIORITY_SCORE.md`). Then, each evening, for one sitting day: take the cases due, hold back those whose summons or warrant is not back, list bail
+first, keep a quarter of each sitting for cases over four years old, then pack the rest by score times the chance the
+hearing moves the case, per minute, with a CP-SAT solver, to 95 percent of the sitting's minutes. Group each advocate's
+matters and each hearing type. After the day, set the next date from the next purpose's reference gap or the reason the
+hearing failed, never a flat 60 days. Count how many times a case has been listed for the same purpose: a deferred case
+(3rd or later) is held until its last failure is cured, then given priority and a fixed slot.
 
-Locked rules in `config/judge_rules.yaml` (the UI can't turn them off): the 25% ageing quota for 5+ year cases, the urgent bypass for bail, habeas corpus and stay, and the readiness gate of 60.
+The model is the organisers' measured probability that each hearing type moves the case, adjusted per case by signals
+read from the last order ("Await warrant", "Absent: Accused", "not ready"), with the failure reasons in their real
+proportions. No machine learning is trained on 100 cases. Lever strengths are stated assumptions in `config/pucar.yaml`.
 
-## Results so far (synthetic court, 60 working days, default settings)
+Full detail, including a stage-by-stage table of every feature: `docs/HOW_IT_WORKS.md`. Results: `outputs/` after running
+`python -m scripts.run_pucar` and `python -m scripts.run_one_judge`.
 
-The simulated baseline is calibrated to the manual's case study: about 60 listed, 20 heard and 10 effective a day.
+## Layout
 
-| Judge | Effective hearings a day | Cases disposed | Change in 5+ year cases | Listed cases heard |
-|---|---|---|---|---|
-| Sehgal | 8.5 today, 19.3 ours | 15 today, 59 ours | +23 today, -24 ours | 24% today, 72% ours |
-| Dimakar | 10.8 today, 21.9 ours | 58 today, 68 ours | -24 today, -39 ours | 31% today, 76% ours |
-| Joshi | 12.2 today, 31.6 ours | 17 today, 45 ours | +21 today, -10 ours | 38% today, 74% ours |
-
-Model accuracy on a time-based holdout (6,402 train, 2,134 test hearings):
-
-| Check | Ours | Naive baseline |
-|---|---|---|
-| P(show) AUC / Brier | 0.77 / 0.196 | 0.50 / 0.250 |
-| P(effective given heard) AUC / Brier | 0.85 / 0.142 | 0.50 / 0.245 |
-| Duration mean absolute error | 2.6 min | 2.6 min (reference table) |
-| Heard per cause list, backtest error | 1.9 hearings (10.7%) | |
-
-## Honest notes
-
-- Every number above comes from synthetic data. Re-run the simulator and the Model accuracy page on the organisers' data before quoting them.
-- Duration prediction does not beat the reference table yet.
-- In production the summary model runs self-hosted on court servers (Kerala HC AI policy).
+| Folder | What |
+|---|---|
+| `core/pucar_engine.py` | Data loading, truth model, levers, CP-SAT packing, next dates, listing rule, leave, metrics |
+| `core/priority.py` | The Samay priority score and its rules |
+| `core/registry.py` | Pre-filing scrutiny of an NI Act s.138 complaint |
+| `config/` | `pucar.yaml` (day, flow, priorities, levers, escalation, leave, clock), `registry_ni138.yaml`, `calendar.yaml` (official Kerala HC 2026) |
+| `pages/` | The five Streamlit pages |
+| `scripts/` | `run_pucar.py`, `run_one_judge.py`, `data_profile.py`, the organisers' roster generator |
+| `docs/` | `HOW_IT_WORKS.md`, `PRIORITY_SCORE.md`, `DATA_PROFILE.md`, `presentation.html` |
+| `design-system/` | Palette and type, from the UI/UX Pro Max skill database (Legal Services) |
+| `archive/highcourt_synthetic/` | The earlier High Court version on synthetic data, kept for reference, not part of the product |
