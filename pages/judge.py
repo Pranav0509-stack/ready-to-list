@@ -58,7 +58,7 @@ def timeline_chart(rows, height=190):
         for edge in (b["start"], b["end"]):
             fig.add_vline(x=base_day + timedelta(minutes=E.to_min(edge)), line_color="#CBD5E1", line_width=1)
     fig.update_layout(barmode="overlay", height=height, margin=dict(l=0, r=0, t=6, b=0),
-                      legend=dict(orientation="h", y=1.25, x=0), xaxis=dict(tickformat="%H:%M", range=[
+                      legend=dict(orientation="h", y=1.25, x=0), xaxis=dict(type="date", tickformat="%H:%M", range=[
                           base_day + timedelta(minutes=E.to_min("10:15")), base_day + timedelta(minutes=E.to_min("17:15"))]),
                       yaxis=dict(autorange="reversed", title=None), plot_bgcolor="#FFFFFF")
     return fig
