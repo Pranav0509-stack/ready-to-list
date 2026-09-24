@@ -121,6 +121,8 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
 .win .t{font-family:var(--serif);font-weight:600;font-size:1.3em}
 .win .p{background:var(--greensoft);color:var(--green);font-weight:600;border-radius:999px;padding:2px 10px;font-size:.85em;white-space:nowrap}
 .eq{font-family:ui-monospace,Menlo,monospace;font-size:clamp(12.5px,1.5vw,18px);background:var(--soft);border-radius:8px;padding:clamp(10px,1.4vw,16px) clamp(12px,1.8vw,20px);overflow-x:auto;white-space:pre;line-height:1.65}
+.defs{display:grid;grid-template-columns:clamp(60px,7vw,90px) 1fr;gap:6px 14px;font-size:clamp(11.5px,1.3vw,15px);align-items:baseline}
+.defs b{font-family:ui-monospace,Menlo,monospace;color:var(--gold);font-weight:700}
 </style>
 <div class="deck" id="deck">
 
@@ -284,22 +286,112 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
   <div class="brand">Samay</div><div class="num">10</div>
 </section>
 
-<section class="slide" aria-label="Next date">
-  <div class="eyebrow">Step 7 · after the hearing</div>
-  <h2>The next date follows what happened</h2>
+<section class="slide" aria-label="Next date rules">
+  <div class="eyebrow">Step 7 · after the hearing · the rule</div>
+  <h2>The next date follows what happened, never the calendar</h2>
+<div class="eq">gap  =  G(next stage)          if the hearing moved the case
+     =  F(reason)              if it failed
+     =  max(F(process), days until the warrant is due back)   if waiting on process
+     =  1 sitting day          if the court did not reach it, or the judge was on leave</div>
   <div class="tw"><table>
-    <thead><tr><th>Outcome</th><th>Next date</th><th>In our example</th></tr></thead>
+    <thead><tr><th>Outcome</th><th class="n">Gap, days</th><th>Why</th></tr></thead>
     <tbody>
-      <tr><td>Moved forward</td><td>The next stage's usual gap, 5 to 45 days</td><td>ST/1166/2023 closes evidence, arguments in 14 days</td></tr>
-      <tr><td>A party absent</td><td>7 days</td><td>ST/608/2017 if the accused skips again</td></tr>
-      <tr><td>Summons or warrant not back</td><td>21 days, or the day it returns</td><td>ST/7/2025</td></tr>
-      <tr><td>Not ready</td><td>10 days</td><td></td></tr>
-      <tr><td>Court did not reach it</td><td>Next sitting day</td><td></td></tr>
-      <tr><td>Judgment delivered</td><td>Disposed; the judge fixes it</td><td>ST/1261/2017</td></tr>
+      <tr><td>Moved forward</td><td class="n">G: 5 to 45</td><td>The next step needs that long to prepare</td></tr>
+      <tr><td>Summons or warrant not back</td><td class="n">21, or the return day</td><td>No point listing before the accused can be there</td></tr>
+      <tr><td>A party absent</td><td class="n">7</td><td>Keeps pressure on attendance</td></tr>
+      <tr><td>Not ready</td><td class="n">10</td><td>Time to prepare, not enough to drift</td></tr>
+      <tr><td>Court problem</td><td class="n">3</td><td>Not the parties' fault</td></tr>
+      <tr><td>Not reached, or judge on leave</td><td class="n">next sitting</td><td>It was ready; only time ran out</td></tr>
     </tbody>
   </table></div>
-  <p class="muted">Today every unfinished case gets a flat 60 days. Samay's average gap is 14.</p>
+  <p class="muted">Today's rule: a flat 60 days for every unfinished case. Samay's average gap: 14 days.</p>
   <div class="brand">Samay</div><div class="num">11</div>
+</section>
+
+<section class="slide" aria-label="Gap by next stage">
+  <div class="eyebrow">Step 7 · G(next stage) · from the organisers' table</div>
+  <h2>When a case moves, the gap is the next stage's</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Next stage</th><th class="n">G, days</th><th>Median hearings per case</th></tr></thead>
+    <tbody>
+      <tr><td>Admission, delay condonation, application review</td><td class="n">5</td><td>1 to 3</td></tr>
+      <tr><td>Cognizance, plea, examination, evidence, arguments, bail</td><td class="n">14</td><td>1 to 5</td></tr>
+      <tr><td>Appearance, warrant, judgment</td><td class="n">21</td><td>2 to 3</td></tr>
+      <tr><td>Reports (mediation)</td><td class="n">45</td><td>3</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li>Column "Time to next hearing given this is the purpose" in <code>hearing_type_reference.csv</code>.</li>
+    <li>ST/1166/2023 closes complainant's evidence. Next stage is defence evidence: <b>G = 14 days</b>.</li>
+    <li>ST/1261/2017: judgment delivered, no next stage. <b>Disposed</b>; the judge fixes it.</li>
+  </ul>
+  <div class="brand">Samay</div><div class="num">12</div>
+</section>
+
+<section class="slide" aria-label="Days to a date">
+  <div class="eyebrow">Step 7 · turning days into a real date</div>
+  <h2>Calendar days become sitting days, and the date is a floor</h2>
+<div class="eq">due  =  today  +  max(1, round(gap × 5/7))       in sitting days
+        skip weekends, Kerala HC holidays, judge's leave</div>
+  <div class="grid g2" style="align-items:start">
+    <div class="tw"><table>
+      <thead><tr><th>Case</th><th>gap</th><th>× 5/7</th><th>Due</th></tr></thead>
+      <tbody>
+        <tr><td>ST/1166/2023</td><td>14</td><td>10 sittings</td><td>about 2 weeks</td></tr>
+        <tr><td>ST/608/2017</td><td>7</td><td>5 sittings</td><td>1 week</td></tr>
+        <tr><td>ST/7/2025</td><td>max(21, 30)</td><td>21 sittings</td><td>the warrant's return day</td></tr>
+        <tr><td>Not reached</td><td>1</td><td>1 sitting</td><td>tomorrow</td></tr>
+      </tbody>
+    </table></div>
+    <ul>
+      <li><b>5/7</b>: a court sits about 5 days in 7.</li>
+      <li><b>A floor, not a promise.</b> On that day the case joins the due pool. If it does not fit, it stays due and competes tomorrow with a higher value. It is never pushed 60 days out.</li>
+      <li><b>Held cases</b> wait for their cause: a summons still out, or a 3rd-listing failure not yet cured.</li>
+    </ul>
+  </div>
+  <div class="brand">Samay</div><div class="num">13</div>
+</section>
+
+<section class="slide" aria-label="Escalation">
+  <div class="eyebrow">Step 7 · what a failure does to the next listing</div>
+  <h2>Each failure raises the case, once its cause is cured</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Listing for the same purpose</th><th class="n">Boost b</th><th>What else changes</th></tr></thead>
+    <tbody>
+      <tr><td>1st</td><td class="n">0</td><td>Normal</td></tr>
+      <tr><td>2nd</td><td class="n">+10</td><td>Readiness checked two days before; a reason code is required to adjourn</td></tr>
+      <tr><td>3rd and later (deferred)</td><td class="n">+25</td><td>Fixed time slot; held until the last failure is cured</td></tr>
+    </tbody>
+  </table></div>
+  <p>ST/608/2017, accused absent again: next date in 7 days, now a 3rd listing. It carries <b>+25</b>, a fixed slot, and in the data 44% of deferred listings move the case against 24% of second listings.</p>
+  <p class="muted">The counter resets to 1st when the purpose succeeds and the case moves to the next stage.</p>
+  <div class="brand">Samay</div><div class="num">14</div>
+</section>
+
+<section class="slide" aria-label="Glossary">
+  <div class="eyebrow">Every term, defined</div>
+  <h2>The symbols on these slides</h2>
+  <div class="grid g2" style="align-items:start">
+    <div class="defs">
+      <b>Sₖ</b><span>Priority score, 0 to 100: age 35, readiness 25, near disposal 15, churn 15, urgency 10</span>
+      <b>pₖ</b><span>Chance this hearing moves the case: type rate × attendance signal × levers; 0.02 to 0.98</span>
+      <b>mₖ</b><span>Organisers' minutes for the hearing type: 5, 10, 15 or 30</span>
+      <b>σ</b><span>Spread of real durations around mₖ, lognormal, 0.35 (assumed)</span>
+      <b>1.063</b><span>e<sup>σ²/2</sup>: mean overrun factor, so 30 min plans as 31.9</span>
+      <b>eₖ</b><span>Expected minutes = pₖ × mₖ × 1.063 + (1 − pₖ) × 2 + 1</span>
+      <b>bₖ</b><span>Listing boost: 0, +10, +25 by listing number for the same purpose</span>
+    </div>
+    <div class="defs">
+      <b>cₖ</b><span>+15 while the case is under 180 days (NI Act s.143, six months)</span>
+      <b>vₖ</b><span>Worth today = (Sₖ + bₖ + cₖ) × pₖ</span>
+      <b>C</b><span>Sitting capacity: (minutes − 15 opening in the morning) × 0.95</span>
+      <b>R</b><span>Room left for CP-SAT after bail and the 25% old-case quota</span>
+      <b>xₖ</b><span>1 if listed today, 0 if not; CP-SAT maximises Σ vₖ eₖ<sup>0.75</sup> xₖ with Σ eₖ xₖ ≤ R</span>
+      <b>G</b><span>Gap after success: the next stage's days from the organisers' table</span>
+      <b>F</b><span>Gap after failure: process 21, absent 7, not ready 10, court 3, unclear 7</span>
+    </div>
+  </div>
+  <div class="brand">Samay</div><div class="num">15</div>
 </section>
 
 <section class="slide" aria-label="Fairness">
@@ -311,7 +403,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     <div class="card"><h3>A case that keeps failing rises</h3><p>+10 on the 2nd listing, +25 from the 3rd, once the reason it failed is fixed.</p></div>
     <div class="card"><h3>Nobody is called for nothing</h3><p>A case waiting on a warrant or summons is not listed until it returns.</p></div>
   </div>
-  <div class="brand">Samay</div><div class="num">12</div>
+  <div class="brand">Samay</div><div class="num">16</div>
 </section>
 
 <section class="slide" aria-label="Assumptions">
@@ -322,7 +414,7 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     <div class="card"><h3>Our assumptions</h3><ul><li>Hearings vary about 35% around the table's minutes</li><li>The last order's warning raises that risk 2.5 times</li><li>5% of the day kept spare, 25% for old cases</li></ul></div>
   </div>
   <p>If the day runs over, unreached cases go to the next sitting day. If it runs short, standby is called. Every outcome the court master records turns an assumption into this court's own number.</p>
-  <div class="brand">Samay</div><div class="num">13</div>
+  <div class="brand">Samay</div><div class="num">17</div>
 </section>
 
 <section class="slide" aria-label="Summary">
@@ -334,14 +426,14 @@ ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
     <div class="stat"><span class="k">Hearings that move a case</span><b class="up">79%</b><span class="from">today 48%</span></div>
     <div class="stat"><span class="k">Disposed in 60 days</span><b class="up">356</b><span class="from">today 196</span></div>
   </div>
-  <div class="brand">Samay</div><div class="num">14</div>
+  <div class="brand">Samay</div><div class="num">18</div>
 </section>
 
 </div>
 
 <div class="nav" role="navigation" aria-label="Slides">
   <button type="button" id="prev" aria-label="Previous slide">← Prev</button>
-  <span class="pos" id="pos">1 / 14</span>
+  <span class="pos" id="pos">1 / 18</span>
   <button type="button" id="next" aria-label="Next slide">Next →</button>
 </div>
 
