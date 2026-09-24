@@ -14,17 +14,29 @@ sitting_days_2026: {1: 20, 2: 20, 3: 21, 4: 6, 5: 9, 6: 20, 7: 23, 8: 15, 9: 20,
 weekend_days: [5, 6]          # Saturday, Sunday (0 = Monday)
 working_saturdays: [2026-01-31, 2026-12-19]
 
-holidays:                     # demo window; add the rest from the organisers' calendar
-  2026-10-02: Gandhi Jayanti
+# Official High Court of Kerala calendar 2026 (Registrar General), Sep to Dec:
+# https://cdnbbsr.s3waas.gov.in/s3ec020e1ebad68af7f0ae4830b7ac92bc/uploads/2026/01/2026011440.pdf
+# Note 5 of that calendar: vacation periods apply to the High Court and the civil courts of the district
+# judiciary; magistrate courts (where the hackathon's cheque cases sit) keep sitting.
+# The hackathon's data/court_calendar.csv carries a GUJARAT holiday list ("Shravan Vad-8" is Gujarat
+# GAD tithi naming; matches Gujarat Gazette Extra No.160 of 27 Nov 2025). We use it as given for the
+# scored runs, and this Kerala list for the Kerala demo court.
+holidays:
+  2026-09-04: Sreekrishna Jayanthi
+  2026-09-21: Sree Narayana Guru Samadhi
+  2026-10-02: Gandhi Jayanthi
+  2026-10-19: High Court non-sitting day
   2026-10-20: Mahanavami
-  2026-10-21: Vijayadashami
-  2026-11-09: Deepavali (observed)
-  2026-11-24: Guru Nanak Jayanti
+  2026-10-21: Vijayadasami
+  2026-11-09: High Court non-sitting day
   2026-12-25: Christmas
 
 vacations:
-  - {name: Summer vacation, start: 2026-04-11, end: 2026-05-17}
-  - {name: Onam, start: 2026-08-25, end: 2026-08-28}
-  - {name: Christmas vacation, start: 2026-12-21, end: 2027-01-01}
+  - {name: Summer vacation, start: 2026-04-13, end: 2026-05-16}
+  - {name: Onam, start: 2026-08-22, end: 2026-08-30}
+  - {name: Christmas vacation, start: 2026-12-24, end: 2026-12-31}
+second_saturdays_closed: true
 
+# Casual leave: at most 20 days a calendar year, Kerala Service Rules Part I Appendix VII
+# https://keralaservice.org/13-ksr/leave/26-casual-leave-appendix-vii.html
 judge_leave_days_per_judge: 2  # random personal leave in the synthetic court

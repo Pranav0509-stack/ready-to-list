@@ -65,7 +65,7 @@ with tabs[1]:
         error_x=dict(type="data", symmetric=False, array=sub.p90_min - sub.median_min,
                      arrayminus=sub.median_min - sub.p10, color="#9a9893", thickness=2),
         hovertemplate="%{y}<br>median %{x:.1f} min<extra></extra>"))
-    fig.update_layout(height=60 + 42 * len(sub), margin=dict(l=0, r=0, t=10, b=0),
+    fig.update_layout(height=60 + 42 * len(sub), margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(automargin=True),
                       xaxis_title=f"Minutes per {stage} hearing (dot: median; line: 10th to 90th percentile)")
     st.plotly_chart(fig, width="stretch")
 
@@ -143,9 +143,9 @@ with tabs[3]:
         c1, c2, c3 = st.columns(3)
         c1.metric("Hearings listed", len(items))
         c2.metric("Type switches if called in priority order", naive_sw, f"{naive_min} changeover minutes",
-                  delta_color="off")
+                  delta_color="off", delta_arrow="off")
         c3.metric("Type switches when grouped (CP-SAT)", grouped_sw,
-                  f"{grouped_min} changeover minutes, {naive_min - grouped_min} saved", delta_color="off")
+                  f"{grouped_min} changeover minutes, {naive_min - grouped_min} saved", delta_color="off", delta_arrow="off")
         st.caption(f"Changeover: {T.DAY['changeover_same_type']} min between cases of the same kind, "
                    f"{T.DAY['changeover_switch_type']} min when the judge switches to a different kind of case. "
                    "Grouping similar cases cuts context switching, which the manual names as a judge's burden.")

@@ -1,241 +1,243 @@
-import json
-from datetime import datetime, timedelta
+import calendar as cal
+from datetime import date
 
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from core.config import BALANCE, HEARING_TYPES, LOCKED, capacity, to_min
-from core.data import df, working_days
-from core.readiness import case_frame
-from core.scheduler import approve, build_causelist, impact, judge_config
-from core.summary import summarise
-from pages.common import VIA_COLORS, VIA_LABELS, resources, sidebar
+from core import priority as PRIO
+from core import pucar_engine as E
+from pages.shared import (BLUE, LISTING, ORANGE, OUTCOME, START, day_list, docket, page_setup, plans, require,
+                          sidebar, why)
 
-conn, predictor = resources()
-jid, day = sidebar()
-base_cfg = judge_config(jid)
+page_setup()
+u = require("Judge")
+sidebar()
 
-# Judge config overrides live in session state per court
-cfg_key = f"cfg_{jid}"
-if cfg_key not in st.session_state:
-    st.session_state[cfg_key] = {"blocks": [dict(b) for b in base_cfg["blocks"]],
-                                 "clustering": base_cfg["clustering"], "overbooking": base_cfg["overbooking"],
-                                 "balance": base_cfg.get("balance", BALANCE),
-                                 "fresh_first": base_cfg.get("fresh_first", False)}
-overrides = st.session_state[cfg_key]
+st.markdown(f"# {u['name']}")
+if docket() is None:
+    st.info("The court master has not uploaded the docket yet. The screens open once it is in.")
+    st.stop()
 
-run_key = (jid, day.isoformat(), json.dumps(overrides, sort_keys=True))
-if st.session_state.get("run_key") != run_key:
-    with st.spinner("Building the cause list"):
-        st.session_state.result = build_causelist(conn, predictor, jid, day, overrides)
-    st.session_state.run_key = run_key
-    st.session_state.add, st.session_state.remove = [], []
-result = st.session_state.result
+R, real, data, scores = plans(docket())
+rtl, base = R["Samay"], R["Today's rules"]
+real_ids = set(real.case_number)
+j = rtl["journey"].assign(real=lambda d: d.case_number.isin(real_ids))
+order = {b["name"]: i for i, b in enumerate(E.DAY["blocks"])}
+leave = {date.fromisoformat(str(x)) for x in E.CFG["judge_leave"]["dates"]}
+holidays = {date.fromisoformat(r.date): r.holiday_name for r in data["calendar"].itertuples() if r.is_holiday == "Yes"}
+sitting_days = [d for d in rtl["workdays"] if d not in leave]
+minutes = data["ref"].minutes
+advocate_of = dict(zip(data["roster"].case_number, data["roster"].advocate_id))
+sc = scores.set_index("case_number")
 
-approved = conn.execute("SELECT COUNT(*) FROM causelists WHERE judge_id=? AND date=?", (jid, day.isoformat())).fetchone()[0]
-st.title(f"{base_cfg['name']}, Court {base_cfg['court']}")
-st.caption(f"{day:%A %d %B %Y}. The system recommends; you decide. "
-           + (f"List approved with {approved} items." if approved else "This is a draft. Nothing is listed until you approve it."))
+tabs = st.tabs(["Today's list", "Docket", "Priority", "Calendar", "Results", "How Samay decides"])
 
-tab_list, tab_cfg, tab_health = st.tabs(["Today's list", "Config", "Docket health"])
-
-# ---------------------------------------------------------------- Today's list
-with tab_list:
-    if result["items"].empty:
-        st.info("No cases due on this date.")
-        st.stop()
-    add, remove = st.session_state.add, st.session_state.remove
-    before, after, items, removed_old = impact(result, add=add, remove=remove)
-    changed = bool(add or remove)
-    m = result["meta"]
-
-    k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Planned utilisation", f"{after['utilisation']}%",
-              f"{after['utilisation'] - before['utilisation']:+} pts" if changed else None, delta_color="off")
-    k2.metric("Predicted heard", f"{after['predicted_heard']} of {after['listed']}",
-              help="Sum of P(show) from the model, both sides present")
-    k3.metric("5+ year cases listed", after["old_listed"],
-              f"{after['old_listed'] - before['old_listed']:+}" if changed else None)
-    k4.metric("Unready listings held back", m["held_back"],
-              help="Due today but readiness below the gate. Under today's rules these would be listed and adjourned. "
-                   "They move to the date their prerequisites are done.")
-
-    left, right = st.columns([2.2, 1])
-    with left:
-        base_day = datetime.combine(day, datetime.min.time())
-        t = items.copy()
-        t["Start"] = [base_day + timedelta(minutes=to_min(s)) for s in t.exp_start]
-        t["Finish"] = t.Start + pd.to_timedelta(t.expected_minutes.clip(lower=2), unit="m")
-        t["Type"] = t.via.map(VIA_LABELS)
-        t["Case"] = t.title
-        fig = px.timeline(t, x_start="Start", x_end="Finish", y="block", color="Type",
-                          color_discrete_map={VIA_LABELS[k]: v for k, v in VIA_COLORS.items()},
-                          hover_data={"Case": True, "next_purpose": True, "readiness": True, "pet_name": True,
-                                      "age_years": ":.1f", "p_show": True, "slot_start": True, "slot_end": True,
-                                      "reason": True, "Start": False, "Finish": False, "block": False, "Type": False},
-                          labels={"next_purpose": "Purpose", "pet_name": "Counsel", "age_years": "Age (yrs)",
-                                  "p_show": "P(show)", "slot_start": "Slot from", "slot_end": "to", "reason": "Why listed",
-                                  "block": ""})
-        fig.update_traces(marker_line_width=2, marker_line_color="rgba(255,255,255,0.9)")
-        for b in result["cfg"]["blocks"]:
-            fig.add_vline(x=base_day + timedelta(minutes=to_min(b["end"])), line_dash="dot", line_width=1,
-                          line_color="#9a9893")
-        fig.update_layout(height=230, margin=dict(l=0, r=0, t=10, b=0), legend_title_text="",
-                          legend=dict(orientation="h", y=-0.35), xaxis_title=None)
-        fig.update_xaxes(tickformat="%H:%M")
-        st.plotly_chart(fig, width="stretch")
-        st.caption("Each bar is one case at its expected start. Hover a bar for the reason it was listed. "
-                   "Dotted lines mark block ends.")
-
-        view = items[["seq", "exp_start", "slot_start", "slot_end", "title", "next_purpose", "readiness",
-                      "pet_name", "age_years", "p_show", "via", "reason"]].rename(columns={
-            "seq": "#", "exp_start": "Expected", "slot_start": "Slot from", "slot_end": "Slot to", "title": "Case",
-            "next_purpose": "Purpose", "readiness": "Readiness", "pet_name": "Counsel", "age_years": "Age (yrs)",
-            "p_show": "P(show)", "via": "Via", "reason": "Why listed"})
-        view["Via"] = view["Via"].map(VIA_LABELS)
-        st.dataframe(view, hide_index=True, width="stretch", height=360,
-                     column_config={"Readiness": st.column_config.ProgressColumn(min_value=0, max_value=100, format="%d"),
-                                    "Age (yrs)": st.column_config.NumberColumn(format="%.1f"),
-                                    "P(show)": st.column_config.NumberColumn(format="%.2f")})
-
+# ---------------------------------------------------------------- today's list
+with tabs[0]:
+    left, right = st.columns([1.7, 1])
     with right:
-        st.subheader("Override")
-        pool = result["pool"]
-        listed_ids = set(items.id)
-        label = lambda cid: f"{cid} · {pool.set_index('id').title.get(cid, cid)[:48]}"
-        wait_ids = [c for c in result["waitlist"].id.tolist() + pool.sort_values("priority", ascending=False).id.tolist()
-                    if c not in result["items"].id.values]
-        wait_ids = list(dict.fromkeys(wait_ids))
-        new_add = st.multiselect("Add a case (waitlist first)", wait_ids, default=add, format_func=label)
-        new_remove = st.multiselect("Remove a case", result["items"].id.tolist(), default=remove, format_func=label)
-        if new_add != add or new_remove != remove:
-            st.session_state.add, st.session_state.remove = new_add, new_remove
+        day = st.selectbox("Court date", sitting_days, format_func=lambda x: x.strftime("%A %d %B %Y"))
+        todays = day_list(j, day, order)
+        removed = st.session_state.setdefault("removed", set())
+        shown = todays[~todays.case_number.isin(removed)]
+        planned = float(shown.hearing_type.map(minutes).sum())
+        m1, m2 = st.columns(2)
+        m1.metric("Listed", len(shown))
+        m2.metric("Minutes", f"{planned:.0f} / 330")
+        m3, m4 = st.columns(2)
+        m3.metric("Your 100 cases", int(shown.real.sum()))
+        m4.metric("Deferred, fixed slot", int((shown.listing == "deferred").sum()))
+        drop = st.selectbox("Remove a case", ["None"] + shown.case_number.tolist())
+        b1, b2 = st.columns(2)
+        if drop != "None" and b1.button("Remove", width="stretch"):
+            removed.add(drop)
             st.rerun()
-
-        st.markdown("**Impact meter**")
-        over = after["utilisation"] > 100
-        c1, c2 = st.columns(2)
-        d = lambda k, unit="": f"{after[k] - before[k]:+}{unit}" if changed else None
-        c1.metric("Utilisation", f"{after['utilisation']}%", d("utilisation", " pts"), delta_color="inverse")
-        c2.metric("Predictability", f"{after['predictability']}%", d("predictability", " pts"))
-        c1.metric("Predicted effective", after["predicted_effective"], d("predicted_effective"))
-        c2.metric("5+ yr listed", after["old_listed"], d("old_listed"))
-        if over:
-            st.error(f"Overbooked: {after['utilisation']}% of court time. Expect cases to be sent back at the end "
-                     "of the day.")
-        if removed_old:
-            st.warning(f"Removing {removed_old} case(s) over 5 years old: 5+ year backlog +{removed_old} this week.")
-        if not changed:
-            st.caption("Add or remove a case to see the impact before you approve.")
-
-        if st.button("Approve list", type="primary", width="stretch"):
-            approve(conn, jid, day, items, removed=remove, judge_name=base_cfg["name"])
-            st.success(f"Approved {len(items)} items. Litigants notified with their time windows.")
+        if removed and b2.button("Restore all", width="stretch"):
+            st.session_state.removed = set()
             st.rerun()
+        approved = st.session_state.get("approved") == day
+        if st.button("Approve today's list", type="primary", width="stretch", disabled=approved):
+            st.session_state.approved = day
+            st.rerun()
+        if approved:
+            st.success(f"Approved for {day:%d %B}. Time windows go to advocates and parties.")
+    with left:
+        view = pd.DataFrame({
+            "Sitting": shown.block, "Time": shown.start, "Case": shown.case_number,
+            "Hearing": shown.hearing_type.str.replace("_", " ").str.title(),
+            "Listing": shown.listing.map(LISTING), "Score": shown.score,
+            "Advocate": shown.case_number.map(advocate_of), "Why today": [why(r) for r in shown.itertuples()]})
+        st.dataframe(view, width="stretch", hide_index=True, height=600)
 
-        st.divider()
-        st.subheader("Case drawer")
-        drawer_opts = items.sort_values("age_years", ascending=False).id.tolist()
-        if "D0007" not in drawer_opts:
-            drawer_opts.insert(0, "D0007")
-        cid = st.selectbox("Open case", drawer_opts, format_func=lambda c: f"{c} · {pool.set_index('id').title.get(c, c)[:40]}"
-                           if c in pool.id.values else c)
-        s = summarise(conn, cid)
-        with st.container(border=True):
-            st.markdown(f"**{s['title']}**  \nFiled {s['filed']}, now at **{s['stage']}**")
-            st.caption("AI-assisted summary, verified by both counsel" if s["verified"]
-                       else "AI-assisted summary, awaiting verification by counsel")
-            st.markdown("**Agreed facts**\n" + "\n".join(f"- {f}" for f in s["agreed_facts"]))
-            st.markdown("**Open issues**\n" + "\n".join(f"- {f}" for f in s["open_issues"]))
-            st.markdown(f"**Counsel:** " + ", ".join(f"{r.counsel} ({r.side})" for r in s["parties"].itertuples()))
-            if not s["events"].empty:
-                st.markdown(f"**Key events.** {s['adjournments']} of {len(s['events'])} hearings were not effective.")
-                st.dataframe(s["events"], hide_index=True, width="stretch", height=150)
+# ---------------------------------------------------------------- docket
+with tabs[1]:
+    cs = rtl["cases"].set_index("case_number")
+    rows = []
+    for cid in real.case_number:
+        k, s_ = cs.loc[cid], sc.loc[cid]
+        nxt = j[j.case_number == cid]
+        rows.append({"Case": cid, "Score": s_.score, "Status": s_.status, "Flags": s_.flag_list,
+                     "Next hearing": str(real.set_index("case_number").loc[cid].purpose_of_next_hearing),
+                     "Age (years)": s_.age_years, "Advocate": advocate_of[cid],
+                     "Listings": int(len(nxt)), "Moved forward": int((nxt.outcome == "substantive").sum()),
+                     "Now": "Disposed" if k.disposed else str(k.purpose_now).replace("_", " ").title()})
+    dk = pd.DataFrame(rows).sort_values("Score", ascending=False)
+    left, right = st.columns([1.7, 1])
+    with right:
+        status = st.multiselect("Status", ["Eligible", "Conditional"], default=["Eligible", "Conditional"])
+        old_only = st.toggle("Only cases over 4 years")
+        view = dk[dk.Status.isin(status)]
+        if old_only:
+            view = view[view["Age (years)"] >= 4]
+        cid = st.selectbox("Open a case", view.Case.tolist())
+        s_ = sc.loc[cid]
+        st.markdown(f"**Score {s_.score}**  \nAge {s_.age_points}, readiness {s_.readiness_points}, disposal "
+                    f"{s_.disposal_points}, churn {s_.churn_points}, urgency {s_.urgency_points}  \n{s_.status}. {s_.flag_list}")
+        st.code(data["roster"][data["roster"].case_number == cid].iloc[0].last_hearing_summary, language=None)
+        hist = j[j.case_number == cid][["date", "start", "hearing_type", "outcome"]].copy()
+        hist["hearing_type"] = hist.hearing_type.str.replace("_", " ").str.title()
+        hist["outcome"] = hist.outcome.map(OUTCOME)
+        st.dataframe(hist.rename(columns={"date": "Date", "start": "Time", "hearing_type": "Hearing",
+                                          "outcome": "Outcome"}), width="stretch", hide_index=True, height=180)
+    with left:
+        st.dataframe(view, width="stretch", hide_index=True, height=600)
 
-# ---------------------------------------------------------------- Config
-with tab_cfg:
-    st.subheader("Bench configuration")
-    st.caption("Changes rebuild today's draft list.")
-    new = {k: v for k, v in overrides.items()}
-    new["blocks"] = []
-    for i, b in enumerate(overrides["blocks"]):
-        c1, c2, c3 = st.columns([2, 1, 1])
-        c1.markdown(f"**{b['name']}**  \n{', '.join(b['purposes'])}")
-        s_ = c2.time_input("Start", datetime.strptime(b["start"], "%H:%M").time(), key=f"{jid}_s{i}", step=900)
-        e_ = c3.time_input("End", datetime.strptime(b["end"], "%H:%M").time(), key=f"{jid}_e{i}", step=900)
-        new["blocks"].append({**b, "start": s_.strftime("%H:%M"), "end": e_.strftime("%H:%M")})
-    new["clustering"] = st.toggle("Cluster each advocate's matters into one window", overrides["clustering"])
-    new["overbooking"] = st.slider("Overbooking above the 95% fill target", 0.0, 0.3, float(overrides["overbooking"]), 0.05)
-    new["balance"] = st.slider("Throughput or disposal", 0.0, 0.5, float(overrides["balance"]), 0.05,
-                               help="0 hears final arguments and old cases first. 0.5 packs in the most short hearings. "
-                                    f"Default {BALANCE}: it beat today's rules on every criterion in the simulator.")
-    new["fresh_first"] = st.toggle("Fresh matters first", overrides["fresh_first"],
-                                   help="Adds priority to cases under a year old. The ageing quota still applies.")
-    if new["fresh_first"]:
-        st.info("Fresh matters first is on. The locked ageing quota still reserves "
-                f"{int(LOCKED['ageing_quota'] * 100)}% of the day for 5+ year cases, so they are not pushed out. "
-                "Open the simulator to see the effect on your 4+ and 5+ year backlog.")
-    if base_cfg.get("cover_sheet_required"):
-        st.caption("Cover sheet required: arguments in a 4+ year case are listed only once both counsel verify the summary.")
-
-    st.markdown("**Protected rules**")
-    lock = "Protected: cannot be disabled."
-    st.toggle(f":material/lock: Ageing quota: {int(LOCKED['ageing_quota'] * 100)}% of daily capacity to 5+ year cases",
-              True, disabled=True, help=lock)
-    st.toggle(":material/lock: Urgent bypass: bail, habeas corpus and stay always listed", True, disabled=True, help=lock)
-    st.toggle(f":material/lock: Readiness gate at {LOCKED['readiness_gate']} (urgent and quota cases exempt)", True, disabled=True,
-              help=lock)
-    if new != overrides:
-        st.session_state[cfg_key] = new
-        st.rerun()
-
-    st.markdown("**Hearing-type reference table**")
-    st.dataframe(pd.DataFrame(HEARING_TYPES).T.rename_axis("purpose").reset_index(), hide_index=True)
-    with st.expander("What the prediction model learned"):
-        st.caption(f"Logistic regression on {predictor.n_train:,} past hearings.")
-        st.dataframe(predictor.coefficients(), hide_index=True)
-
-# ---------------------------------------------------------------- Docket health
-with tab_health:
-    cf = case_frame(conn, jid, on=day)
-    c1, c2 = st.columns(2)
-    with c1:
-        bins = pd.cut(cf.age_years, [0, 1, 3, 5, 10, 100], labels=["<1 yr", "1-3 yrs", "3-5 yrs", "5-10 yrs", "10+ yrs"])
-        ag = bins.value_counts().sort_index().reset_index()
-        ag.columns = ["Age", "Cases"]
-        fig = px.bar(ag, x="Age", y="Cases", text="Cases", color_discrete_sequence=["#2a78d6"])
-        fig.update_layout(height=280, margin=dict(l=0, r=0, t=30, b=0), title="Pending cases by age")
+# ---------------------------------------------------------------- priority
+with tabs[2]:
+    left, right = st.columns([1, 1.7])
+    with left:
+        st.markdown("**Weights, out of 100**")
+        w = {}
+        for k, v in PRIO.WEIGHTS.items():
+            w[k] = st.slider(k.replace("_", " ").title(), 0, 60, v, 5, key=f"w_{k}")
+        w = PRIO.rescale_weights(w)
+        st.markdown("Applied: " + ", ".join(f"{k} {v:.0f}" for k, v in w.items()) + ". Age never below 20.")
+        live = PRIO.score_roster(real, data["ref"], START, weights=w)
+        bands = pd.cut(live.score, [0, 20, 40, 60, 80, 100],
+                       labels=["0 to 20", "20 to 40", "40 to 60", "60 to 80", "80 to 100"]).value_counts().sort_index()
+        fig = go.Figure(go.Bar(x=bands.index.astype(str), y=bands.values, marker_color=BLUE, text=bands.values,
+                               textposition="outside"))
+        fig.update_layout(height=230, margin=dict(l=0, r=0, t=10, b=0), yaxis_title="Cases")
         st.plotly_chart(fig, width="stretch")
-    with c2:
-        wd = working_days(day, 20)
-        due_counts = df(conn, "SELECT next_date, next_purpose FROM cases WHERE judge_id=? AND status='pending'", (jid,))
-        due_counts["mins"] = due_counts.next_purpose.map(lambda p: HEARING_TYPES[p]["duration"] * 0.7)
-        load = due_counts.groupby("next_date").mins.sum()
-        fc = pd.DataFrame({"date": wd, "minutes": [load.get(d.isoformat(), 0) for d in wd]})
-        cap = capacity(jid)
-        fig = go.Figure(go.Bar(x=fc.date, y=fc.minutes, marker_color="#2a78d6", name="Expected minutes",
-                               hovertemplate="%{x|%d %b}: %{y:.0f} min<extra></extra>"))
-        fig.add_hline(y=cap, line_dash="dash", line_color="#9a9893", annotation_text=f"Capacity {cap} min")
-        fig.update_layout(height=280, margin=dict(l=0, r=0, t=30, b=0), title="4-week load forecast", showlegend=False)
+    with right:
+        st.dataframe(live.sort_values("score", ascending=False).rename(columns={
+            "case_number": "Case", "score": "Score", "age_points": "Age", "readiness_points": "Readiness",
+            "disposal_points": "Disposal", "churn_points": "Churn", "urgency_points": "Urgency",
+            "age_years": "Years", "status": "Status", "flag_list": "Flags"}).drop(columns=["process_pending"]),
+            width="stretch", hide_index=True, height=600)
+
+# ---------------------------------------------------------------- calendar
+with tabs[3]:
+    used = dict(zip(rtl["daily"].date, rtl["daily"].minutes_used))
+    count = j.groupby("date").size().to_dict()
+    months = sorted({(d.year, d.month) for d in rtl["workdays"]})
+    cols = st.columns(len(months))
+    for col, (y, mth) in zip(cols, months):
+        col.markdown(f"**{cal.month_name[mth]} {y}**")
+        grid = []
+        for week in cal.monthcalendar(y, mth):
+            row = []
+            for dnum in week[:5]:
+                if dnum == 0:
+                    row.append("")
+                    continue
+                d = date(y, mth, dnum)
+                if d in leave:
+                    row.append(f"{dnum}  leave")
+                elif d in holidays:
+                    row.append(f"{dnum}  holiday")
+                elif d in count:
+                    row.append(f"{dnum}  {count[d]} cases, {used.get(d, 0):.0f} min")
+                else:
+                    row.append(f"{dnum}")
+            grid.append(row)
+        col.dataframe(pd.DataFrame(grid, columns=["Mon", "Tue", "Wed", "Thu", "Fri"]), hide_index=True,
+                      width="stretch", height=len(grid) * 35 + 40)
+    daily = rtl["daily"]
+    fig = go.Figure()
+    fig.add_bar(x=daily.date, y=daily.minutes_used, name="Minutes used", marker_color=BLUE)
+    fig.add_scatter(x=daily.date, y=[330] * len(daily), name="Sitting minutes", line=dict(color="#94A3B8", dash="dash"))
+    fig.update_layout(height=250, margin=dict(l=0, r=0, t=10, b=0), legend=dict(orientation="h", y=-0.3))
+    st.plotly_chart(fig, width="stretch")
+
+# ---------------------------------------------------------------- results
+with tabs[4]:
+    spec = [("Listed cases the court reaches", "reach_rate_pct", "%"),
+            ("Heard cases that move forward", "substantiveness_pct", "%"),
+            ("Cases over 4 years heard at least once", "backlog_4y_heard_pct", "%"),
+            ("Days from listing to a real hearing", "predictability_days", " days"),
+            ("Average gap to the next date", "next_date_gap_days", " days"),
+            ("Hearings that moved a case, per day", "substantive_per_day", ""),
+            ("Wasted listings in the quarter", "wasted_listings", ""),
+            ("Cases disposed in the quarter", "disposed", "")]
+    fmt = lambda m, k, unit: f"{m[k]:.1f}" if k == "substantive_per_day" else f"{m[k]:.0f}{unit}"
+    left, right = st.columns([1.3, 1])
+    with left:
+        st.dataframe(pd.DataFrame([{"Measure": l, "Today's rules": fmt(base, k, un), "Samay": fmt(rtl, k, un)}
+                                   for l, k, un in spec]), width="stretch", hide_index=True, height=330)
+        rows = []
+        for label, m in R.items():
+            jj = m["journey"]
+            for key, lab in LISTING.items():
+                g = jj[jj.listing == key]
+                if len(g):
+                    rows.append({"Approach": label, "Listing": lab, "Hearings": len(g),
+                                 "Moved forward": f"{(g.outcome == 'substantive').mean():.0%}"})
+        st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True, height=230)
+    with right:
+        fig = go.Figure()
+        for label, colr in [("Today's rules", ORANGE), ("Samay", BLUE)]:
+            m = R[label]
+            jj = m["journey"]
+            d = jj[jj.case_number.isin(real_ids)].groupby("date").outcome.apply(lambda s: (s == "substantive").sum())
+            d = d.reindex(m["workdays"], fill_value=0).cumsum()
+            fig.add_scatter(x=list(d.index), y=d.values, name=label, line=dict(color=colr, width=2))
+        fig.update_layout(title="Hearings that moved your 100 cases, cumulative", height=560,
+                          margin=dict(l=0, r=0, t=40, b=0), legend=dict(orientation="h", y=-0.15), hovermode="x unified")
         st.plotly_chart(fig, width="stretch")
 
-    hist = df(conn, """SELECT h.case_id, c.title, c.next_purpose,
-                              SUM(h.outcome<>'effective') adjournments, COUNT(*) hearings
-                       FROM hearings h JOIN cases c ON c.id=h.case_id
-                       WHERE c.judge_id=? AND c.status='pending' GROUP BY h.case_id""", (jid,))
-    hist["Counter"] = pd.cut(hist.adjournments, [-1, 1, 3, 100], labels=["Green: 0-1", "Amber: 2-3", "Red: 4+"])
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown("**Repeat adjournments**")
-        st.dataframe(hist.sort_values("adjournments", ascending=False).head(15)[
-                         ["Counter", "case_id", "title", "adjournments", "hearings"]],
-                     hide_index=True, width="stretch")
-    with c2:
-        st.markdown("**Stuck at one stage** (3+ hearings at the current purpose)")
-        stuck = df(conn, """SELECT h.case_id, c.title, c.next_purpose stage, COUNT(*) hearings_at_stage
-                            FROM hearings h JOIN cases c ON c.id=h.case_id AND h.purpose=c.next_purpose
-                            WHERE c.judge_id=? AND c.status='pending' GROUP BY h.case_id
-                            HAVING COUNT(*)>=3 ORDER BY hearings_at_stage DESC LIMIT 15""", (jid,))
-        st.dataframe(stuck, hide_index=True, width="stretch")
+# ---------------------------------------------------------------- how Samay decides
+with tabs[5]:
+    box = st.container(height=640)
+    with box:
+        st.markdown("""
+## The decision, each evening
+
+For one judge and one sitting day, Samay decides which due cases to list, in which sitting, in what order and time window, and the next date for each case not listed or not moved.
+
+## Step 1: score every case on its own details (0 to 100)
+
+| Factor | Points | How it is measured |
+|---|---|---|
+| Case age | 35 | Years since filing over the full-points age (8 years for this roster: mean age plus two standard deviations, computed once, then fixed) |
+| Hearing readiness | 25 | The measured share of this hearing type that moves a case (plea 90%, warrant 13.5%), reduced by at most 30% when required people were absent last time |
+| Disposal proximity | 15 | Position in the 11 stages, Admission 0 to Judgement 10 |
+| Hearing churn | 15 | Hearings held against the median expected by this stage; full points at twice the expected |
+| Court-set urgency | 10 | "Last chance" 10 points, "for judgment" 8, from the last order |
+
+The points are added, never multiplied, so an old case at a slow stage is not pushed to zero. Beside the score: Conditional status when a summons, warrant or notice is out; the liberty lane for bail; Backlog 4y+ and Ageing 5y+ flags; the age weight can never fall below 20.
+
+## Step 2: estimate each hearing
+
+The chance a hearing moves the case is the measured rate for its type, multiplied 2.5 times when the last order signals a risk ("Await warrant", "Absent: Accused", "not ready"), with each type's average held at the measured rate. If it fails, the reason follows the real mix for that type: process not back (which persists until the return), a party absent, not ready, court, unclear. Minutes are the reference minutes for the type with spread; an adjournment still costs 2 minutes. No machine learning is trained on 100 cases; as the court master records outcomes, the same rates are recomputed.
+
+## Step 3: build the day
+
+1. Take every case due on or before today.
+2. Hold back any case whose summons or warrant has not returned, and any deferred case (3rd or later listing) whose last failure is not yet cured.
+3. List bail first.
+4. Reserve a quarter of each sitting's minutes for cases over 4 years old.
+5. Rank the rest by score times the chance of moving forward, per minute; add 10 for a 2nd listing, 25 for a deferred listing, 15 while the case is inside the six-month window of NI Act s.143.
+6. Pack each sitting to 95% of its minutes with a CP-SAT solver: morning 10:30 to 12:30 for admission to plea, bail, reports and applications; afternoon 13:30 to 17:00 for examination, evidence, arguments and judgement. The first 15 minutes go to pronouncements and mentions; each change of case costs a minute, a change of hearing type three.
+7. Keep the next five ready cases per sitting on standby.
+8. Group each advocate's matters and each hearing type together; give every case a one-hour window from its expected start.
+
+## Step 4: after the day
+
+After a hearing that moved the case, the next date is the reference gap for the next purpose (appearance 21 days, evidence 14, reports 45). After a failure, the gap for its reason: process 21 days or when the return is due, absence 7, not ready 10, court 3. Never a flat 60 days. On a judge's leave day, the listed cases move to the next sitting with room.
+
+## What the court master supplies
+
+The docket file (Excel or CSV), each day's outcomes, and the registry scrutiny of new complaints: statutory dates computed at e-filing, documents, summons details, jurisdiction. A late complaint files its condonation petition with the complaint and it is heard at admission.
+""")

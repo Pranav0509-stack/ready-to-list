@@ -1,4 +1,4 @@
-# Ready-to-List design tokens.
+# Ready-to-List design tokens: see design-system/ready-to-list/MASTER.md (from the UI/UX Pro Max skill database).
 # Grounded in the court's own vernacular: the printed cause list. Ink on cool paper,
 # a serif for case titles and headings the way a cause list or judgment is set, a clean
 # sans for data. Noto is chosen because it covers Indian scripts, so Hindi and Malayalam
@@ -7,36 +7,31 @@
 
 [theme]
 base = "light"
-font = "Noto Sans:https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600&display=swap"
-headingFont = "Noto Serif:https://fonts.googleapis.com/css2?family=Noto+Serif:wght@500;600&display=swap"
-headingFontWeights = [600, 600, 600, 600, 600, 600]
+primaryColor = "#1E3A8A"
+backgroundColor = "#F8FAFC"
+secondaryBackgroundColor = "#E9EEF5"
+textColor = "#0F172A"
+borderColor = "#CBD5E1"
+font = "Noto Sans:https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap"
+headingFont = "Lexend:https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&display=swap"
+headingFontWeights = [700, 600, 600, 600, 600, 600]
 baseRadius = "small"
 showWidgetBorder = true
 showSidebarBorder = true
 chartCategoricalColors = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
 
 [theme.light]
-primaryColor = "#1d4f91"
-backgroundColor = "#fcfcfb"
-secondaryBackgroundColor = "#f1f2f4"
-textColor = "#14171c"
-borderColor = "#dcdee3"
-dataframeHeaderBackgroundColor = "#eceef1"
+primaryColor = "#1E3A8A"
+backgroundColor = "#F8FAFC"
+secondaryBackgroundColor = "#E9EEF5"
+textColor = "#0F172A"
+borderColor = "#CBD5E1"
+dataframeHeaderBackgroundColor = "#E9EEF5"
 
 [theme.light.sidebar]
-backgroundColor = "#f1f2f4"
+backgroundColor = "#EEF2F8"
 
-[theme.dark]
-primaryColor = "#6fa3e8"
-backgroundColor = "#121418"
-secondaryBackgroundColor = "#1c1f25"
-textColor = "#eceef2"
-borderColor = "#2c3038"
-dataframeHeaderBackgroundColor = "#1f232a"
-chartCategoricalColors = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"]
-
-[theme.dark.sidebar]
-backgroundColor = "#17191e"
+# Light only: a registry tool reads like paper. Dark tokens are kept in design-system/ready-to-list/MASTER.md.
 
 [client]
 toolbarMode = "minimal"

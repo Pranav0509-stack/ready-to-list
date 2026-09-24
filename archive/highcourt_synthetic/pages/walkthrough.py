@@ -45,9 +45,10 @@ with st.container(border=True):
     if not res["defects"]:
         c2.markdown(":green[:material/check_circle:] No defects found.")
     a, b = c2.columns(2)
-    a.metric("Submit now", f"#{q['as_filed']['rank']}", f"listing {q['as_filed']['date']:%d %b}", delta_color="off")
-    b.metric("Fix critical defects first", f"#{q['if_fixed']['rank']}", f"listing {q['if_fixed']['date']:%d %b}",
-             delta_color="off")
+    a.metric("Submit now: queue position", f"#{q['as_filed']['rank']}")
+    a.caption(f"Likely listing {q['as_filed']['date']:%d %b}")
+    b.metric("Fix critical defects first", f"#{q['if_fixed']['rank']}")
+    b.caption(f"Likely listing {q['if_fixed']['date']:%d %b}")
     if done == 0 and st.button("Submit anyway", help="Never disabled: a defect costs queue position, never access"):
         W["case"] = submit_filing(conn, {"name": sample}, res, target, res["case_type"], purpose, True, day)
         W["judge"], W["step"] = target, 1

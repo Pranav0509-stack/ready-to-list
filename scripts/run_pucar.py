@@ -27,7 +27,7 @@ def run(cases=3000, days=60, capacity=None, start=date(2026, 10, 1), seed=7, dat
     data = E.load(data_dir)
     if cases and cases != len(data["roster"]):
         data = E.scale_roster(data, cases)
-    arms = {"Today's rules": dict(rtl=False), "Ready-to-List": dict(rtl=True)}
+    arms = {"Today's rules": dict(rtl=False), "Samay": dict(rtl=True)}
     for lever in E.LEVERS:
         arms[f"Without {lever.replace('_', ' ')}"] = dict(rtl=True, levers=[x for x in E.LEVERS if x != lever])
     arms["Readiness levers only (no optimiser, no smart date)"] = dict(
@@ -43,7 +43,7 @@ def run(cases=3000, days=60, capacity=None, start=date(2026, 10, 1), seed=7, dat
             runs.append({k: v for k, v in m.items() if isinstance(v, (int, float))})  # numbers only
             if s == 0:
                 daily.append(m["daily"].assign(arm=name))
-                if name == "Ready-to-List":
+                if name == "Samay":
                     schedule = sched
         rows.append({"arm": name, **pd.DataFrame(runs).mean().to_dict()})
     return pd.DataFrame(rows), pd.concat(daily), schedule

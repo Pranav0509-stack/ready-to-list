@@ -1,125 +1,133 @@
-from datetime import timedelta
+from datetime import date
 
+import pandas as pd
 import streamlit as st
 
-from core.config import JUDGES, STAGE_FLOW, to_hhmm, to_min
-from core.data import df
-from core.nextdate import REASON_CODES, confirm_next_date, next_date, plan_after, record_outcome
-from core.scheduler import approve, build_causelist
-from pages.common import resources, sidebar
+from core import pucar_engine as E
+from core.registry import RULES, scrutinise, timeline
+from pages.shared import LISTING, OUTCOME, day_list, docket, page_setup, plans, require, sidebar
 
-conn, predictor = resources()
-jid, day = sidebar()
-court = JUDGES[jid]
+page_setup()
+u = require("Court master")
+sidebar()
 
-st.title(f"Court {court['court']}, hearing day")
-st.caption(f"{court['name']}, {day:%A %d %B %Y}. Mark each outcome with one tap; the next date follows.")
+st.markdown("# Court 12")
+tabs = st.tabs(["Docket file", "Run today's list", "New complaint"])
 
-items = df(conn, """SELECT cl.*, c.title, c.next_purpose, a.name counsel FROM causelists cl
-                    JOIN cases c ON c.id=cl.case_id
-                    LEFT JOIN case_parties p ON p.case_id=c.id AND p.side='petitioner'
-                    LEFT JOIN advocates a ON a.id=p.advocate_id
-                    WHERE cl.judge_id=? AND cl.date=? ORDER BY cl.seq""", (jid, day.isoformat()))
-if items.empty:
-    st.info("The judge has not approved a list for this date yet.")
-    if st.button("Approve the recommended list (demo shortcut)"):
-        r = build_causelist(conn, predictor, jid, day)
-        approve(conn, jid, day, r["items"], judge_name=court["name"])
-        st.rerun()
-    st.stop()
+# ---------------------------------------------------------------- docket file
+with tabs[0]:
+    c1, c2 = st.columns([1.1, 1])
+    with c1:
+        up = st.file_uploader("Upload the judge's docket (Excel or CSV)", type=["xlsx", "xls", "csv"])
+        if up is not None:
+            try:
+                df = pd.read_excel(up) if up.name.lower().endswith(("xlsx", "xls")) else pd.read_csv(up)
+                problems = E.validate_roster(df)
+                if problems:
+                    st.error("The file cannot be planned yet.\n\n" + "\n".join(f"- {p}" for p in problems))
+                else:
+                    st.session_state.docket, st.session_state.docket_name = df, up.name
+            except Exception as e:
+                st.error(f"Could not read {up.name}: {e}")
+        d = docket()
+        if d is None:
+            st.info("No docket yet. Upload the file to plan the quarter; the judge's screens open once it is in.")
+        else:
+            st.success(f"{st.session_state.docket_name}: {len(d)} cases, {d.advocate_id.nunique()} advocates. "
+                       f"Planned for the quarter from 1 October 2026.")
+            if st.button("Remove this docket"):
+                for k in ("docket", "docket_name"):
+                    st.session_state.pop(k, None)
+                st.rerun()
+    with c2:
+        st.markdown("**Columns the file needs**")
+        st.dataframe(pd.DataFrame([{"Column": k, "Meaning": v} for k, v in E.REQUIRED_COLUMNS.items()]
+                                  + [{"Column": "last_hearing_summary", "Meaning": "the last order, read for readiness and urgency"},
+                                     {"Column": "total_hearings_held", "Meaning": "hearings so far, for the churn factor"}]),
+                     hide_index=True, width="stretch", height=270)
+    if docket() is not None:
+        st.dataframe(docket(), width="stretch", hide_index=True, height=330)
 
-# Live ETA: each block starts on time, done items take their recorded minutes, the rest their expected minutes
-used = df(conn, "SELECT case_id, minutes_used FROM hearings WHERE judge_id=? AND date=?",
-          (jid, day.isoformat())).set_index("case_id").minutes_used
-eta = {}
-for block, g in items.groupby("block", sort=False):
-    t = to_min(next(b for b in court["blocks"] if b["name"] == block)["start"])
-    for r in g.itertuples():
-        eta[r.case_id] = to_hhmm(t)
-        t += used.get(r.case_id, r.expected_minutes)
-items["eta"] = items.case_id.map(eta)
-pending = items[items.outcome.isna()]
-done = len(items) - len(pending)
-
-k1, k2, k3, k4 = st.columns(4)
-k1.metric("Listed", len(items))
-k2.metric("Done", done)
-k3.metric("Effective", int((items.outcome == "effective").sum()))
-k4.metric("Adjourned", int((items.outcome == "adjourned").sum()))
-st.progress(done / len(items))
-
-left, right = st.columns([1.3, 1])
-ICON = {"effective": ":green[:material/check_circle:]", "heard_not_effective": ":orange[:material/pending:]",
-        "adjourned": ":red[:material/event_busy:]"}
-
-with right:
-    if pending.empty:
-        st.success("All items marked for today.")
+# ---------------------------------------------------------------- run today's list
+with tabs[1]:
+    if docket() is None:
+        st.info("Upload the docket first.")
     else:
-        cur_id = st.session_state.get("cm_current")
-        if cur_id not in pending.case_id.values:
-            cur_id = pending.case_id.iloc[0]
-        cur = items.set_index("case_id").loc[cur_id]
-        with st.container(border=True):
-            st.markdown(f"#### Now hearing: item {cur.seq}")
-            st.markdown(f"**{cur.title}**  \nFor {cur.next_purpose}. Counsel {cur.counsel}. Slot {cur.slot_start}-{cur.slot_end}, "
-                        f"expected {cur.eta}.")
-            with st.expander("Why listed"):
-                st.write(cur.reason)
-            reason = st.radio("If adjourned, reason", REASON_CODES, horizontal=True, key=f"rc_{cur_id}")
-            b1, b2, b3 = st.columns(3)
-            clicked = None
-            if b1.button("Effective", icon=":material/check_circle:", width="stretch", type="primary"):
-                clicked = ("effective", None)
-            if b2.button("Heard, not effective", icon=":material/pending:", width="stretch"):
-                clicked = ("heard_not_effective", "not prepared")
-            if b3.button("Adjourned", icon=":material/event_busy:", width="stretch"):
-                clicked = ("adjourned", reason)
-            if clicked:
-                outcome, code = clicked
-                record_outcome(conn, jid, day, cur_id, outcome, code)
-                purpose = plan_after(outcome, cur.next_purpose, code)
-                st.session_state.cm_pending = {"case_id": cur_id, "outcome": outcome, "code": code,
-                                               "purpose": purpose}
-                st.rerun()
-
-    # Next-date suggestion for the last marked case
-    pend = st.session_state.get("cm_pending")
-    if pend:
-        with st.container(border=True):
-            st.markdown(f"#### Next date for {pend['case_id']}")
-            purpose = st.selectbox("Next purpose", STAGE_FLOW + ["bail", "stay", "habeas"],
-                                   index=(STAGE_FLOW + ["bail", "stay", "habeas"]).index(pend["purpose"]),
-                                   key=f"np_{pend['case_id']}")
-            rec = next_date(conn, pend["case_id"], pend["outcome"], purpose, day, pend["code"])
-            st.markdown(f"### {rec['date']:%d %b}, {rec['slot']}")
-            st.caption(f"{rec['gap_days']} days out instead of a flat 60. Why: {rec['reason']}.")
-            if rec["tasks"]:
-                st.markdown("**Tasks sent to both sides:** " + "; ".join(rec["tasks"]))
-            new_d = st.date_input("Change date", rec["date"], key=f"nd_{pend['case_id']}")
-            c1, c2 = st.columns(2)
-            if c1.button("Confirm", type="primary", width="stretch"):
-                changed = new_d != rec["date"]
-                if changed:
-                    rec = {**rec, "date": new_d, "reason": rec["reason"] + "; changed by court master"}
-                confirm_next_date(conn, pend["case_id"], rec, day, changed_by="Court master" if changed else None)
-                st.session_state.cm_pending = None
-                st.toast(f"Next date {rec['date']:%d %b} sent to both sides and the litigant.")
-                st.rerun()
-            if c2.button("Skip", width="stretch"):
-                st.session_state.cm_pending = None
-                st.rerun()
-
-with left:
-    st.markdown("**Today's list**")
-    for block, g in items.groupby("block", sort=False):
-        st.caption(block)
-        for r in g.itertuples():
-            icon = ICON.get(r.outcome, ":gray[:material/radio_button_unchecked:]")
-            c1, c2 = st.columns([5, 1])
-            c1.markdown(f"{icon} **{r.seq}.** {r.eta}, {r.title[:52]}  \n"
-                        f":gray[{r.next_purpose}, {r.counsel}, slot {r.slot_start}-{r.slot_end}]")
-            if r.outcome is None or r.outcome != r.outcome:  # NaN when not yet marked
-                if c2.button("Call", key=f"call_{r.case_id}"):
-                    st.session_state.cm_current = r.case_id
+        R, real, data, scores = plans(docket())
+        rtl = R["Samay"]
+        j = rtl["journey"]
+        order = {b["name"]: i for i, b in enumerate(E.DAY["blocks"])}
+        leave = {date.fromisoformat(str(x)) for x in E.CFG["judge_leave"]["dates"]}
+        sitting_days = [d for d in rtl["workdays"] if d not in leave]
+        advocate_of = dict(zip(data["roster"].case_number, data["roster"].advocate_id))
+        gaps = E.CFG["next_date"]["after_failure_days"]
+        top, side = st.columns([1.6, 1])
+        with side:
+            day = st.selectbox("Court date", sitting_days, format_func=lambda x: x.strftime("%A %d %B %Y"))
+            todays = day_list(j, day, order)
+            marks = st.session_state.setdefault("marks", {})
+            done = sum(1 for c in todays.case_number if (day, c) in marks)
+            m1, m2 = st.columns(2)
+            m1.metric("On the list", len(todays))
+            m2.metric("Recorded", done)
+            st.progress(done / max(1, len(todays)))
+            pending = [c for c in todays.case_number if (day, c) not in marks]
+            if pending:
+                cur = st.selectbox("Now calling", pending, format_func=lambda c: f"{c}  ({todays.set_index('case_number').loc[c].start})")
+                r = todays.set_index("case_number").loc[cur]
+                st.markdown(f"**{r.hearing_type.replace('_', ' ').title()}**, {LISTING[r.listing]}, advocate {advocate_of.get(cur, '')}, score {r.score:.0f}")
+                choice = st.radio("Outcome", list(OUTCOME.values()), label_visibility="collapsed")
+                if st.button("Record outcome", type="primary", width="stretch"):
+                    marks[(day, cur)] = next(k for k, v in OUTCOME.items() if v == choice)
                     st.rerun()
+            else:
+                st.success("Every matter on the list is recorded.")
+            if done and st.button("Undo last record"):
+                last = [c for c in todays.case_number if (day, c) in marks][-1]
+                marks.pop((day, last))
+                st.rerun()
+        with top:
+            rows = []
+            for r in todays.itertuples():
+                mark = marks.get((day, r.case_number))
+                if mark == "substantive":
+                    nxt = f"in {int(data['ref'].loc[r.hearing_type].gap_days)} days, next purpose"
+                elif mark:
+                    nxt = f"in {gaps[mark]} days" + (", or when process returns" if mark == "process" else "")
+                else:
+                    nxt = ""
+                rows.append({"Time": r.start, "Case": r.case_number,
+                             "Hearing": r.hearing_type.replace("_", " ").title(), "Listing": LISTING[r.listing],
+                             "Advocate": advocate_of.get(r.case_number, ""),
+                             "Outcome": OUTCOME.get(mark, "") if mark else "", "Next date": nxt})
+            st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True, height=560)
+
+# ---------------------------------------------------------------- new complaint
+with tabs[2]:
+    c1, c2, c3 = st.columns(3)
+    cheque = c1.date_input("Cheque date", date(2026, 5, 2))
+    presented = c1.date_input("Presented to the bank", date(2026, 7, 20))
+    memo = c2.date_input("Return memo received", date(2026, 7, 24))
+    sent = c2.date_input("Demand notice sent", date(2026, 8, 10))
+    received = c3.date_input("Notice received by the drawer", date(2026, 8, 14))
+    filed = c3.date_input("Complaint filed", date(2026, 9, 30))
+    tl = timeline(cheque, presented, memo, sent, received, filed)
+    left, right = st.columns([1.3, 1])
+    with left:
+        st.dataframe(pd.DataFrame([{"Step": r["step"], "Date": r["date"], "Deadline": r["deadline"],
+                                    "In time": "Yes" if r["in_time"] else "No", "Rule": r["rule"]} for r in tl["rows"]]),
+                     width="stretch", hide_index=True)
+        d1, d2 = st.columns(2)
+        docs = {d["id"]: d1.checkbox(f"{d['label']} ({d['law']})", value=d["id"] not in ("s141_averments", "vakalat"),
+                                     key=f"doc_{d['id']}") for d in RULES["documents"]}
+        summons = {s["id"]: d2.checkbox(s["label"], value=s["id"] == "address", key=f"sum_{s['id']}")
+                   for s in RULES["summons_details"]}
+        company = d2.toggle("The drawer is a company")
+        outside = d2.toggle("The accused lives outside this court's area", value=True)
+    res = scrutinise(tl, docs, summons, company, outside)
+    with right:
+        st.markdown(f"### :{'green' if res['ready'] else 'orange'}[{res['status']}]")
+        for n in res["notes"]:
+            st.markdown(f"- {n}")
+        if res["missing"] or res["summons_missing"]:
+            st.markdown("**To cure:** " + "; ".join(res["missing"] + res["summons_missing"]))

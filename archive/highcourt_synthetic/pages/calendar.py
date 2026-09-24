@@ -186,7 +186,7 @@ with tab_year:
     target = CALENDAR["annual_sitting_days_target"]
 
     k1, k2, k3 = st.columns(3)
-    k1.metric(f"Sitting days in {year}", sitting, f"{sitting - target:+} vs target {target}", delta_color="off")
+    k1.metric(f"Sitting days in {year}", sitting, f"{sitting - target:+} vs target {target}", delta_color="off", delta_arrow="off")
     k2.metric("Holidays and vacation days on weekdays",
               int(yr[yr.kind.isin(["Holiday", "Vacation"]) & (pd.to_datetime(yr.date).dt.weekday < 5)].shape[0]))
     k3.metric(f"{JUDGES[jid]['name']} on leave", int((yr.kind == "Judge on leave").sum()))

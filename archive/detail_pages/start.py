@@ -7,12 +7,20 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from core import pucar_engine as E
-from pages.common import BASE_COLOR, RTL_COLOR, sidebar
+from pages.common import BASE_COLOR, RTL_COLOR
 
-sidebar()
+
+def link(page, label, icon):
+    """A page link that stays quiet when the page runs outside app.py (tests)."""
+    try:
+        st.page_link(page, label=label, icon=icon)
+    except Exception:
+        pass
+
 START = date(2026, 10, 1)
 HORIZONS = {"A week": 5, "A month": 21, "A quarter": 60, "A year": 250}
 
+link("pages/samay.py", label="Back to Samay", icon=":material/arrow_back:")
 st.title("Plan a judge's docket")
 st.caption("Upload the docket file from the hackathon repo (data/roster_sample_100.csv, or the same columns as an "
            "Excel sheet). Everything below is computed from that file and the organisers' reference tables.")
@@ -67,7 +75,7 @@ nxt = cases.purpose.value_counts().reindex(flow).fillna(0)
 fig = go.Figure(go.Bar(x=nxt.values, y=[p.replace("_", " ").title() for p in nxt.index], orientation="h",
                        marker_color=RTL_COLOR, hovertemplate="%{y}: %{x} cases<extra></extra>"))
 fig.update_layout(title="Next hearing, in the order of a case's life", height=380, margin=dict(l=0, r=0, t=40, b=0),
-                  yaxis=dict(autorange="reversed"))
+                  yaxis=dict(autorange="reversed", automargin=True))
 a.plotly_chart(fig, width="stretch")
 ages = pd.cut(cases.age_years, [0, 1, 2, 3, 4, 5, 20], labels=["<1", "1-2", "2-3", "3-4", "4-5", "5+"]).value_counts().sort_index()
 fig = go.Figure(go.Bar(x=ages.index.astype(str), y=ages.values, marker_color=["#2a78d6"] * 4 + ["#eb6834"] * 2,
@@ -104,20 +112,20 @@ embed = c2.toggle("Inside a full 3,000-case docket", value=len(df) < 1000,
 days = HORIZONS[horizon or "A quarter"]
 
 
-@st.cache_data(show_spinner="Planning with today's rules and with Ready-to-List")
+@st.cache_data(show_spinner="Planning with today's rules and with Samay")
 def plan(docket: pd.DataFrame, days: int, embed: bool):
     d = E.with_roster(E.load(), docket)
     d = E.judge_docket(d, 3000) if embed else {**d, "roster": d["roster"].assign(sample=True)}
     real = set(d["roster"][d["roster"]["sample"]].case_number)
     out = {}
-    for name, kw in {"Today's rules": dict(rtl=False), "Ready-to-List": dict(rtl=True)}.items():
+    for name, kw in {"Today's rules": dict(rtl=False), "Samay": dict(rtl=True)}.items():
         m, _ = E.simulate(d, START, days=days, seed=7, **kw)
         out[name] = {k: v for k, v in m.items()}
     return out, real
 
 
 runs, real = plan(df, days, embed)
-m = runs["Ready-to-List"]
+m = runs["Samay"]
 j = m["journey"]
 mine = j[j.case_number.isin(real)]
 wd = m["workdays"]
@@ -132,7 +140,7 @@ st.dataframe(wk[["Date", "block", "start", "case_number", "hearing_type"]].renam
 
 # ------------------------------------------------------------------ 5. results
 st.markdown(f"### 5. What changes over {horizon.lower() if horizon else 'a quarter'}")
-base, rtl = runs["Today's rules"], runs["Ready-to-List"]
+base, rtl = runs["Today's rules"], runs["Samay"]
 
 
 def disposed(run):
@@ -151,7 +159,7 @@ for col, (label, key, unit) in zip(cols, spec):
 cols[4].metric(f"Of your {len(real)} cases disposed", disposed(rtl), f"{disposed(rtl) - disposed(base):+d} vs today")
 
 fig = go.Figure()
-for name, colr in [("Today's rules", BASE_COLOR), ("Ready-to-List", RTL_COLOR)]:
+for name, colr in [("Today's rules", BASE_COLOR), ("Samay", RTL_COLOR)]:
     run = runs[name]
     jj = run["journey"]
     daily = jj[jj.case_number.isin(real)].groupby("date").outcome.apply(lambda s: (s == "substantive").sum())

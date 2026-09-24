@@ -9,7 +9,7 @@ from datetime import date, timedelta
 
 import yaml
 
-from core.config import ROOT
+from core.pucar_engine import ROOT
 
 RULES = yaml.safe_load((ROOT / "config" / "registry_ni138.yaml").read_text())
 P = RULES["periods"]

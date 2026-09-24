@@ -71,9 +71,9 @@ days = st.slider("Working days to back-test", 2, 15, 8)
 bt = _backtest(days, 0)
 bd, bs = bt["days"], bt["summary"]
 c = st.columns(3)
-c[0].metric("Heard per list: error", f"{bs['heard_mae']:.1f}", f"bias {bs['heard_bias']:+.1f}", delta_color="off")
-c[1].metric("Effective per list: error", f"{bs['effective_mae']:.1f}", f"bias {bs['effective_bias']:+.1f}", delta_color="off")
-c[2].metric("Court minutes: error", f"{bs['minutes_mae']:.0f} min", f"bias {bs['minutes_bias']:+.0f} min", delta_color="off")
+c[0].metric("Heard per list: error", f"{bs['heard_mae']:.1f}", f"bias {bs['heard_bias']:+.1f}", delta_color="off", delta_arrow="off")
+c[1].metric("Effective per list: error", f"{bs['effective_mae']:.1f}", f"bias {bs['effective_bias']:+.1f}", delta_color="off", delta_arrow="off")
+c[2].metric("Court minutes: error", f"{bs['minutes_mae']:.0f} min", f"bias {bs['minutes_bias']:+.0f} min", delta_color="off", delta_arrow="off")
 
 label = bd.date.str[5:] + " " + bd.judge
 fig = go.Figure()

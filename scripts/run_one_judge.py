@@ -14,7 +14,7 @@ from core import pucar_engine as E
 ARMS = {"Today's rules": dict(rtl=False),
         "Scheduling only": dict(rtl=True, levers=["optimiser", "smart_next_date", "fixed_slot_cluster"]),
         "Scheduling + pre-filing": dict(rtl=True, levers=["prefiling", "optimiser", "smart_next_date", "fixed_slot_cluster"]),
-        "Ready-to-List (all levers)": dict(rtl=True)}
+        "Samay (all levers)": dict(rtl=True)}
 EARLY = ["ADMISSION", "DELAY_CONDONATION_HEARING", "COGNIZANCE"]
 
 

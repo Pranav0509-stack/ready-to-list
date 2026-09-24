@@ -5,9 +5,17 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from core import pucar_engine as E
-from pages.common import BASE_COLOR, RTL_COLOR, sidebar
+from pages.common import BASE_COLOR, RTL_COLOR
 
-sidebar()
+
+def link(page, label, icon):
+    """A page link that stays quiet when the page runs outside app.py (tests)."""
+    try:
+        st.page_link(page, label=label, icon=icon)
+    except Exception:
+        pass
+
+link("pages/samay.py", label="Back to Samay", icon=":material/arrow_back:")
 st.title("On the organisers' data")
 st.caption("The hackathon's own data: a Kerala court pilot, anonymised. Real probability that each of 14 hearing "
            "types moves the case forward, real reasons hearings fail, their estimated minutes and gaps, their "
@@ -21,14 +29,14 @@ capacity = c3.select_slider("Court minutes a day", [330, 420], 330,
 seeds = c4.select_slider("Random seeds averaged", [1, 3, 5], 3)
 
 
-@st.cache_data(show_spinner="Running today's rules, Ready-to-List and each lever switched off")
+@st.cache_data(show_spinner="Running today's rules, Samay and each lever switched off")
 def run(n_cases, days, capacity, seeds):
     from scripts.run_pucar import run as run_all
     return run_all(n_cases, days, capacity, seeds=seeds)
 
 
 res, daily, sched = run(n_cases, days, capacity, seeds)
-base, rtl = res.set_index("arm").loc["Today's rules"], res.set_index("arm").loc["Ready-to-List"]
+base, rtl = res.set_index("arm").loc["Today's rules"], res.set_index("arm").loc["Samay"]
 
 h = st.columns(5)
 spec = [("utilisation_pct", "Utilisation", "%", False), ("reach_rate_pct", "Reach rate", "%", False),
@@ -40,28 +48,29 @@ g = st.columns(4)
 g[0].metric("Substantive hearings a day", f"{rtl.substantive_per_day:.1f}", f"{rtl.substantive_per_day - base.substantive_per_day:+.1f}")
 g[1].metric("Cases disposed", f"{rtl.disposed:.0f}", f"{rtl.disposed - base.disposed:+.0f}")
 g[2].metric("Wasted listings", f"{rtl.wasted_listings:,.0f}", f"{rtl.wasted_listings - base.wasted_listings:+,.0f}", delta_color="inverse")
-g[3].metric("Next-date gap, days", f"{rtl.next_date_gap_days:.0f}", f"vs {base.next_date_gap_days:.0f} flat", delta_color="off")
+g[3].metric("Next-date gap, days", f"{rtl.next_date_gap_days:.0f}", f"vs {base.next_date_gap_days:.0f} flat", delta_color="off", delta_arrow="off")
 
 tabs = st.tabs(["Which lever does what", "Day by day", "Proposed cause list", "Why hearings fail (their data)"])
 
 with tabs[0]:
-    st.markdown("Each Ready-to-List lever switched off in turn, plus the two halves on their own. Without a pre-filing "
+    st.markdown("Each Samay lever switched off in turn, plus the two halves on their own. Without a pre-filing "
                 "check, the readiness levers do its job: process tracking, the T-2 intent check, reading the last "
                 "hearing's note, and fixed slots.")
     order = res.sort_values("substantive_per_day")
-    colors = [BASE_COLOR if a == "Today's rules" else RTL_COLOR if a == "Ready-to-List" else "#9a9893" for a in order.arm]
+    colors = [BASE_COLOR if a == "Today's rules" else RTL_COLOR if a == "Samay" else "#9a9893" for a in order.arm]
     fig = go.Figure(go.Bar(x=order.substantive_per_day, y=order.arm, orientation="h", marker_color=colors,
                            text=order.substantive_per_day.round(1), textposition="outside",
                            hovertemplate="%{y}: %{x:.1f} a day<extra></extra>"))
-    fig.update_layout(height=420, margin=dict(l=0, r=40, t=10, b=0), xaxis_title="Substantive hearings a day")
+    fig.update_layout(height=420, margin=dict(l=0, r=40, t=10, b=0), xaxis_title="Substantive hearings a day",
+                      yaxis=dict(automargin=True))
     st.plotly_chart(fig, width="stretch")
     st.dataframe(res.round(1), width="stretch", hide_index=True)
 
 with tabs[1]:
-    d = daily[daily.arm.isin(["Today's rules", "Ready-to-List"])]
+    d = daily[daily.arm.isin(["Today's rules", "Samay"])]
     for metric, title in [("heard", "Substantive hearings a day"), ("listed", "Listed a day")]:
         fig = go.Figure()
-        for arm, colr in [("Today's rules", BASE_COLOR), ("Ready-to-List", RTL_COLOR)]:
+        for arm, colr in [("Today's rules", BASE_COLOR), ("Samay", RTL_COLOR)]:
             s = d[d.arm == arm]
             fig.add_scatter(x=s.day, y=s[metric], name=arm, line=dict(color=colr, width=2))
         fig.update_layout(title=title, height=280, margin=dict(l=0, r=0, t=40, b=0), hovermode="x unified",
@@ -84,9 +93,9 @@ with tabs[3]:
         fig.add_bar(y=ref.index, x=100 * fail * ref[f"share_{g}"], name=g.capitalize(), orientation="h",
                     marker_color=colr, hovertemplate="%{y}: %{x:.0f}% of hearings<extra>" + g + "</extra>")
     fig.add_bar(y=ref.index, x=100 * ref.p_sub, name="Substantive", orientation="h", marker_color="#c9c7c0")
-    fig.update_layout(barmode="stack", height=480, margin=dict(l=0, r=0, t=10, b=0),
+    fig.update_layout(barmode="stack", height=480, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(automargin=True),
                       legend=dict(orientation="h", y=-0.12), xaxis_title="% of hearings of this type")
     st.plotly_chart(fig, width="stretch")
     st.caption("From their substantiveness and failure-reason files. Process (summons and warrants not back) is the "
-               "biggest preventable cause: 67% of failed WARRANT hearings. Ready-to-List does not list a case until "
+               "biggest preventable cause: 67% of failed WARRANT hearings. Samay does not list a case until "
                "its process is back.")

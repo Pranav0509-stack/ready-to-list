@@ -41,7 +41,7 @@ h2.metric("Cases disposed", f"{s['disposed'][1]:.0f}", f"{s['disposed'][1] - s['
 h3.metric("Wasted advocate trips", f"{s['wasted_trips'][1]:,.0f}",
           f"{s['wasted_trips'][2]:+.0f}% vs {s['wasted_trips'][0]:,.0f}", delta_color="inverse")
 h4.metric("Change in 5+ year cases", f"{s['backlog_5y_change'][1]:+.0f}",
-          f"today's rules {s['backlog_5y_change'][0]:+.0f}", delta_color="off")
+          f"today's rules {s['backlog_5y_change'][0]:+.0f}", delta_color="off", delta_arrow="off")
 
 st.markdown("#### The five judging criteria")
 crit = pd.DataFrame([

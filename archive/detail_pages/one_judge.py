@@ -7,11 +7,19 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from core import pucar_engine as E
-from core.config import ROOT
+from core.pucar_engine import ROOT
 from core.registry import RULES, scrutinise, timeline
-from pages.common import BASE_COLOR, RTL_COLOR, sidebar
+from pages.common import BASE_COLOR, RTL_COLOR
 
-sidebar()
+
+def link(page, label, icon):
+    """A page link that stays quiet when the page runs outside app.py (tests)."""
+    try:
+        st.page_link(page, label=label, icon=icon)
+    except Exception:
+        pass
+
+link("pages/samay.py", label="Back to Samay", icon=":material/arrow_back:")
 st.title("Justice Sehgal's docket")
 st.caption("One judge. The organisers' 100 real cheque-dishonour cases (NI Act s.138) sit inside a 3,000-case docket "
            "built with their generator, with new complaints arriving every day. Court day 10:30-12:30 and 13:30-17:00. "
@@ -21,7 +29,7 @@ START = date(2026, 10, 1)
 ARMS = {"Today's rules": dict(rtl=False),
         "Scheduling only": dict(rtl=True, levers=["optimiser", "smart_next_date", "fixed_slot_cluster"]),
         "Scheduling + pre-filing": dict(rtl=True, levers=["prefiling", "optimiser", "smart_next_date", "fixed_slot_cluster"]),
-        "Ready-to-List (all levers)": dict(rtl=True)}
+        "Samay (all levers)": dict(rtl=True)}
 
 
 @st.cache_data(show_spinner="Simulating a year of this court under each approach (about a minute)")
@@ -148,11 +156,12 @@ with tabs[3]:
     held = row[[c for c in roster.columns if c.startswith("hearings_") and c != "hearings_held"]]
     held.index = [i.replace("hearings_", "").replace("_", " ") for i in held.index]
     fig = go.Figure(go.Bar(x=held.values, y=held.index, orientation="h", marker_color="#2a78d6"))
-    fig.update_layout(height=360, margin=dict(l=0, r=0, t=10, b=0), xaxis_title="Hearings held at each stage")
+    fig.update_layout(height=360, margin=dict(l=0, r=0, t=10, b=0), xaxis_title="Hearings held at each stage",
+                      yaxis=dict(automargin=True))
     b.plotly_chart(fig, width="stretch")
     st.markdown("**Its next year, simulated**")
     cols = st.columns(2)
-    for col, arm in zip(cols, ["Today's rules", "Ready-to-List (all levers)"]):
+    for col, arm in zip(cols, ["Today's rules", "Samay (all levers)"]):
         j = runs[arm]["journey"]
         j = j[j.case_number == cid]
         col.markdown(f"*{arm}*: {len(j)} listings, {(j.outcome == 'substantive').sum()} moved the case")
@@ -195,7 +204,7 @@ with tabs[4]:
     else:
         fig = go.Figure()
         for name, colr in [("Today's rules", BASE_COLOR), ("Scheduling only", "#9a9893"),
-                           ("Ready-to-List (all levers)", RTL_COLOR)]:
+                           ("Samay (all levers)", RTL_COLOR)]:
             cs = runs[name]["cases"]
             disp = cs[cs.disposed].disposed_day.value_counts().sort_index().cumsum()
             fig.add_scatter(x=[runs[name]["workdays"][i] for i in disp.index], y=disp.values, name=name,
@@ -204,7 +213,7 @@ with tabs[4]:
                           legend=dict(orientation="h", y=-0.2), hovermode="x unified")
         st.plotly_chart(fig, width="stretch")
         stage = pd.DataFrame({name: runs[name]["cases"].query("not disposed").purpose_now.value_counts()
-                              for name in ["Today's rules", "Ready-to-List (all levers)"]}).fillna(0).astype(int)
+                              for name in ["Today's rules", "Samay (all levers)"]}).fillna(0).astype(int)
         st.markdown("**Where the pending cases stand after a year**")
         st.dataframe(stage, width="stretch")
 

@@ -21,10 +21,16 @@ stage_flow: [ADMISSION, COGNIZANCE, APPEARANCE, PLEA, EXAMINATION_UNDER_S351_BNS
 side_purposes: [WARRANT, BAIL, REPORTS, APPLICATION_REVIEW, DELAY_CONDONATION_HEARING]
 # Where a side hearing leads once it succeeds ("stage" = back to the case's current stage)
 side_return: {DELAY_CONDONATION_HEARING: COGNIZANCE, WARRANT: PLEA, BAIL: PLEA, REPORTS: stage, APPLICATION_REVIEW: stage}
+# Purpose weights are no longer used for ranking; the Samay score (core/priority.py, docs/PRIORITY_SCORE.md)
+# ranks cases. Kept for the hearing-type list.
 priority: {BAIL: 100, JUDGEMENT: 70, ARGUMENTS: 60, EVIDENCE_ACCUSED: 50, EVIDENCE_COMPLAINANT: 50,
            EXAMINATION_UNDER_S351_BNSS: 45, PLEA: 45, COGNIZANCE: 40, ADMISSION: 40, APPEARANCE: 30,
            WARRANT: 25, DELAY_CONDONATION_HEARING: 30, REPORTS: 20, APPLICATION_REVIEW: 30}
 urgent_purposes: [BAIL]
+# NI Act s.143(3): the court shall endeavour to conclude the trial within six months of filing;
+# s.143(2): hearings day to day unless an adjournment is recorded in writing. Cases still inside
+# the six-month window get a priority boost so they can finish in time (https://indiankanoon.org/doc/45362031/).
+statutory_clock: {days: 180, priority_boost: 15}
 
 # Failure reasons (their hearing_failure_reasons.csv columns) grouped by what can prevent them
 reason_groups:
@@ -72,6 +78,20 @@ new_filings:
   per_day: 2.5                 # keeps the docket about steady under today's rules
   late_share: 0.96             # in the data, 96 of 100 cases went through delay condonation hearings
   admission_extra_minutes_with_prefiling: 5   # condonation decided at admission when the delay is computed at filing
+
+# How a case is treated by the number of times it has been listed for the SAME purpose
+# (the data: Warrant averages 5.0 hearings per case, Evidence complainant 6.8)
+escalation:
+  first: {label: "1st listing", priority_boost: 0}
+  second: {label: "2nd listing", priority_boost: 10, readiness_check: true}      # readiness checked, reason code required
+  deferred: {label: "Deferred (3rd+)", priority_boost: 25, fixed_slot: true,      # never relisted until the last failure is cured
+             hold_until_cured: true, from_attempt: 3}
+
+# Judge on leave: no sitting. Under today's rules the day's cases take the flat gap; under
+# Ready-to-List they move to the next sitting day with room, never to the flat 60 days.
+judge_leave:
+  casual_leave_days_per_year: 20        # Kerala Service Rules Part I, Appendix VII (at most 20 a calendar year)
+  dates: [2026-10-09, 2026-11-13, 2026-12-04]   # demo leave days; replace from the court's leave register
 
 ageing_quota: 0.25                       # locked: share of each day's minutes for 4+ year cases
 old_years: 4

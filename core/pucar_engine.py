@@ -27,7 +27,36 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from core.config import ROOT, to_hhmm, to_min
+ROOT = Path(__file__).resolve().parent.parent
+from core import priority as PRIO  # noqa: E402  (the Samay case priority score)
+
+
+def to_min(hhmm: str) -> int:
+    h, m = hhmm.split(":")
+    return int(h) * 60 + int(m)
+
+
+def to_hhmm(minutes: float) -> str:
+    minutes = int(round(minutes))
+    return f"{minutes // 60:02d}:{minutes % 60:02d}"
+
+
+COURT_CAL = yaml.safe_load((ROOT / "config" / "calendar.yaml").read_text())
+_HOLIDAYS = set(COURT_CAL["holidays"])
+for _v in COURT_CAL["vacations"]:
+    _HOLIDAYS |= {_v["start"] + timedelta(days=k) for k in range((_v["end"] - _v["start"]).days + 1)}
+
+
+def is_working_day(d: date) -> bool:
+    """Kerala High Court calendar (config/calendar.yaml): weekends, gazetted holidays, vacations,
+    second Saturdays closed, listed working Saturdays open."""
+    if d in set(COURT_CAL.get("working_saturdays", [])):
+        return True
+    if d.weekday() in COURT_CAL["weekend_days"] or d in _HOLIDAYS:
+        return False
+    if COURT_CAL.get("second_saturdays_closed") and d.weekday() == 5 and 8 <= d.day <= 14:
+        return False
+    return True
 
 CFG = yaml.safe_load((ROOT / "config" / "pucar.yaml").read_text())
 DAY = CFG["court_day"]
@@ -152,6 +181,43 @@ class Case:
     disposed_day: int = -1
     late: bool = False        # complaint filed after the limitation period
     new: bool = False
+    attempt: int = 0          # listings so far for the current purpose (1st, 2nd, deferred)
+    hearings0: int = 0        # hearings held before the simulation started
+    urgency_value: float = 0.0  # court-set urgency read from the last order (static)
+    attendance0: float = 1.0  # share of required people present at the last real hearing
+    score: float = 0.0        # Samay score at the last planning
+    last_failure: str = ""    # why the last listing for this purpose failed
+
+
+def samay_score(k, ref, fp_age: int) -> float:
+    """The Samay priority score for a case as it stands today (core/priority.py, dynamic version):
+    age grows, stage and hearings held move, attendance is the last listing's, urgency is the
+    court's own words in the last real order."""
+    w = PRIO.WEIGHTS
+    age_value = min(1.0, k.age_days / 365.25 / fp_age)
+    rate = float(ref.loc[k.purpose].p_sub) if k.purpose in ref.index else 0.5
+    share = 0.0 if k.last_failure == "absence" else (k.attendance0 if k.attempt == 0 and k.reached == 0 else 1.0)
+    readiness_value = min(1.0, rate * (PRIO.ATTENDANCE_FLOOR + (1 - PRIO.ATTENDANCE_FLOOR) * share))
+    stage = k.stage if k.stage in PRIO.STAGES else k.purpose
+    stage_no = PRIO.STAGES.index(stage) if stage in PRIO.STAGES else 0
+    disposal_value = stage_no / (len(PRIO.STAGES) - 1)
+    exp = _EXPECTED.get(stage, 1) or 1
+    churn_value = float(np.clip((k.hearings0 + k.reached) / exp - 1, 0, 1))
+    return (w["age"] * age_value + w["readiness"] * readiness_value + w["disposal"] * disposal_value
+            + w["churn"] * churn_value + w["urgency"] * k.urgency_value)
+
+
+_EXPECTED = {}
+
+
+def escalation(attempt: int) -> dict:
+    """The rule for a case listed `attempt` times for the same purpose (config: escalation)."""
+    e = CFG["escalation"]
+    if attempt + 1 >= e["deferred"]["from_attempt"]:
+        return {"key": "deferred", **e["deferred"]}
+    if attempt + 1 == 2:
+        return {"key": "second", **e["second"]}
+    return {"key": "first", **e["first"]}
 
 
 def _prefiling_process_scale(purpose):
@@ -202,7 +268,12 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
         if "prefiling" in levers:
             p_pend *= _prefiling_process_scale(r.purpose)
         pending = rng.random() < p_pend
+        note = str(data["roster"].last_hearing_summary.iloc[i]) if "last_hearing_summary" in data["roster"] else ""
+        need = PRIO.REQUIRED_PEOPLE.get(r.purpose, PRIO.DEFAULT_PEOPLE)
+        att0 = sum(1 for q in need if q in PRIO.present_people(note)) / len(need)
+        urg0 = next((v for k, v in PRIO.URGENCY if k in note.lower()), 0.0)
         cases.append(Case(r.id, r.purpose, r.stage, r.advocate, r.age_years * 365.25, bool(r.old),
+                          hearings0=int(r.hearings_held), urgency_value=urg0, attendance0=att0,
                           # every case already has a next date inside today's 60-day cycle
                           due=n * min(days, CFG["next_date"]["initial_spread_working_days"]) // len(c),
                           pending_until=int(rng.integers(3, 25)) if pending else -1,
@@ -211,6 +282,9 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
     rng = np.random.default_rng(seed + 1)   # outcome draws shared across arms
     rows, schedule, next_gaps, journey = [], [], [], []
     minutes_ref = ref.minutes.to_dict()
+    _EXPECTED.clear()
+    _EXPECTED.update(PRIO.expected_hearings({t: float(r["Median Hearings per Case"]) for t, r in ref.iterrows()}))
+    fp_age = PRIO.full_points_age(data["roster"].filing_date, start)   # computed once per roster, then fixed
 
     def p_sub_plan(k: Case, d):
         """What the planner believes: with text signals it sees each case's own risks, without
@@ -239,13 +313,31 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
     nf = CFG["new_filings"]
     type_avg = _type_rates(ref)
     advs = c.advocate.unique()
+    leave = {date.fromisoformat(str(x)) for x in CFG["judge_leave"]["dates"]}
     for d in range(days):
+        if wd[d] in leave:  # judge on leave: no sitting
+            for k in cases:
+                if not k.disposed and k.due <= d:
+                    if rtl:
+                        k.due = d + 1
+                    else:
+                        _reschedule(k, d, "court", set(), rng, next_gaps, not_reached=True)
+            rows.append({"day": d + 1, "date": wd[d], "listed": 0, "called": 0, "reached": 0, "heard": 0,
+                         "minutes_used": 0.0, "type_switches": 0, "leave": True})
+            continue
         for i in range(rng.poisson(nf["per_day"])):  # new complaints arrive every working day
             pr = type_avg["ADMISSION"]
             cases.append(Case(f"NEW-{d:03d}-{i}", "ADMISSION", "ADMISSION", str(rng.choice(advs)), 0.0, False,
                               due=d + int(rng.integers(3, 10)), pending_until=-1, late=rng.random() < nf["late_share"],
                               new=True, **pr))
         live = [k for k in cases if not k.disposed and k.due <= d]
+        if rtl and CFG["escalation"]["deferred"]["hold_until_cured"]:
+            # Deferred cases (3rd+ listing) whose last failure was process are held until it is back
+            held = [k for k in live if escalation(k.attempt)["key"] == "deferred" and k.last_failure == "process"
+                    and k.pending_until > d]
+            for k in held:
+                k.due = k.pending_until
+            live = [k for k in live if k not in held]
         # Process tracking: a case whose summons/warrant has not come back is not listed
         if "process_tracking" in levers:
             acc = CFG["levers"]["process_tracking"]["status_accuracy"]
@@ -257,7 +349,7 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
                     ready.append(k)
             live = ready
         if "optimiser" in levers:
-            listed, waitlist = _pack(live, d, p_sub_plan, cap_block, block_of, minutes_ref)
+            listed, waitlist = _pack(live, d, p_sub_plan, cap_block, block_of, minutes_ref, ref, fp_age)
         else:
             live.sort(key=lambda k: (k.purpose not in CFG["urgent_purposes"], k.due, -k.age_days))
             listed, waitlist = live[:CFG["baseline_listed_per_day"]], []
@@ -293,6 +385,8 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
                 prev[bname] = k.purpose
                 used[bname] += change
                 k.reached += 1
+                k.attempt += 1
+                esc = escalation(k.attempt - 1)["key"]
                 reached += 1
                 if k.first_listed < 0:
                     k.first_listed = d
@@ -320,6 +414,7 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
                         if k.purpose in CFG["stage_flow"]:
                             k.stage = k.purpose
                         k.purpose = nxt
+                        k.attempt, k.last_failure = 0, ""
                         p_pend = (1 - ref.loc[nxt].p_sub) * ref.loc[nxt].share_process
                         if "prefiling" in levers:
                             p_pend *= _prefiling_process_scale(nxt)
@@ -332,10 +427,12 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
                 else:
                     used[bname] += DAY["adjourned_minutes"]
                     mins_heard += DAY["adjourned_minutes"]
+                    k.last_failure = outcome
                     _reschedule(k, d, outcome, levers, rng, next_gaps)
                 journey.append({"day": d, "date": wd[d], "case_number": k.id, "hearing_type": ptype,
                                 "block": bname, "start": to_hhmm(start_min), "outcome": outcome,
-                                "from_waitlist": standby})
+                                "from_waitlist": standby, "attempt": k.attempt, "listing": esc,
+                                "score": round(k.score, 1)})
                 if rtl and d < 10:
                     schedule.append({"date": wd[d].isoformat(), "block": bname, "expected_start": to_hhmm(start_min),
                                      "window": f"{to_hhmm((start_min // 30) * 30)}-{to_hhmm((start_min // 30) * 30 + 60)}",
@@ -346,12 +443,13 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
             k.age_days += 1.4  # a working day is about 1.4 calendar days
         rows.append({"day": d + 1, "date": wd[d], "listed": len(listed) + standby_called,
                      "called": called, "reached": reached, "heard": heard, "minutes_used": min(sum(used.values()), capacity),
-                     "type_switches": switches})
+                     "type_switches": switches, "leave": False})
     m = _metrics(pd.DataFrame(rows), cases, c, next_gaps, capacity, days)
     m["journey"] = pd.DataFrame(journey)
     m["cases"] = pd.DataFrame([{"case_number": k.id, "purpose_now": k.purpose, "stage_now": k.stage,
                                 "first_listed": k.first_listed, "first_heard": k.first_heard,
                                 "disposed_day": k.disposed_day, "new_filing": k.new, "late": k.late,
+                                "attempt": k.attempt, "last_failure": k.last_failure, "score": round(k.score, 1),
                                 "disposed": k.disposed, "hearings_reached": k.reached, "substantive": k.heard,
                                 "old": k.old, "advocate": k.advocate} for k in cases])
     m["workdays"] = wd
@@ -360,7 +458,6 @@ def simulate(data, start: date, days=60, rtl=True, levers=None, capacity=None, s
 
 def working_days_from(data, start, n):
     """Their calendar first; past its end, our court calendar (config/calendar.yaml) takes over."""
-    from core.data import is_working_day
     days = [d for d in data["workdays"] if d >= start]
     d = (days[-1] if days else start - timedelta(days=1)) + timedelta(days=1)
     while len(days) < n:
@@ -404,17 +501,20 @@ def _reschedule(k: Case, d, outcome, levers, rng, gaps, ref=None, not_reached=Fa
     k.due = d + max(1, int(round(gap_cal * wd_per_cal)))
 
 
-def _pack(live, d, p_sub_plan, cap_block, block_of, minutes_ref):
-    """CP-SAT knapsack per block: urgent first, the locked ageing quota, then the rest by
-    priority x P(substantive) per minute^0.25. The next ready cases form a same-day waitlist."""
+def _pack(live, d, p_sub_plan, cap_block, block_of, minutes_ref, ref, fp_age):
+    """CP-SAT knapsack per block: bail first (liberty lane), the locked ageing quota, then the rest
+    by Samay score x P(substantive) per minute^0.25. The next ready cases form a same-day waitlist.
+    Scheduling-layer boosts sit on top of the score: listing number (escalation) and the s.143 clock."""
     from ortools.sat.python import cp_model
-    pr = CFG["priority"]
     rows = []
     for k in live:
         p = p_sub_plan(k, d)
         exp = p * minutes_ref[k.purpose] * np.exp(DAY["duration_sigma"] ** 2 / 2) + (1 - p) * DAY["adjourned_minutes"] \
             + DAY["changeover_same"]
-        value = (pr.get(k.purpose, 30) + k.age_days / 30 * 0.5) * p
+        clock = CFG["statutory_clock"]
+        k.score = samay_score(k, ref, fp_age)
+        value = (k.score + escalation(k.attempt)["priority_boost"]
+                 + (clock["priority_boost"] if k.age_days < clock["days"] else 0)) * p  # still inside the s.143 window
         rows.append((k, block_of.get(k.purpose, list(cap_block)[-1]), exp, value))
     listed, waitlist = [], []
     for bname, cap in cap_block.items():
