@@ -42,8 +42,12 @@ judges:
     overbooking: 0.0
     fresh_first: true     # his preference; the ageing quota still applies (locked)
     blocks:
-      - name: Full day
+      - name: Morning
         start: "10:30"
+        end: "13:30"
+        purposes: [bail, habeas, stay, admission, notice, reply, evidence, arguments, final]
+      - name: Afternoon
+        start: "14:30"
         end: "16:30"
         purposes: [bail, habeas, stay, admission, notice, reply, evidence, arguments, final]
 

@@ -25,7 +25,8 @@ from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score
 from core import agents
 from core.config import HEARING_TYPES, JUDGES
 from core.data import DEMO_DAY, build_db, connect, df, working_days
-from core.predict import ADJOURN_MINUTES, FEATURES, Predictor
+from core import taxonomy as T
+from core.predict import ADJOURN_MINUTES, FEATURES, Predictor, reference_minutes
 
 EPS = 1e-6
 
@@ -91,10 +92,22 @@ def holdout(conn, test_size=0.25, seed=0) -> dict:
         out[k]["ece"] = float((t.mean_predicted - t.observed).abs().mul(t["count"]).sum() / t["count"].sum())
 
     # Duration: reference minutes x overrun learnt on train, vs the plain reference table
-    ref = lambda d: d.purpose.map(lambda p: HEARING_TYPES[p]["duration"]).astype(float)
-    overrun = float((tr_heard.minutes_used / ref(tr_heard)).mean())
-    actual = te_heard.minutes_used.astype(float)
-    pred, base = ref(te_heard) * overrun, ref(te_heard)
+    # Our model: the case taxonomy (type x sub-type x stage x paper book x parties x cover sheet).
+    # Baseline: the purpose-only reference table the manual provides.
+    cases = df(conn, "SELECT id, category, subtype, pages, parties, filing_date, summary_verified FROM cases")
+    cases = cases.set_index("id")
+
+    def with_case(d):
+        d = d.join(cases, on="case_id")
+        d["age_years"] = (pd.to_datetime(d.date) - pd.to_datetime(d.filing_date)).dt.days / 365.25
+        d["summary_ok"] = (d.age_years < 4) | (d.summary_verified == 1)
+        return d
+
+    tr_h, te_h = with_case(tr_heard), with_case(te_heard)
+    overrun = float((tr_h.minutes_used / reference_minutes(tr_h, "purpose")).mean())
+    actual = te_h.minutes_used.astype(float)
+    pred = reference_minutes(te_h, "purpose") * overrun
+    base = te_h.purpose.map(lambda p: HEARING_TYPES[p]["duration"]).astype(float)
     out["duration"] = {
         "overrun": overrun,
         "mae": float((pred - actual).abs().mean()),
@@ -174,13 +187,22 @@ def backtest_causelists(seed_days=8, judges=("J1", "J2", "J3"), seed=0, db_seed=
                     minutes = exp_heard = exp_eff = exp_min = 0.0
                     for r in items.itertuples():
                         p_heard, p_eff = _truth_probs(r)
-                        ref = HEARING_TYPES[r.next_purpose]["duration"]
+                        cat = getattr(r, "category", None)
+                        if isinstance(cat, str) and cat in T.TYPES:
+                            kw = dict(pages=r.pages, parties=int(r.parties),
+                                      cover_sheet=bool(r.age_years >= 4 and r.summary_ok))
+                            stage = T.PURPOSE_STAGE[r.next_purpose]
+                            mean_ref = T.mean_minutes(cat, r.subtype, stage, **kw)
+                            draw = lambda: T.sample_minutes(rng, cat, r.subtype, stage, **kw)
+                        else:
+                            ref = HEARING_TYPES[r.next_purpose]["duration"]
+                            mean_ref, draw = ref * np.exp(0.3 ** 2 / 2), lambda: ref * rng.lognormal(0, 0.3)
                         exp_heard += p_heard
                         exp_eff += p_heard * p_eff
-                        exp_min += p_heard * ref * np.exp(0.3 ** 2 / 2) + (1 - p_heard) * ADJOURN_MINUTES
+                        exp_min += p_heard * mean_ref + (1 - p_heard) * ADJOURN_MINUTES
                         if rng.random() < p_heard:
                             heard += 1
-                            minutes += ref * rng.lognormal(0, 0.3)
+                            minutes += draw()
                             eff += rng.random() < p_eff
                         else:
                             minutes += ADJOURN_MINUTES

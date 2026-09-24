@@ -8,12 +8,14 @@ Order of filling, each step protected from the next:
      ~95% of expected minutes, greedy fallback if the solver is unavailable.
 Then advocate clustering into one-hour windows, a reason per item, and a waitlist.
 """
+import zlib
 from datetime import date
 
 import numpy as np
 import pandas as pd
 
 from core import agents, audit
+from core import taxonomy as T
 from core.config import BALANCE, FILL_TARGET, JUDGES, LOCKED, to_hhmm, to_min
 from core.data import df
 from core.readiness import case_frame
@@ -30,16 +32,34 @@ def judge_config(judge_id, overrides=None):
     return cfg
 
 
-def block_for(purpose, blocks):
-    for b in blocks:
-        if purpose in b["purposes"]:
+def block_for(purpose, blocks, case_id=None):
+    """The block that hears this purpose. When several blocks accept it (e.g. a full-day bench split
+    by lunch), cases are spread across them in proportion to block minutes, stably per case."""
+    ok = [b for b in blocks if purpose in b["purposes"]]
+    if not ok:
+        return blocks[-1]["name"]
+    if len(ok) == 1 or case_id is None:
+        return ok[0]["name"]
+    mins = [to_min(b["end"]) - to_min(b["start"]) for b in ok]
+    u = (zlib.crc32(str(case_id).encode()) % 10_000) / 10_000 * sum(mins)
+    for b, m in zip(ok, mins):
+        if u < m:
             return b["name"]
-    return blocks[-1]["name"]
+        u -= m
+    return ok[-1]["name"]
 
 
 def block_caps(cfg):
     fill = FILL_TARGET + cfg.get("overbooking", 0)
-    return {b["name"]: (to_min(b["end"]) - to_min(b["start"])) * fill for b in cfg["blocks"]}
+    return {b["name"]: net_minutes(cfg, b) * fill for b in cfg["blocks"]}
+
+
+def net_minutes(cfg, b):
+    """Block minutes minus the day's opening (first block) and short breaks (config/case_taxonomy.yaml)."""
+    m = to_min(b["end"]) - to_min(b["start"])
+    if b is cfg["blocks"][0]:
+        m -= T.DAY["opening_minutes"]
+    return m - T.DAY["misc_break_minutes"] / len(cfg["blocks"])
 
 
 def _features(conn, pool, judge_id, day, cfg):
@@ -149,7 +169,7 @@ def build_causelist(conn, predictor, judge_id, day: date, overrides=None):
     if pool.empty:
         return {"items": pool, "waitlist": pool, "pool": pool, "meta": {}, "cfg": cfg}
     pool = pool.join(predictor.predict(pool))
-    pool["block"] = pool.next_purpose.map(lambda p: block_for(p, cfg["blocks"]))
+    pool["block"] = [block_for(p, cfg["blocks"], i) for p, i in zip(pool.next_purpose, pool.id)]
 
     caps = block_caps(cfg)
     total_cap = sum(caps.values())
@@ -165,7 +185,7 @@ def build_causelist(conn, predictor, judge_id, day: date, overrides=None):
     used = 0.0
     for r in pool[pool.old & ~pool.urgent].sort_values("priority", ascending=False).itertuples():
         if used + r.expected_minutes > quota_min:
-            break
+            continue  # too long for what is left of the quota; a shorter old case may still fit
         blk = r.block if left[r.block] >= r.expected_minutes else max(left, key=left.get)
         picked.append(r.id); via[r.id] = "quota"; left[blk] -= r.expected_minutes
         pool.loc[pool.id == r.id, "block"] = blk

@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from core import agents
+from core import taxonomy as T
 from core.config import HEARING_TYPES, LOCKED
 from core.data import df, working_days
 
@@ -56,6 +57,11 @@ def priority(c: pd.DataFrame) -> pd.Series:
     htp = c.next_purpose.map(lambda p: HEARING_TYPES[p]["priority"])
     age_boost = (c.age_years * 12 * 0.5)  # half a point for every month waited
     base = htp + age_boost + c.readiness * 0.5
+    if "category" in c:  # cost of waiting for this kind of case (liberty, statutory clocks)
+        vw = T.TAX["priority_from_waiting_cost"]
+        cost = [T.waiting_cost(cat, a * 365)[()] if isinstance(cat, str) and cat in T.TYPES else 0
+                for cat, a in zip(c.category, c.age_years)]
+        base = base + np.minimum(np.array(cost, dtype=float) / vw["divisor"], vw["cap"])
     return np.where(c.urgent, URGENT_PRIORITY + base, base).round(1)
 
 

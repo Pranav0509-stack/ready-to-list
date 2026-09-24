@@ -1,0 +1,265 @@
+# Case taxonomy: 10 High Court case types (a..j), their sub-types, how long each hearing
+# takes, how the cost of waiting grows, and what the judge checks.
+#
+# Hearing minutes model (core/taxonomy.py):
+#   minutes = stage_minutes[type][stage] x subtype.multiplier x (pages / 100)^pages_elasticity
+#             x (1 + per_extra_party x (parties - 2)) x cover_sheet_factor x precheck_factor x noise
+#   noise ~ lognormal(0, sigma[type])
+# Cost of waiting (feeds priority): cost(t) = weight x (1 + growth x t / 30) x clock(t)
+#   clock(t) jumps to clock_multiplier once t passes clock_days (a statutory or practical deadline).
+#
+# Minutes are ESTIMATES until calibrated: see `sources` at the end and the Case types page.
+
+pages_elasticity: 0.2        # 4x the paper book -> 1.32x the time
+reference_pages: 100
+per_extra_party: 0.08
+cover_sheet_factor: 0.8      # a verified summary saves a fifth of an old case's hearing (Justice Dimakar's practice)
+fresh_liberty_share: 0.12   # of bail and habeas cases on a roster, share that are fresh (listed as urgent)
+pages_log_shift: {c_crl_appeal: 1.1, g_civil_appeal: 1.0, i_arbitration: 0.8, a_bail: -0.5, b_anticipatory: -0.5}
+priority_from_waiting_cost: {divisor: 20, cap: 80}   # priority += min(cost(t) / divisor, cap)
+precheck_factor: 0.9         # documents already verified by the pre-filing check: the judge skips that part
+
+types:
+  a_bail:
+    name: Bail application (regular)
+    code: Bail Appl.
+    statute: BNSS 2023 s.480, s.483
+    liberty: true
+    sigma: 0.35
+    stage_minutes: {admission: 6, notice: 4, interim: 5, arguments: 12, final: 8}
+    value: {weight: 100, growth: 1.5, clock_days: 60, clock_multiplier: 2.0}   # default bail clock, BNSS s.187
+    judge_checks:
+      - FIR and the sections alleged (gravity of offence)
+      - Custody period so far and stage of investigation (charge-sheet filed or not)
+      - Criminal antecedents of the accused
+      - Flight risk, risk of tampering with evidence or witnesses (triple test)
+      - Earlier bail orders in the same crime (parity, change of circumstances)
+    documents: [FIR copy, remand or custody certificate, charge-sheet status, earlier bail orders, antecedents statement]
+    subtypes:
+      theft_property:     {name: "Theft, property offences (BNS 303-310)", multiplier: 0.7, share: 0.25}
+      cheating_economic:  {name: "Cheating, criminal breach of trust (BNS 316, 318)", multiplier: 1.0, share: 0.18}
+      ndps_small:         {name: "NDPS, small or intermediate quantity", multiplier: 0.9, share: 0.14}
+      ndps_commercial:    {name: "NDPS, commercial quantity (s.37 twin conditions)", multiplier: 1.6, share: 0.08,
+                           extra_checks: ["Reasonable grounds that the accused is not guilty (NDPS s.37)", "Not likely to offend while on bail"]}
+      murder:             {name: "Murder, attempt to murder (BNS 103, 109)", multiplier: 1.5, share: 0.12}
+      sexual_pocso:       {name: "Sexual offences, POCSO", multiplier: 1.4, share: 0.10,
+                           extra_checks: ["Victim's age and statement", "Notice to the victim (BNSS s.483(2))"]}
+      uapa:               {name: "UAPA (s.43D(5) bar)", multiplier: 2.2, share: 0.02,
+                           extra_checks: ["Whether accusation is prima facie true on the case diary (s.43D(5))"]}
+      pmla:               {name: "Money laundering (PMLA s.45 twin conditions)", multiplier: 2.0, share: 0.03}
+      default_bail:       {name: "Default bail (BNSS s.187, 60/90 days)", multiplier: 0.5, share: 0.08,
+                           extra_checks: ["Date of first remand", "Whether charge-sheet was filed within 60/90 days"]}
+
+  b_anticipatory:
+    name: Anticipatory bail
+    code: Bail Appl. (AB)
+    statute: BNSS 2023 s.482
+    liberty: true
+    sigma: 0.35
+    stage_minutes: {admission: 7, notice: 4, interim: 5, arguments: 12, final: 8}
+    value: {weight: 85, growth: 1.2, clock_days: 30, clock_multiplier: 1.5}
+    judge_checks:
+      - Nature and gravity of accusation; role attributed to the applicant
+      - Apprehension of arrest is real (notice, FIR, complaint)
+      - Antecedents and possibility of fleeing justice
+      - Whether custodial interrogation is needed
+    documents: [FIR or complaint, notice received, antecedents statement]
+    subtypes:
+      matrimonial_dowry:  {name: "Matrimonial cruelty, dowry (BNS 85, 80)", multiplier: 0.8, share: 0.35}
+      cheating:           {name: "Cheating, forgery", multiplier: 1.0, share: 0.30}
+      sc_st_act:          {name: "SC/ST (PoA) Act (s.18 bar)", multiplier: 1.4, share: 0.10}
+      sexual:             {name: "Sexual offences", multiplier: 1.3, share: 0.15}
+      economic:           {name: "Economic offences, large amounts", multiplier: 1.5, share: 0.10}
+
+  c_crl_appeal:
+    name: Criminal appeal
+    code: Crl.A
+    statute: BNSS 2023 s.415, s.419
+    liberty: true
+    sigma: 0.5
+    stage_minutes: {admission: 10, notice: 5, interim: 10, arguments: 60, final: 45}
+    value: {weight: 70, growth: 1.0, clock_days: 365, clock_multiplier: 1.5}
+    judge_checks:
+      - Certified copy of the judgment under appeal
+      - Limitation (condonation petition if late)
+      - Evidence on record: depositions, exhibits (paper book)
+      - For suspension of sentence: length of sentence, period undergone
+    documents: [certified copy of judgment, trial court records or paper book, condonation petition if late]
+    subtypes:
+      conviction_life:    {name: "Against conviction, life or death sentence", multiplier: 1.8, share: 0.2}
+      conviction_short:   {name: "Against conviction, under 10 years", multiplier: 0.9, share: 0.35}
+      ndps_pocso:         {name: "NDPS or POCSO conviction", multiplier: 1.2, share: 0.2}
+      against_acquittal:  {name: "Against acquittal (leave to appeal)", multiplier: 1.1, share: 0.15}
+      suspension:         {name: "Suspension of sentence application", multiplier: 0.3, share: 0.10}
+
+  d_quash:
+    name: Quashing petition (inherent powers)
+    code: CRL.MC
+    statute: BNSS 2023 s.528
+    liberty: false
+    sigma: 0.45
+    stage_minutes: {admission: 8, notice: 4, interim: 6, arguments: 20, final: 15}
+    value: {weight: 50, growth: 0.6, clock_days: 180, clock_multiplier: 1.2}
+    judge_checks:
+      - Whether allegations, taken at face value, make out an offence (Bhajan Lal categories)
+      - Settlement between parties and whether the offence is private in nature (Gian Singh)
+      - Civil dispute given a criminal colour
+    documents: [FIR or final report, settlement deed and affidavits if settled, impugned order]
+    subtypes:
+      matrimonial_settled: {name: "Matrimonial, settled", multiplier: 0.5, share: 0.3}
+      cheque_ni138:        {name: "Cheque dishonour (NI Act s.138)", multiplier: 0.8, share: 0.25}
+      civil_colour:        {name: "Civil dispute in criminal colour", multiplier: 1.3, share: 0.25}
+      other_fir:           {name: "Other FIR quashing", multiplier: 1.0, share: 0.2}
+
+  e_writ_civil:
+    name: Writ petition (civil)
+    code: WP(C)
+    statute: Constitution of India, Art. 226
+    liberty: false
+    sigma: 0.5
+    stage_minutes: {admission: 7, notice: 4, interim: 8, arguments: 25, final: 20}
+    value: {weight: 45, growth: 0.5, clock_days: 365, clock_multiplier: 1.2}
+    judge_checks:
+      - Maintainability and alternative remedy
+      - Locus standi
+      - Delay and laches
+      - The impugned order and the exhibits relied on
+    documents: [impugned order, exhibits, representation made to the authority]
+    subtypes:
+      service:            {name: "Service matters", multiplier: 0.9, share: 0.3}
+      revenue_land:       {name: "Revenue, land acquisition", multiplier: 1.2, share: 0.2}
+      education:          {name: "Education, admissions (time-bound)", multiplier: 0.8, share: 0.15}
+      licensing_local:    {name: "Licensing, local bodies", multiplier: 0.9, share: 0.25}
+      pil:                {name: "Public interest", multiplier: 1.8, share: 0.1}
+
+  f_habeas:
+    name: Habeas corpus and preventive detention
+    code: WP(Crl.)
+    statute: Constitution Art. 226, Art. 22; KAAPA 2007; PIT-NDPS; COFEPOSA
+    liberty: true
+    sigma: 0.4
+    stage_minutes: {admission: 8, notice: 5, interim: 6, arguments: 30, final: 20}
+    value: {weight: 110, growth: 2.0, clock_days: 21, clock_multiplier: 2.0}
+    judge_checks:
+      - Detention order and grounds supplied in time and in a language understood
+      - Representation made and disposed of without delay (Art. 22(5))
+      - Live link between the prejudicial activity and the detention
+      - For missing persons: police report on search
+    documents: [detention order, grounds of detention, representation and its disposal]
+    subtypes:
+      kaapa:              {name: "KAAPA detention", multiplier: 1.0, share: 0.5}
+      pit_ndps_cofeposa:  {name: "PIT-NDPS, COFEPOSA", multiplier: 1.3, share: 0.2}
+      missing_person:     {name: "Missing person, illegal custody", multiplier: 0.6, share: 0.3}
+
+  g_civil_appeal:
+    name: Civil appeal (first or second)
+    code: RFA / RSA
+    statute: CPC 1908 s.96, s.100
+    liberty: false
+    sigma: 0.55
+    stage_minutes: {admission: 10, notice: 4, interim: 8, arguments: 45, final: 40}
+    value: {weight: 35, growth: 0.4, clock_days: 1825, clock_multiplier: 1.5}
+    judge_checks:
+      - Limitation and condonation of delay
+      - Court fee on the appeal valuation
+      - For second appeals: a substantial question of law (CPC s.100)
+      - Certified copies of judgment and decree
+    documents: [certified judgment and decree, court fee, condonation petition if late]
+    subtypes:
+      first_money:        {name: "First appeal, money or damages", multiplier: 1.0, share: 0.3}
+      first_partition:    {name: "First appeal, partition or title", multiplier: 1.4, share: 0.25}
+      second_appeal:      {name: "Second appeal (substantial question of law)", multiplier: 0.8, share: 0.35}
+      execution:          {name: "Execution appeal", multiplier: 0.6, share: 0.1}
+
+  h_mact:
+    name: Motor accident claims appeal
+    code: MACA
+    statute: Motor Vehicles Act 1988 s.173
+    liberty: false
+    sigma: 0.35
+    stage_minutes: {admission: 5, notice: 3, interim: 5, arguments: 15, final: 12}
+    value: {weight: 45, growth: 0.6, clock_days: 365, clock_multiplier: 1.3}
+    judge_checks:
+      - Statutory deposit by the insurer or owner (s.173 proviso)
+      - Award copy and computation (multiplier, income, dependency)
+      - Policy defences: licence, permit, breach of policy conditions
+    documents: [award, deposit receipt, policy copy, disability certificate]
+    subtypes:
+      death:              {name: "Death claim", multiplier: 1.2, share: 0.35}
+      injury:             {name: "Injury claim", multiplier: 0.9, share: 0.45}
+      insurer_liability:  {name: "Insurer contests liability", multiplier: 1.3, share: 0.2}
+
+  i_arbitration:
+    name: Arbitration petition or appeal
+    code: Arb.A / OP(Arb)
+    statute: Arbitration and Conciliation Act 1996 s.9, 11, 34, 37
+    liberty: false
+    sigma: 0.5
+    stage_minutes: {admission: 8, notice: 4, interim: 10, arguments: 40, final: 30}
+    value: {weight: 45, growth: 0.5, clock_days: 365, clock_multiplier: 1.5}   # s.34(6): decide within one year
+    judge_checks:
+      - Limitation (s.34(3): 3 months, plus 30 days at most)
+      - Copy of the award and the arbitration agreement
+      - Grounds limited to s.34(2) (no merits review)
+    documents: [award, arbitration agreement, notice under s.34(5)]
+    subtypes:
+      s34_challenge:      {name: "s.34 challenge to award", multiplier: 1.3, share: 0.4}
+      s37_appeal:         {name: "s.37 appeal", multiplier: 1.1, share: 0.25}
+      s11_appointment:    {name: "s.11 appointment of arbitrator", multiplier: 0.4, share: 0.25}
+      s9_interim:         {name: "s.9 interim measures", multiplier: 0.8, share: 0.10}
+
+  j_family:
+    name: Family and matrimonial appeal
+    code: Mat.Appeal / OP(FC)
+    statute: Family Courts Act 1984 s.19; Hindu Marriage Act; BNSS s.144 maintenance
+    liberty: false
+    sigma: 0.45
+    stage_minutes: {admission: 7, notice: 3, interim: 8, arguments: 30, final: 25}
+    value: {weight: 55, growth: 0.8, clock_days: 180, clock_multiplier: 1.3}
+    judge_checks:
+      - Welfare of the child (custody)
+      - Income and assets (maintenance)
+      - Mediation attempted
+    documents: [family court judgment, income affidavit, mediation report]
+    subtypes:
+      divorce:            {name: "Divorce", multiplier: 1.0, share: 0.35}
+      custody:            {name: "Child custody", multiplier: 1.3, share: 0.25}
+      maintenance:        {name: "Maintenance", multiplier: 0.7, share: 0.40}
+
+# Which types each bench hears (share of its roster)
+bench_mix:
+  J1: {a_bail: 0.18, b_anticipatory: 0.08, c_crl_appeal: 0.08, d_quash: 0.12, e_writ_civil: 0.22, f_habeas: 0.04,
+       g_civil_appeal: 0.14, h_mact: 0.08, j_family: 0.06}
+  J2: {i_arbitration: 1.0}
+  J3: {a_bail: 0.15, b_anticipatory: 0.10, c_crl_appeal: 0.10, d_quash: 0.15, e_writ_civil: 0.20, f_habeas: 0.03,
+       g_civil_appeal: 0.10, h_mact: 0.12, j_family: 0.05}
+
+# The judge's day. Every minute of the gross sitting time is accounted for.
+court_day:
+  opening_minutes: 15          # pronouncing judgments, urgent mentions at the start of the day
+  changeover_same_type: 1      # calling the next item, counsel stepping up, same kind of case
+  changeover_switch_type: 3    # switching to a different kind of case: new file, new law in mind
+  misc_break_minutes: 10       # short breaks across the day
+  overrun_buffer: 0.05         # kept free for hearings that run long
+
+# Evidence used to set relative times (checked 2026-09-24). No Indian source gives minutes per
+# High Court hearing by type; these give relative judge time, which the multipliers follow.
+sources:
+  - {what: "District judge unit norms: contested bail 0.2, criminal appeal vs conviction 2.0, murder trial 4.5, UAPA 9, MCOCA/NIA 18 (norm per working day)",
+     who: Maharashtra 2020, url: "https://cdnbbsr.s3waas.gov.in/s3ec0207c4b1fdd1ef8da2d7e939307120/uploads/2024/02/2024020931.pdf"}
+  - {what: "Units per disposal: contested trial 8, criminal appeal 4, revision 2, MACT 6, matrimonial contested 8 / mutual 4",
+     who: Patna High Court, url: "https://www.patnahighcourt.gov.in/pdf/UPLOADED/2902.PDF"}
+  - {what: "Units: T-1 homicide/NDPS 6, criminal appeal 3, revision 2, MACT 3, bail 1 per 10 applications",
+     who: Gauhati High Court 2020, url: "https://cdnbbsr.s3waas.gov.in/s3ec05252a3dbaeb32e7690242ad3b556e/uploads/2023/11/2023111712.pdf"}
+  - {what: "An admission hearing takes 5 to 20 minutes; a High Court bench has about 330 minutes a day",
+     who: DAKSH, url: "https://www.dakshindia.org/can-a-court-list-and-hear-over-500-cases-a-day/"}
+  - {what: "Case-flow tracks: habeas corpus disposed within 15 days; criminal appeals 6 to 15 months by track; writ tracks 6 months to 2 years",
+     who: Punjab and Haryana HC rules, url: "https://highcourtchd.gov.in/sub_pages/left_menu/Rules_orders/high_court_rules/Vol-V--PDF/chap4partIV5.pdf"}
+  - {what: "Weighted caseload: federal case weights range 0.10 to 12.89 (129x) across case types",
+     who: US Federal Judicial Center, url: "https://www.uscourts.gov/file/43768/download"}
+  - {what: "Minutes per case: homicide 1,602; violent felony 102; pre-trial detention hearing 99; civil contract 31; traffic 4",
+     who: NCSC New Mexico 2020, url: "https://nmcourts.gov/wp-content/uploads/2023/11/NCSC-NM-Judicial-Workload-Assessment-Final-Report.pdf"}
+  - {what: "Bail: triple test and Prasanta Kumar Sarkar factors; Satender Kumar Antil categories A-D; default bail BNSS s.187 (60/90 days)",
+     who: Supreme Court, url: "https://indiankanoon.org/doc/7148380/"}
+  - {what: "Court hours: Delhi 10:30-13:30 and 14:30-16:30",
+     who: ThePrint, url: "https://theprint.in/india/day-after-sc-rebuke-delhi-hc-revises-timings-of-court-sittings-lunch-breaks/2626960/"}

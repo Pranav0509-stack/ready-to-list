@@ -33,6 +33,7 @@ from core.config import FILL_TARGET, HEARING_TYPES, JUDGES, LOCKED, MODEL, OPTIM
 from core.data import df, working_days
 from core.readiness import case_frame
 from core.scheduler import block_for
+from core.taxonomy import DAY as TDAY, net_block_minutes
 
 try:
     from ortools.linear_solver import pywraplp
@@ -43,6 +44,7 @@ except ImportError:  # greedy still works
 DEF = MODEL["defects"]
 FX = MODEL["show_effects"]
 ADJ = MODEL["durations"]["adjourn_minutes"]
+URGENT_MISS_PENALTY = 10_000  # per urgent matter not heard within its deadline
 
 
 def _u(case_id, salt):
@@ -75,7 +77,7 @@ def build_instance(conn, predictor, start: date, horizon=None, judges=None, pref
         cf = case_frame(conn, jid, on=start)
         cfg = JUDGES[jid]
         cf["judge_id"] = jid
-        cf["block"] = cf.next_purpose.map(lambda p: block_for(p, cfg["blocks"]))
+        cf["block"] = [block_for(p, cfg["blocks"], i) for p, i in zip(cf.next_purpose, cf.id)]
         cf["clashes"] = 0
         cf["bundled"] = 0
         cf["fixed_slot"] = int(cfg.get("clustering", True))
@@ -132,7 +134,7 @@ def build_instance(conn, predictor, start: date, horizon=None, judges=None, pref
             if (jid, d) in off:
                 continue
             for b in JUDGES[jid]["blocks"]:
-                blocks[(jid, k, b["name"])] = to_min(b["end"]) - to_min(b["start"])
+                blocks[(jid, k, b["name"])] = net_block_minutes(jid, b["name"])
     return Instance(c, days, blocks, prefiling, judges, feasible)
 
 
@@ -176,6 +178,9 @@ def solve(inst, method=None, weights=None, time_limit=None, seed=0):
         assign, info = _cpsat(inst, w, time_limit, saa=True, seed=seed)
     else:
         raise ValueError(method)
+    if not assign and method != "greedy":
+        assign = _greedy(inst, w)
+        info["status"] += " (fell back to greedy)"
     info["seconds"] = round(time.perf_counter() - t0, 2)
     info["method"] = method
     plan = _plan_frame(inst, assign)
@@ -271,7 +276,11 @@ def _cpsat(inst, w, time_limit, saa=False, seed=0):
         vs = [x[(i, k)] for k in ks]
         m.Add(sum(vs) <= 1)  # listed at most once in the horizon
         if r.urgent and any(k <= r.deadline for k in ks):
-            m.Add(sum(x[(i, k)] for k in ks if k <= r.deadline) == 1)  # locked: urgent within deadline
+            # Urgent within the deadline: soft only so the model stays feasible when urgent matters
+            # alone exceed court time; the penalty dwarfs every other term, so it is met whenever possible.
+            miss = m.NewBoolVar(f"miss_{i}")
+            m.Add(sum(x[(i, k)] for k in ks if k <= r.deadline) + miss >= 1)
+            obj.append(-S * URGENT_MISS_PENALTY * miss)
         if not r.urgent and not r.old and r.readiness < gate:
             for v in vs:
                 m.Add(v == 0)  # readiness gate (locked); the ageing quota may still take old cases
@@ -291,7 +300,7 @@ def _cpsat(inst, w, time_limit, saa=False, seed=0):
             continue
         m.Add(sum(int(round(S * c.at[i, "expected_minutes"])) * v for i, v in items) <= int(S * _cap(inst, key, saa)))
         if saa:
-            capm = inst.blocks[key]
+            capm = int(round(inst.blocks[key]))
             per_min = max(1, int(round(S * w["overtime"] / n)))  # expected overtime, on the S scale
             for s in range(n):
                 ot = m.NewIntVar(0, capm * 3, f"ot_{key}_{s}")  # overtime minutes in scenario s
@@ -381,10 +390,13 @@ def _milp(inst, w, time_limit):
         for k in ks:
             ct.SetCoefficient(x[(i, k)], 1)
         if r.urgent and any(k <= r.deadline for k in ks):
-            ct = solver.Constraint(1, 1)  # locked: urgent within deadline
+            miss = solver.BoolVar(f"miss_{i}")  # urgent within deadline, soft (see _cpsat)
+            ct = solver.Constraint(1, solver.infinity())
             for k in ks:
                 if k <= r.deadline:
                     ct.SetCoefficient(x[(i, k)], 1)
+            ct.SetCoefficient(miss, 1)
+            obj.SetCoefficient(miss, -URGENT_MISS_PENALTY)
         if not r.urgent and not r.old and r.readiness < gate:
             for k in ks:
                 x[(i, k)].SetUb(0)
@@ -477,6 +489,8 @@ def sequence_day(plan_day: pd.DataFrame, time_limit=5.0, seed=0):
     for p, r in rows.iterrows():
         blk = next(b for b in JUDGES[r.judge_id]["blocks"] if b["name"] == r.block)
         b0, b1 = to_min(blk["start"]), to_min(blk["end"])
+        if blk is JUDGES[r.judge_id]["blocks"][0]:
+            b0 += TDAY["opening_minutes"]  # the day opens with pronouncements and mentions
         dur = max(1, int(round(r.expected_minutes)))
         st = m.NewIntVar(b0, horizon_end, f"s{p}")
         en = m.NewIntVar(b0, horizon_end + dur, f"e{p}")
@@ -491,6 +505,32 @@ def sequence_day(plan_day: pd.DataFrame, time_limit=5.0, seed=0):
         ends.append(en)
     for ivs in intervals.values():
         m.AddNoOverlap(ivs)
+    # Changeovers: within each courtroom block, a circuit fixes the calling order; switching case
+    # type costs extra minutes (sequence-dependent setup), so similar cases get grouped.
+    extra = TDAY["changeover_switch_type"] - TDAY["changeover_same_type"]  # same-type changeover is in the duration
+    setups = []
+    kind = rows["category"].fillna(rows.next_purpose) if "category" in rows else rows.next_purpose
+    for _, g in rows.groupby(["judge_id", "block"]):
+        idx = list(g.index)
+        if len(idx) < 2:
+            continue
+        arcs = []
+        for a_ in idx:
+            arcs.append((0, a_ + 1, m.NewBoolVar("")))
+            arcs.append((a_ + 1, 0, m.NewBoolVar("")))
+            for b_ in idx:
+                if a_ == b_:
+                    continue
+                lit = m.NewBoolVar("")
+                su = 0 if kind[a_] == kind[b_] else extra
+                arcs.append((a_ + 1, b_ + 1, lit))
+                m.Add(starts[b_] >= starts[a_] + max(1, int(round(rows.at[a_, "expected_minutes"]))) + su).OnlyEnforceIf(lit)
+                if su:
+                    setups.append(su * lit)
+        # nodes outside this group are skipped via self-loops
+        others = [q for q in rows.index if q not in set(idx)]
+        arcs += [(q + 1, q + 1, m.NewConstant(1)) for q in others]
+        m.AddCircuit(arcs)
     spans = []
     for a, items in adv_iv.items():
         courts = {j for j, _, _ in items}
@@ -503,7 +543,8 @@ def sequence_day(plan_day: pd.DataFrame, time_limit=5.0, seed=0):
             m.AddMaxEquality(hi, [st + dur for _, st, dur in items])
             spans.append(hi - lo)
     weight = (rows.priority.clip(upper=1100) / 10).round().astype(int).tolist()
-    m.Minimize(sum(wt * st for wt, st in zip(weight, starts)) + 50 * sum(spans) + 500 * sum(late))
+    m.Minimize(sum(wt * st for wt, st in zip(weight, starts)) + 50 * sum(spans) + 500 * sum(late)
+               + OPTIMIZER["sequencing"]["changeover_weight"] * sum(setups))
     s = cp_model.CpSolver()
     s.parameters.max_time_in_seconds = time_limit
     s.parameters.num_workers = 8
@@ -519,7 +560,11 @@ def sequence_day(plan_day: pd.DataFrame, time_limit=5.0, seed=0):
     w0 = (out.start_min // 30) * 30
     out["window"] = [f"{to_hhmm(a)}-{to_hhmm(a + window)}" for a in w0]
     out["seq_status"] = s.StatusName(st)
-    return out.sort_values(["judge_id", "start_min"])
+    out["kind"] = kind.values
+    out = out.sort_values(["judge_id", "start_min"])
+    same_next = out.groupby(["judge_id", "block"]).kind.transform(lambda k: k.eq(k.shift()))
+    out["type_switch"] = ~same_next & out.groupby(["judge_id", "block"]).cumcount().gt(0)
+    return out
 
 
 # ---------------------------------------------------------------------- evaluation

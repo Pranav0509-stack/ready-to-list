@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from core import agents
+from core import agents, taxonomy as T
 from core.config import CALENDAR, HEARING_TYPES, JUDGES, MODEL, PREREQ_DAYS, ROOT, STAGE_FLOW, URGENT_PURPOSES
 
 MIX = MODEL["case_mix"]
@@ -24,7 +24,8 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS cases (
   id TEXT PRIMARY KEY, title TEXT, filing_date TEXT, case_type TEXT, stage TEXT,
   next_purpose TEXT, urgency_flag INT, judge_id TEXT, next_date TEXT,
-  confirmed INT DEFAULT 0, summary_verified INT DEFAULT 0, status TEXT DEFAULT 'pending');
+  confirmed INT DEFAULT 0, summary_verified INT DEFAULT 0, status TEXT DEFAULT 'pending',
+  category TEXT, subtype TEXT, pages INT DEFAULT 100, parties INT DEFAULT 2);
 CREATE TABLE IF NOT EXISTS advocates (
   id TEXT PRIMARY KEY, name TEXT, agent_type TEXT, show_rate REAL, warned INT DEFAULT 0);
 CREATE TABLE IF NOT EXISTS case_parties (
@@ -153,15 +154,28 @@ def _synthesise(conn, rng, cases_per_judge, n_advocates):
             lo, hi, _ = MIX["age_buckets"][rng.choice(len(MIX["age_buckets"]), p=[b[2] for b in MIX["age_buckets"]])]
             age_years = rng.uniform(lo, hi)
             filing = today - timedelta(days=int(age_years * 365))
-            if rng.random() < MIX["urgent_share"]:
-                purpose = rng.choice(sorted(URGENT_PURPOSES), p=[0.6, 0.1, 0.3])
+            tk, sk = T.draw_type(rng, jid)
+            fresh_liberty = {"a_bail": "bail", "b_anticipatory": "bail", "f_habeas": "habeas"}.get(tk)
+            if fresh_liberty and rng.random() < T.TAX["fresh_liberty_share"]:
+                purpose = fresh_liberty
+                age_years = rng.uniform(0, 0.1)
+                filing = today - timedelta(days=int(age_years * 365))
+            elif fresh_liberty:  # bail matters that have moved on: notice to the prosecutor, arguments
+                purpose = rng.choice(["notice", "arguments", "final"])
+                age_years = rng.uniform(0.05, 1.0)
+                filing = today - timedelta(days=int(age_years * 365))
+            elif rng.random() < MIX["urgent_share"]:
+                purpose = "stay"
                 age_years = min(age_years, 0.3)
                 filing = today - timedelta(days=int(age_years * 365))
             else:
                 # Older cases sit further down the stage flow
                 idx = int(np.clip(rng.normal(age_years / 2, 1.2), 0, len(STAGE_FLOW) - 1))
                 purpose = STAGE_FLOW[idx]
-            ctype = CASE_TYPES.get(purpose, rng.choice(ARB_TYPES if JUDGES[jid].get("case_types") else CIVIL_TYPES))
+            ctype = T.TYPES[tk]["code"]
+            pages = int(np.clip(rng.lognormal(np.log(T.TAX["reference_pages"]) + T.TAX["pages_log_shift"].get(tk, 0), 0.6),
+                                10, 3000))
+            n_parties = 2 + int(rng.poisson(0.5))
             title = f"{ctype} {rng.integers(100, 9999)}/{filing.year}, {rng.choice(FIRST)} v. {rng.choice(PARTIES)}"
             # Next date: mostly in the next 30 working days, some overdue
             nd = upcoming[int(rng.integers(0, 30))] if rng.random() > 0.05 else today - timedelta(days=int(rng.integers(1, 20)))
@@ -172,7 +186,7 @@ def _synthesise(conn, rng, cases_per_judge, n_advocates):
                 nd = upcoming[int(rng.integers(0, 4))]
             summary_verified = int(age_years < 4 or rng.random() < 0.4)
             cases.append([cid, title, filing.isoformat(), ctype, purpose, purpose, urgent, jid,
-                          nd.isoformat(), 0, summary_verified, "pending"])
+                          nd.isoformat(), 0, summary_verified, "pending", tk, sk, pages, n_parties])
 
             pet = f"A{rng.integers(0, n_advocates):03d}"
             res = f"A{rng.integers(0, n_advocates):03d}"
@@ -217,14 +231,17 @@ def _synthesise(conn, rng, cases_per_judge, n_advocates):
                     outcome, code = "heard_not_effective", "not prepared"
                 else:
                     outcome, code = "adjourned", rng.choice(["counsel absent", "counsel absent", "service pending", "time ran out"])
-                mins = HEARING_TYPES[purpose]["duration"] * rng.lognormal(0, MODEL["durations"]["lognormal_sigma"]) * (1.3 if old_unsum else 1) if showed else 2
+                mins = (T.sample_minutes(rng, tk, sk, T.PURPOSE_STAGE[purpose], pages=pages, parties=n_parties,
+                                         cover_sheet=bool(age_years >= 4 and summary_verified)) *
+                        (MODEL["effective"]["old_unsummarised_overrun"] if old_unsum else 1)) if showed else \
+                    MODEL["durations"]["adjourn_minutes"]
                 hearings.append((cid, jid, hd.isoformat(), purpose, None, outcome, code, float(mins),
                                  int(conf), int(bundled), clashes, int(fixed), pf, agents.BASE_SHOW[t], res_rate,
                                  int(old_unsum), int(showed), int(eff)))
 
     _demo_cases(cases, parties, prereqs, filings, today)
 
-    conn.executemany(f"INSERT INTO cases VALUES ({','.join('?' * 12)})", cases)
+    conn.executemany(f"INSERT INTO cases VALUES ({','.join('?' * 16)})", cases)
     conn.executemany("INSERT INTO case_parties VALUES (?,?,?,?)", parties)
     conn.executemany("INSERT INTO filings VALUES (?,?,?,?)", filings)
     conn.executemany("INSERT INTO defects VALUES (?,?,?,?,?,?)", defects)
@@ -237,13 +254,13 @@ def _demo_cases(cases, parties, prereqs, filings, today):
     t = today.isoformat()
     cases += [
         ["D0001", "WP(C) 2231/2025, Rao (for Kurian) v. State of Kerala", "2025-06-30", "WP(C)",
-         "admission", "admission", 0, "J1", t, 1, 1, "pending"],
+         "admission", "admission", 0, "J1", t, 1, 1, "pending", "e_writ_civil", "service", 120, 2],
         ["D0002", "WP(C) 1904/2025, Rao (for Menon) v. KSEB", "2025-04-11", "WP(C)",
-         "admission", "admission", 0, "J1", t, 1, 1, "pending"],
-        ["D0003", "OP 877/2025, Rao (for Pillai) v. Cochin Corporation", "2025-05-02", "OP",
-         "notice", "notice", 0, "J1", t, 1, 1, "pending"],
-        ["D0007", "RSA 412/2019, Varghese v. Mathew", "2019-06-14", "RSA",
-         "arguments", "arguments", 0, "J1", t, 1, 1, "pending"],
+         "admission", "admission", 0, "J1", t, 1, 1, "pending", "e_writ_civil", "licensing_local", 90, 2],
+        ["D0003", "WP(C) 877/2025, Rao (for Pillai) v. Cochin Corporation", "2025-05-02", "WP(C)",
+         "notice", "notice", 0, "J1", t, 1, 1, "pending", "e_writ_civil", "licensing_local", 80, 2],
+        ["D0007", "RSA 412/2019, Varghese v. Mathew", "2019-06-14", "RFA / RSA",
+         "arguments", "arguments", 0, "J1", t, 1, 1, "pending", "g_civil_appeal", "second_appeal", 420, 2],
     ]
     for cid in ["D0001", "D0002", "D0003", "D0007"]:
         parties.append((cid, "A000" if cid != "D0007" else "A001", "petitioner", 0))

@@ -23,6 +23,7 @@ The first run builds `data/court.db`: a synthetic court with 3 benches, 2,700 pe
 | Full flow, one case | Panel | A dummy writ petition from filing, defect check and re-upload, through planning, approval and the hearing, to its next date |
 | Court calendar | Judge, registry | The year's sitting days, a fortnight heatmap for all three courts, each day's timeline across courtrooms, every case's day, time and reason |
 | Pre-filing check | Advocate | Defects with page and fix, a queue card (submit now vs fix first); submit anyway is never disabled |
+| Case types and judge time | Judge, panel | The 10 types and sub-types, minutes per hearing with evidence, cost-of-waiting curves, where the judge's minutes go, what the judge checks |
 | Optimisation lab | Panel | Solve with greedy, MILP, CP-SAT or stochastic CP-SAT; every combination compared; which method when |
 | Judge dashboard | Judge | KPIs, a timeline of the day by block, a reason for each listing, override with a live impact meter, Approve. Config tab with locked rules. Docket health tab. Case drawer with the summary cover sheet. |
 | Court master | Court master | One-tap outcome (effective / heard, not effective / adjourned + reason code), live ETAs, next-date suggestion with the reason, Confirm or Change. |
@@ -41,10 +42,11 @@ The first run builds `data/court.db`: a synthetic court with 3 benches, 2,700 pe
 | `simulate.py` | `run`, `summary` | Agent simulation (diligent / busy / chronic adjourner advocates) |
 | `summary.py` | `summarise` | Cover sheet for old cases. The LLM output is cached for the demo |
 | `optimize.py` | `build_instance`, `solve`, `sequence_day`, `evaluate`, `plan_horizon` | Stage 1 picks the day for every case in all courts (MILP or CP-SAT); stage 2 sets the time with CP-SAT interval scheduling; Monte Carlo scoring |
+| `taxonomy.py` | `median_minutes`, `waiting_cost`, `day_budget`, `sequence_with_changeovers` | 10 case types and sub-types: hearing minutes by stage, cost of waiting over time, the judge's minute budget, grouping similar cases |
 | `defects.py` | `check_filing`, `queue_position`, `submit_filing`, `refile` | Rules-based pre-filing check driven by `config/defect_rules.yaml` |
 | `evaluate.py` | `holdout`, `backtest_causelists`, `learning_curve` | Model accuracy against naive baselines |
 
-Nothing is hardcoded: judge styles and the hearing-type table are in `config/judge_rules.yaml`, people's behaviour in `config/model.yaml`, objective weights in `config/optimizer.yaml`, the court calendar in `config/calendar.yaml`, defect rules in `config/defect_rules.yaml`.
+Nothing is hardcoded: judge styles and the hearing-type table are in `config/judge_rules.yaml`, people's behaviour in `config/model.yaml`, objective weights in `config/optimizer.yaml`, the court calendar in `config/calendar.yaml`, defect rules in `config/defect_rules.yaml`, case types in `config/case_taxonomy.yaml`.
 
 Locked rules in `config/judge_rules.yaml` (the UI can't turn them off): the 25% ageing quota for 5+ year cases, the urgent bypass for bail, habeas corpus and stay, and the readiness gate of 60.
 
@@ -64,11 +66,11 @@ Model accuracy on a time-based holdout (6,402 train, 2,134 test hearings):
 |---|---|---|
 | P(show) AUC / Brier | 0.77 / 0.196 | 0.50 / 0.250 |
 | P(effective given heard) AUC / Brier | 0.85 / 0.142 | 0.50 / 0.245 |
-| Duration mean absolute error | 2.6 min | 2.6 min (reference table) |
+| Hearing length, mean absolute error | 5.5 min (case taxonomy) | 11.8 min (purpose-only reference table) |
 | Heard per cause list, backtest error | 1.9 hearings (10.7%) | |
 
 ## Honest notes
 
 - Every number above comes from synthetic data. Re-run the simulator and the Model accuracy page on the organisers' data before quoting them.
-- Duration prediction does not beat the reference table yet.
+- Minutes per case type are estimates anchored on official judge-unit norms (see `config/case_taxonomy.yaml` sources) until fitted to the organisers' data.
 - In production the summary model runs self-hosted on court servers (Kerala HC AI policy).

@@ -27,6 +27,7 @@ saa:
 sequencing:                         # CP day-sequencing across courtrooms
   travel_minutes: 10               # an advocate needs this long to move between courtrooms
   window_minutes: 60
+  changeover_weight: 60             # objective cost per extra changeover minute (switching case type)
 
 # Named objective profiles for the comparison grid. Each overrides some weights above.
 profiles:

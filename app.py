@@ -19,6 +19,7 @@ sections = {
         page("pages/court_master.py", "Court master", ":material/fact_check:"),
         page("pages/calendar.py", "Court calendar", ":material/calendar_month:"),
         page("pages/filing.py", "Pre-filing check", ":material/upload_file:"),
+        page("pages/case_types.py", "Case types and judge time", ":material/category:"),
     ],
     "Proof": [
         page("pages/optimizer_lab.py", "Optimisation lab", ":material/tune:"),

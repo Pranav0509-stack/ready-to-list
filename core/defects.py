@@ -274,6 +274,18 @@ def queue_position(conn, judge_id, case_type, purpose, filing_score, urgent, on:
 
 # ---------------------------------------------------------------- submission
 
+def _taxonomy_for(case_type, purpose):
+    """Map a filing's case-type code to the taxonomy type and its most common sub-type."""
+    from core import taxonomy as T
+    for tk, t in T.TYPES.items():
+        if case_type in t["code"].replace(" / ", "/").split("/") or case_type == t["code"]:
+            if tk == "a_bail" and "AB" in case_type:
+                continue
+            sk = max(t["subtypes"], key=lambda k: t["subtypes"][k]["share"])
+            return tk, sk
+    return "e_writ_civil", "licensing_local"
+
+
 def _next_case_id(conn):
     row = conn.execute("SELECT MAX(CAST(SUBSTR(id, 2) AS INT)) FROM cases WHERE id LIKE 'F%'").fetchone()
     return f"F{(row[0] or 0) + 1:04d}"
@@ -307,9 +319,12 @@ def submit_filing(conn, pdf_meta: dict, result: dict, judge_id, case_type, purpo
     cid = _next_case_id(conn)
     pet, res = ex.get("petitioner") or "Petitioner", ex.get("respondent") or "Respondent"
     title = f"{case_type} (filing {cid}), {pet} v. {res}"
-    conn.execute(f"INSERT INTO cases VALUES ({','.join('?' * 12)})",
+    category, subtype = _taxonomy_for(case_type, purpose)
+    conn.execute("INSERT INTO cases (id, title, filing_date, case_type, stage, next_purpose, urgency_flag, judge_id, "
+                 "next_date, confirmed, summary_verified, status, category, subtype, pages, parties) "
+                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                  (cid, title, on.isoformat(), case_type, purpose, purpose, urgent, judge_id, when.isoformat(),
-                  0, 0, "pending"))
+                  0, 0, "pending", category, subtype, int(result.get("pages") or 100), 2))
     pip = int(result.get("party_in_person", False))
     adv = None if pip else _advocate(conn, ex.get("counsel"))
     conn.execute("INSERT INTO case_parties VALUES (?,?,?,?)", (cid, adv, "petitioner", pip))
