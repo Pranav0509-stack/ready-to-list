@@ -13,6 +13,10 @@ HEARING_TYPES = _CFG["hearing_types"]
 PREREQ_DAYS = _CFG["prereq_days"]
 STAGE_FLOW = _CFG["stage_flow"]
 
+MODEL = yaml.safe_load((ROOT / "config" / "model.yaml").read_text())
+OPTIMIZER = yaml.safe_load((ROOT / "config" / "optimizer.yaml").read_text())
+CALENDAR = yaml.safe_load((ROOT / "config" / "calendar.yaml").read_text())
+
 URGENT_PURPOSES = {p for p, h in HEARING_TYPES.items() if h["urgent"]}
 
 

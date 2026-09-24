@@ -12,7 +12,9 @@ import numpy as np
 import pandas as pd
 
 from core import agents
-from core.config import HEARING_TYPES, JUDGES, PREREQ_DAYS, ROOT, STAGE_FLOW, URGENT_PURPOSES
+from core.config import CALENDAR, HEARING_TYPES, JUDGES, MODEL, PREREQ_DAYS, ROOT, STAGE_FLOW, URGENT_PURPOSES
+
+MIX = MODEL["case_mix"]
 
 DB_PATH = ROOT / "data" / "court.db"
 RAW_DIR = ROOT / "data" / "raw"
@@ -48,8 +50,10 @@ CREATE TABLE IF NOT EXISTS audit_log (
   ts TEXT, service TEXT, case_id TEXT, decision TEXT, reason TEXT, overridden_by TEXT);
 """
 
-HOLIDAYS = {date(2026, 10, 2), date(2026, 10, 20), date(2026, 11, 9), date(2026, 11, 24),
-            date(2026, 12, 25)}
+HOLIDAYS = set(CALENDAR["holidays"])
+for _v in CALENDAR["vacations"]:
+    HOLIDAYS |= {_v["start"] + timedelta(days=k) for k in range((_v["end"] - _v["start"]).days + 1)}
+WORKING_SATURDAYS = set(CALENDAR["working_saturdays"])
 
 FIRST = ["Rao", "Menon", "Nair", "Pillai", "Iyer", "Kurian", "Thomas", "Varghese", "Das", "Sharma",
          "Joseph", "Mathew", "George", "Krishnan", "Warrier", "Kamath", "Shenoy", "Bhat", "Reddy",
@@ -69,7 +73,9 @@ def connect(path=DB_PATH):
 
 
 def is_working_day(d: date) -> bool:
-    return d.weekday() < 5 and d not in HOLIDAYS
+    if d in WORKING_SATURDAYS:
+        return True
+    return d.weekday() not in CALENDAR["weekend_days"] and d not in HOLIDAYS
 
 
 def working_days(start: date, n: int, step=1):
@@ -130,7 +136,8 @@ def _synthesise(conn, rng, cases_per_judge, n_advocates):
     days = [today + timedelta(days=k) for k in range(-40, 180)]
     cal = []
     for jid in JUDGES:
-        leave = set(rng.choice([d for d in days if d > today + timedelta(days=5)], 2, replace=False))
+        leave = set(rng.choice([d for d in days if d > today + timedelta(days=5) and is_working_day(d)],
+                                CALENDAR["judge_leave_days_per_judge"], replace=False))
         for d in days:
             cal.append((d.isoformat(), jid, int(not is_working_day(d)), int(d in leave)))
     conn.executemany("INSERT INTO calendar VALUES (?,?,?,?)", cal)
@@ -143,10 +150,10 @@ def _synthesise(conn, rng, cases_per_judge, n_advocates):
             n += 1
             cid = f"C{n:05d}"
             # Manual: a quarter under a year old, 1 in 6 over four years
-            age_years = rng.choice([rng.uniform(0, 1), rng.uniform(1, 3), rng.uniform(3, 4),
-                                    rng.uniform(4, 5), rng.uniform(5, 11)], p=[0.25, 0.40, 0.18, 0.07, 0.10])
+            lo, hi, _ = MIX["age_buckets"][rng.choice(len(MIX["age_buckets"]), p=[b[2] for b in MIX["age_buckets"]])]
+            age_years = rng.uniform(lo, hi)
             filing = today - timedelta(days=int(age_years * 365))
-            if rng.random() < 0.035:
+            if rng.random() < MIX["urgent_share"]:
                 purpose = rng.choice(sorted(URGENT_PURPOSES), p=[0.6, 0.1, 0.3])
                 age_years = min(age_years, 0.3)
                 filing = today - timedelta(days=int(age_years * 365))
@@ -184,7 +191,7 @@ def _synthesise(conn, rng, cases_per_judge, n_advocates):
 
             prereq_done = True
             for item in HEARING_TYPES[purpose]["prereqs"]:
-                done = int(rng.random() < 0.62)
+                done = int(rng.random() < MIX["prereq_ready_share"] + 0.15)  # listed cases skew ready
                 prereq_done &= bool(done)
                 due = nd - timedelta(days=PREREQ_DAYS[item] // 2)
                 prereqs.append((cid, purpose, item, done, due.isoformat()))
@@ -210,7 +217,7 @@ def _synthesise(conn, rng, cases_per_judge, n_advocates):
                     outcome, code = "heard_not_effective", "not prepared"
                 else:
                     outcome, code = "adjourned", rng.choice(["counsel absent", "counsel absent", "service pending", "time ran out"])
-                mins = HEARING_TYPES[purpose]["duration"] * rng.lognormal(0, 0.3) * (1.3 if old_unsum else 1) if showed else 2
+                mins = HEARING_TYPES[purpose]["duration"] * rng.lognormal(0, MODEL["durations"]["lognormal_sigma"]) * (1.3 if old_unsum else 1) if showed else 2
                 hearings.append((cid, jid, hd.isoformat(), purpose, None, outcome, code, float(mins),
                                  int(conf), int(bundled), clashes, int(fixed), pf, agents.BASE_SHOW[t], res_rate,
                                  int(old_unsum), int(showed), int(eff)))

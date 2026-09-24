@@ -1,0 +1,36 @@
+# What the planner optimises. Each term is a weight on one objective; set a weight to 0
+# to switch that goal off. The Optimisation lab page edits these live.
+
+horizon_working_days: 10          # plan two weeks ahead, re-plan every evening (rolling horizon)
+time_limit_seconds: 10
+method: cpsat                      # greedy | milp | cpsat | cpsat_saa
+
+weights:
+  throughput: 10        # reward: expected effective hearings, weighted by case priority
+  wasted: 4             # penalty: expected listings that will not be heard (1 - P(show))
+  wait: 0.6             # penalty: priority x days until listed (urgent and old cases first)
+  unlisted: 2           # penalty: priority of due cases left out of the whole horizon
+  trips: 3              # penalty: advocate trips (days an advocate must attend)
+  clash: 8              # penalty: advocate listed in two courts on the same day
+  balance: 20           # penalty: gap between the busiest and quietest court-day (load balance)
+  idle: 0.02            # penalty: planned idle minutes (utilisation)
+  overtime: 0.5         # SAA only: expected minutes past the end of a block
+
+fairness:
+  old_case_years: 5
+  ageing_quota_hard: true          # the locked quota is a constraint, not a weight
+
+saa:
+  scenarios: 30         # sampled futures of show-ups and durations
+  allow_overbooking: 0.25          # SAA may plan up to 125% of block minutes; it pays for overtime instead
+
+sequencing:                         # CP day-sequencing across courtrooms
+  travel_minutes: 10               # an advocate needs this long to move between courtrooms
+  window_minutes: 60
+
+# Named objective profiles for the comparison grid. Each overrides some weights above.
+profiles:
+  balanced: {}
+  throughput_first: {throughput: 20, wait: 0.2, trips: 1, clash: 4, balance: 5}
+  fairness_first: {wait: 2.0, unlisted: 5, balance: 40}
+  advocate_first: {trips: 10, clash: 25, wasted: 8}

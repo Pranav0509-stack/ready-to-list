@@ -20,6 +20,10 @@ The first run builds `data/court.db`: a synthetic court with 3 benches, 2,700 pe
 
 | Screen | For | What it does |
 |---|---|---|
+| Full flow, one case | Panel | A dummy writ petition from filing, defect check and re-upload, through planning, approval and the hearing, to its next date |
+| Court calendar | Judge, registry | The year's sitting days, a fortnight heatmap for all three courts, each day's timeline across courtrooms, every case's day, time and reason |
+| Pre-filing check | Advocate | Defects with page and fix, a queue card (submit now vs fix first); submit anyway is never disabled |
+| Optimisation lab | Panel | Solve with greedy, MILP, CP-SAT or stochastic CP-SAT; every combination compared; which method when |
 | Judge dashboard | Judge | KPIs, a timeline of the day by block, a reason for each listing, override with a live impact meter, Approve. Config tab with locked rules. Docket health tab. Case drawer with the summary cover sheet. |
 | Court master | Court master | One-tap outcome (effective / heard, not effective / adjourned + reason code), live ETAs, next-date suggestion with the reason, Confirm or Change. |
 | Simulator | Panel | 60 days of today's rules vs Ready-to-List, same roster and seed, with the five judging metrics. |
@@ -36,7 +40,11 @@ The first run builds `data/court.db`: a synthetic court with 3 benches, 2,700 pe
 | `nextdate.py` | `next_date`, `record_outcome`, `confirm_next_date` | today + max(ideal gap, prerequisite time), then the first day with capacity, skipping holidays, the judge's leave and the advocate's other listings |
 | `simulate.py` | `run`, `summary` | Agent simulation (diligent / busy / chronic adjourner advocates) |
 | `summary.py` | `summarise` | Cover sheet for old cases. The LLM output is cached for the demo |
+| `optimize.py` | `build_instance`, `solve`, `sequence_day`, `evaluate`, `plan_horizon` | Stage 1 picks the day for every case in all courts (MILP or CP-SAT); stage 2 sets the time with CP-SAT interval scheduling; Monte Carlo scoring |
+| `defects.py` | `check_filing`, `queue_position`, `submit_filing`, `refile` | Rules-based pre-filing check driven by `config/defect_rules.yaml` |
 | `evaluate.py` | `holdout`, `backtest_causelists`, `learning_curve` | Model accuracy against naive baselines |
+
+Nothing is hardcoded: judge styles and the hearing-type table are in `config/judge_rules.yaml`, people's behaviour in `config/model.yaml`, objective weights in `config/optimizer.yaml`, the court calendar in `config/calendar.yaml`, defect rules in `config/defect_rules.yaml`.
 
 Locked rules in `config/judge_rules.yaml` (the UI can't turn them off): the 25% ageing quota for 5+ year cases, the urgent bypass for bail, habeas corpus and stay, and the readiness gate of 60.
 

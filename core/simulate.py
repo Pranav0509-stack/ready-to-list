@@ -19,19 +19,20 @@ import numpy as np
 import pandas as pd
 
 from core import agents
-from core.config import BALANCE, HEARING_TYPES, LOCKED, PREREQ_DAYS, STAGE_FLOW, URGENT_PURPOSES, next_stage
+from core.config import (BALANCE, FILL_TARGET, HEARING_TYPES, JUDGES, LOCKED, MODEL, PREREQ_DAYS, STAGE_FLOW,
+                         URGENT_PURPOSES, capacity, next_stage)
 
-STYLES = {
-    "Sehgal": {"minutes": 270, "baseline_list": 60, "carry_over": True, "cover_sheet": False, "fresh_first": False},
-    "Dimakar": {"minutes": 300, "baseline_list": 60, "carry_over": False, "cover_sheet": True, "fresh_first": False},
-    "Joshi": {"minutes": 360, "baseline_list": 60, "carry_over": False, "cover_sheet": False, "fresh_first": True},
-}
-TYPES = ["diligent", "busy", "chronic"]
-COVER_SHEET_RATE = {"diligent": 0.9, "busy": 0.6, "chronic": 0.3}  # files one when asked, per T-7 request
+MIX, BASE, FX, DEF = MODEL["case_mix"], MODEL["baseline"], MODEL["show_effects"], MODEL["defects"]
+# Judge styles come from config/judge_rules.yaml, keyed by surname
+STYLES = {j["name"].split()[-1]: {
+    "minutes": capacity(jid), "baseline_list": BASE["listed_per_day"],
+    "carry_over": bool(j.get("weekly_carry_over")), "cover_sheet": bool(j.get("cover_sheet_required")),
+    "fresh_first": bool(j.get("fresh_first"))} for jid, j in JUDGES.items()}
+TYPES = agents.AGENT_TYPES
+COVER_SHEET_RATE = MODEL["advocates"]["cover_sheet_rate"]
 FOUR_YEARS, FIVE_YEARS = 4 * 365, 5 * 365
-READY_SHARE = 0.45 # share of pending prerequisites already done; tuned so the baseline lands near 60/20/10
-AGE_MIX = [(0, 365, 0.25), (365, 730, 0.30), (730, FOUR_YEARS, 0.28), (FOUR_YEARS, FIVE_YEARS, 0.07),
-           (FIVE_YEARS, 12 * 365, 0.10)]
+READY_SHARE = MIX["prereq_ready_share"]
+AGE_MIX = [(lo * 365, hi * 365, w) for lo, hi, w in MIX["age_buckets"]]
 
 
 @dataclass
@@ -46,6 +47,7 @@ class Case:
     urgent: bool
     summary: bool = False
     disposed: bool = False
+    defect: bool = False     # an uncaught critical defect (court fee, vakalatnama, limitation)
 
 
 def _roster(rng, n_cases, n_adv, diligent_share, chronic_share, cover_sheet):
@@ -55,7 +57,7 @@ def _roster(rng, n_cases, n_adv, diligent_share, chronic_share, cover_sheet):
     for i in range(n_cases):
         lo, hi, _ = AGE_MIX[rng.choice(len(AGE_MIX), p=[m[2] for m in AGE_MIX])]
         age = rng.uniform(lo, hi)
-        urgent = rng.random() < 0.03
+        urgent = rng.random() < MIX["urgent_share"]
         if urgent:
             purpose, age = rng.choice(sorted(URGENT_PURPOSES)), rng.uniform(0, 60)
         else:
@@ -65,13 +67,20 @@ def _roster(rng, n_cases, n_adv, diligent_share, chronic_share, cover_sheet):
         ready = 0 if (not items or rng.random() < READY_SHARE) else int(rng.integers(1, 40))
         pet = int(rng.integers(0, n_adv))
         summary = cover_sheet and age >= FOUR_YEARS and rng.random() < COVER_SHEET_RATE[types[pet]]
+        defect = rng.random() < DEF["share_with_critical"]
         cases.append(Case(i, age, purpose, int(rng.integers(0, 60)), ready, pet,
-                          -1 if rng.random() < 0.05 else int(rng.integers(0, n_adv)), urgent, summary))
+                          -1 if rng.random() < 0.05 else int(rng.integers(0, n_adv)), urgent, summary,
+                          defect=defect))
     return types, cases
 
 
-def run(days=60, style="Sehgal", rtl_on=True, diligent_share=0.4, chronic_share=0.2,
-        overbooking=0.0, seed=42, n_cases=3000, n_adv=250, balance=BALANCE):
+def run(days=60, style="Sehgal", rtl_on=True, diligent_share=None, chronic_share=None,
+        overbooking=0.0, seed=42, n_cases=3000, n_adv=250, balance=BALANCE, prefiling=None):
+    """prefiling: run the pre-filing check (defaults to rtl_on). Without it, critical defects
+    surface only in court and sink the hearing."""
+    diligent_share = MODEL["advocates"]["mix"]["diligent"] if diligent_share is None else diligent_share
+    chronic_share = MODEL["advocates"]["mix"]["chronic"] if chronic_share is None else chronic_share
+    prefiling = rtl_on if prefiling is None else prefiling
     st = STYLES[style]
     rng_roster = np.random.default_rng(seed)
     types, cases = _roster(rng_roster, n_cases, n_adv, diligent_share, chronic_share, st["cover_sheet"])
@@ -83,13 +92,17 @@ def run(days=60, style="Sehgal", rtl_on=True, diligent_share=0.4, chronic_share=
     next_id, rows = n_cases, []
 
     for day in range(days):
-        for _ in range(rng.poisson(4)):  # fresh filings keep arriving
-            urgent = rng.random() < 0.15
+        for _ in range(rng.poisson(MIX["new_filings_per_day"])):  # fresh filings keep arriving
+            urgent = rng.random() < MIX["new_urgent_share"]
             cases.append(Case(next_id, 0, rng.choice(sorted(URGENT_PURPOSES)) if urgent else "admission",
                               day + int(rng.integers(1, 10)), day, int(rng.integers(0, n_adv)),
                               int(rng.integers(0, n_adv)), urgent))
             next_id += 1
 
+        if prefiling:  # the check catches most critical defects; the advocate fixes them before listing
+            for c in cases:
+                if c.defect and rng.random() < DEF["caught_by_prefiling"]:
+                    c.defect = False
         live = [c for c in cases if not c.disposed]
         due = [c for c in live if c.due <= day]
         load = np.bincount([c.pet for c in due], minlength=n_adv)
@@ -116,7 +129,7 @@ def run(days=60, style="Sehgal", rtl_on=True, diligent_share=0.4, chronic_share=
             bundled = rtl_on and here[c.pet] >= 2
             ps = agents.p_show(t, rtl_on, bundled, confirmed[c.id], clashes, warned[c.pet])
             if c.id in standby:
-                ps *= 0.6  # called from the waitlist at short notice
+                ps *= FX["waitlist_call_factor"]  # called from the waitlist at short notice
             show_pet = rng.random() < ps
             show_res = rng.random() < (agents.p_show(types[c.res], rtl_on, False, False, 0, warned[c.res])
                                        if c.res >= 0 else agents.PARTY_IN_PERSON_SHOW)
@@ -126,7 +139,7 @@ def run(days=60, style="Sehgal", rtl_on=True, diligent_share=0.4, chronic_share=
                 _reschedule(c, day, rtl_on, False, st, rng)
                 continue
             if not (show_pet and show_res):
-                used += 2
+                used += MODEL["durations"]["adjourn_minutes"]
                 wasted[c.pet] += 1
                 if rtl_on and confirmed[c.id] and not show_pet and t == "busy":
                     warned[c.pet] = True  # costs warning after a confirmed no-show
@@ -134,9 +147,14 @@ def run(days=60, style="Sehgal", rtl_on=True, diligent_share=0.4, chronic_share=
                 continue
             heard += 1
             old_unsum = c.age >= FOUR_YEARS and not c.summary
-            dur = HEARING_TYPES[c.purpose]["duration"] * rng.lognormal(0, 0.3) * (1.3 if old_unsum else 1.0)
+            dur = HEARING_TYPES[c.purpose]["duration"] * rng.lognormal(0, MODEL["durations"]["lognormal_sigma"]) * \
+                (MODEL["effective"]["old_unsummarised_overrun"] if old_unsum else 1.0)
             used += dur
-            if rng.random() < agents.p_effective_given_heard(float(c.prereq_ready <= day), old_unsum, t, confirmed[c.id]):
+            p_eff = agents.p_effective_given_heard(float(c.prereq_ready <= day), old_unsum, t, confirmed[c.id])
+            if c.defect:
+                p_eff *= 1 - DEF["critical_fail_rate"]
+                c.defect = rng.random() < 0.5  # the court points it out; half get fixed before next time
+            if rng.random() < p_eff:
                 effective += 1
                 if c.purpose == "final":
                     c.disposed = True
@@ -169,7 +187,7 @@ def run(days=60, style="Sehgal", rtl_on=True, diligent_share=0.4, chronic_share=
 
 
 def _rtl_select(due, confirmed, day, minutes, overbook, types, fresh_first, balance):
-    cap = minutes * (0.95 + overbook)
+    cap = minutes * (FILL_TARGET + overbook)
     gate = LOCKED["readiness_gate"]
 
     def readiness(c):
@@ -222,9 +240,9 @@ def _with_waitlist(listed, waitlist, used_now, minutes, standby):
 
 def _reschedule(c, day, rtl_on, was_effective, st, rng):
     if not was_effective and st["carry_over"]:
-        c.due = day + 5  # Sehgal: same weekday next week until heard
+        c.due = day + BASE["carry_over_working_days"]  # Sehgal: same weekday next week until heard
     elif not rtl_on:
-        c.due = day + 42  # flat 60 calendar days is about 42 working days
+        c.due = day + BASE["flat_gap_working_days"]  # flat 60 calendar days
     elif was_effective:
         c.due = day + max(1, HEARING_TYPES[c.purpose]["ideal_gap"] * 5 // 7, c.prereq_ready - day)
     else:
