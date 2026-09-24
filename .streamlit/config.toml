@@ -12,9 +12,9 @@ backgroundColor = "#F8FAFC"
 secondaryBackgroundColor = "#E9EEF5"
 textColor = "#0F172A"
 borderColor = "#CBD5E1"
-font = "Noto Sans:https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap"
-headingFont = "Lexend:https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&display=swap"
-headingFontWeights = [700, 600, 600, 600, 600, 600]
+font = "Inter Tight:https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap"
+headingFont = "Playfair Display:https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap"
+headingFontWeights = [600, 600, 600, 600, 600, 600]
 baseRadius = "small"
 showWidgetBorder = true
 showSidebarBorder = true

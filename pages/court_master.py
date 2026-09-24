@@ -1,80 +1,110 @@
 from datetime import date
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
 from core import pucar_engine as E
 from core.registry import RULES, scrutinise, timeline
-from pages.shared import (COURT_OF, JUDGES, LISTING, OUTCOME, day_list, docket, dockets, hearing_label,
-                          page_setup, plans, require, sidebar)
+from pages.shared import (COURT_OF, JUDGES, LISTING, OUTCOME, REFERENCE_FILES, classify, day_list, docket, dockets,
+                          hearing_label, hearing_table, page_setup, plans, read_any, reference_dir, require, sidebar)
 
 page_setup()
 u = require("Court master")
 sidebar()
 
+st.markdown("<div class='eyebrow'>Registry</div>", unsafe_allow_html=True)
 st.markdown("# Court master")
-tabs = st.tabs(["Judges", "Docket files", "Run a day", "New complaint"])
+tabs = st.tabs(["Judges", "Files", "Run a day", "New complaint"])
 
 # ---------------------------------------------------------------- judges dashboard
 with tabs[0]:
     cols = st.columns(len(JUDGES))
+    leave = {date.fromisoformat(str(x)) for x in E.CFG["judge_leave"]["dates"]}
     for col, jname in zip(cols, JUDGES):
-        with col:
-            with st.container(border=True):
-                st.markdown(f"**{jname}**  \n{COURT_OF[jname]}")
-                d = docket(jname)
-                if d is None:
-                    st.markdown("No docket yet")
-                    st.metric("Cases", 0)
-                else:
-                    R, real, data, scores = plans(d, jname)
-                    rtl, base = R["Samay"], R["Today's rules"]
-                    st.metric("Cases on file", f"{len(d)} in a {len(data['roster']):,} docket")
-                    a, b = st.columns(2)
-                    a.metric("Listed a day", f"{rtl['listed_per_day']:.0f}")
-                    b.metric("Reach", f"{rtl['reach_rate_pct']:.0f}%")
-                    a.metric("Disposed, quarter", f"{rtl['disposed']:.0f}", f"{rtl['disposed'] - base['disposed']:+.0f} vs today")
-                    b.metric("Move forward", f"{rtl['substantiveness_pct']:.0f}%",
-                             f"{rtl['substantiveness_pct'] - base['substantiveness_pct']:+.0f} pts")
-                    leave = {date.fromisoformat(str(x)) for x in E.CFG["judge_leave"]["dates"]}
-                    st.markdown("Leave: " + ", ".join(f"{x:%d %b}" for x in sorted(leave)))
-    st.markdown("Sitting 10:30 to 12:30 and 13:30 to 17:00 in every court. Upload each judge's docket on the next tab.")
+        d = docket(jname)
+        if d is None:
+            body = "<div class='empty'>No docket yet. Add one on the Files tab.</div>"
+        else:
+            R, real, data, scores = plans(d, jname, reference_dir())
+            rtl, base = R["Samay"], R["Today's rules"]
+            body = ("<div class='kv'>"
+                    f"<div><div class='k'>Cases on file</div><div class='v'>{len(d)}</div></div>"
+                    f"<div><div class='k'>Listed a day</div><div class='v'>{rtl['listed_per_day']:.0f}</div></div>"
+                    f"<div><div class='k'>Listed cases reached</div><div class='v'>{rtl['reach_rate_pct']:.0f}%</div></div>"
+                    f"<div><div class='k'>Heard cases that move</div><div class='v'>{rtl['substantiveness_pct']:.0f}%</div></div>"
+                    f"<div><div class='k'>Disposed this quarter</div><div class='v'>{rtl['disposed']:.0f}</div></div>"
+                    f"<div><div class='k'>Against today's rules</div><div class='v'>+{rtl['disposed'] - base['disposed']:.0f}</div></div>"
+                    "</div>"
+                    f"<div class='muted' style='margin-top:10px'>Leave: {', '.join(f'{x:%d %b}' for x in sorted(leave))}</div>")
+        col.markdown(f"<div class='card'><h3>{jname}</h3><div class='muted'>{COURT_OF[jname]}, sitting 10:30 to 12:30 "
+                     f"and 13:30 to 17:00</div>{body}</div>", unsafe_allow_html=True)
+    st.markdown("")
+    loaded = [jn for jn in JUDGES if docket(jn) is not None]
+    if loaded:
+        st.markdown("<div class='eyebrow'>Next sitting day</div>", unsafe_allow_html=True)
+        cols = st.columns(len(loaded))
+        for col, jname in zip(cols, loaded):
+            R, real, data, scores = plans(docket(jname), jname, reference_dir())
+            rtl = R["Samay"]
+            order = {b["name"]: i for i, b in enumerate(E.DAY["blocks"])}
+            first = next(d for d in rtl["workdays"] if d not in leave)
+            dl = day_list(rtl["journey"], first, order)
+            col.markdown(f"**{jname}**, {first:%A %d %B}: {len(dl)} matters, "
+                         f"{float(dl.hearing_type.map(data['ref'].minutes).sum()):.0f} planned minutes, "
+                         f"{dl.case_number.map(dict(zip(data['roster'].case_number, data['roster'].advocate_id))).nunique()} advocates")
 
-# ---------------------------------------------------------------- docket files
+# ---------------------------------------------------------------- files
 with tabs[1]:
-    left, right = st.columns([1, 1.1])
+    left, right = st.columns([1.15, 1])
     with left:
         jname = st.selectbox("Judge", JUDGES, key="upload_judge")
-        up = st.file_uploader(f"Docket for {jname} (Excel or CSV)", type=["xlsx", "xls", "csv"], key=f"up_{jname}")
-        if up is not None:
-            try:
-                df = pd.read_excel(up) if up.name.lower().endswith(("xlsx", "xls")) else pd.read_csv(up)
-                problems = E.validate_roster(df)
-                if problems:
-                    st.error("The file cannot be planned yet.\n\n" + "\n".join(f"- {p}" for p in problems))
-                else:
-                    dockets()[jname] = df
-                    st.session_state[f"docket_name_{jname}"] = up.name
-            except Exception as e:
-                st.error(f"Could not read {up.name}: {e}")
+        ups = st.file_uploader("Add files or a whole folder (CSV, Excel, JSON, or a ZIP of files)",
+                               accept_multiple_files=True, key=f"up_{jname}")
+        if ups:
+            report = []
+            for up in ups:
+                for fname, df in read_any(up.name, up.getvalue()):
+                    if isinstance(df, Exception):
+                        report.append((fname, "Could not read", str(df)))
+                        continue
+                    kind = classify(fname, df)
+                    if kind == "docket":
+                        problems = E.validate_roster(df)
+                        if problems:
+                            report.append((fname, "Docket, not usable", "; ".join(problems)))
+                        else:
+                            dockets()[jname] = df
+                            st.session_state[f"docket_name_{jname}"] = fname
+                            report.append((fname, f"Docket for {jname}", f"{len(df)} cases"))
+                    elif kind in REFERENCE_FILES:
+                        df.to_csv(Path(reference_dir()) / kind, index=False)
+                        st.cache_data.clear()
+                        report.append((fname, "Reference table replaced", kind))
+                    else:
+                        report.append((fname, "Not recognised", ", ".join(map(str, df.columns[:6]))))
+            st.dataframe(pd.DataFrame(report, columns=["File", "Read as", "Detail"]), hide_index=True,
+                         width="stretch", height=min(200, 38 + 35 * len(report)))
         d = docket(jname)
         if d is None:
             st.markdown("No docket loaded for this judge.")
         else:
-            st.success(f"{st.session_state.get(f'docket_name_{jname}', 'docket')}: {len(d)} cases, "
-                       f"{d.advocate_id.nunique()} advocates, planned for the quarter from 1 October 2026.")
+            st.markdown(f"**{st.session_state.get(f'docket_name_{jname}', 'docket')}**: {len(d)} cases, "
+                        f"{d.advocate_id.nunique()} advocates, planned for the quarter from 1 October 2026.")
             if st.button("Remove this docket"):
                 dockets().pop(jname, None)
                 st.rerun()
-            st.dataframe(d, width="stretch", hide_index=True, height=300)
+            st.dataframe(d, width="stretch", hide_index=True, height=280)
     with right:
-        st.markdown("**What the file needs**")
+        st.markdown("<div class='eyebrow'>What Samay reads</div>", unsafe_allow_html=True)
+        st.markdown("A docket needs these columns. Reference tables (hearing types, substantiveness, failure reasons, "
+                    "calendar) are recognised by their columns and replace the defaults.")
         st.dataframe(pd.DataFrame(
             [{"Column": k, "Meaning": v} for k, v in E.REQUIRED_COLUMNS.items()]
             + [{"Column": "last_hearing_summary", "Meaning": "the last order: who was present, what the court said"},
                {"Column": "total_hearings_held", "Meaning": "hearings so far"}]),
             hide_index=True, width="stretch", height=270)
-        st.markdown("**How the rows look**")
+        st.markdown("<div class='eyebrow'>How the rows look</div>", unsafe_allow_html=True)
         example = pd.DataFrame([
             {"case_number": "ST/819/2023", "filing_date": "2023-01-09", "advocate_id": "ADV-005",
              "current_stage": "Evidence Accused", "purpose_of_next_hearing": "Evidence Accused",
@@ -90,11 +120,11 @@ with tabs[1]:
 with tabs[2]:
     loaded = [jn for jn in JUDGES if docket(jn) is not None]
     if not loaded:
-        st.markdown("Upload a docket first.")
+        st.markdown("Add a docket first.")
     else:
         top = st.columns([1.2, 1.6, 1, 1])
         jname = top[0].selectbox("Judge", loaded, key="run_judge")
-        R, real, data, scores = plans(docket(jname), jname)
+        R, real, data, scores = plans(docket(jname), jname, reference_dir())
         rtl = R["Samay"]
         j = rtl["journey"]
         order = {b["name"]: i for i, b in enumerate(E.DAY["blocks"])}
@@ -109,7 +139,7 @@ with tabs[2]:
         done = sum(1 for c in todays.case_number if (key, c) in marks)
         top[2].metric("On the list", len(todays))
         top[3].metric("Recorded", done)
-        left, right = st.columns([1.7, 1])
+        left, right = st.columns([1.9, 1])
         with right:
             st.progress(done / max(1, len(todays)))
             pending = [c for c in todays.case_number if (key, c) not in marks]
@@ -130,20 +160,15 @@ with tabs[2]:
                 marks.pop((key, last))
                 st.rerun()
         with left:
-            rows = []
+            outcome_text = {}
             for r in todays.itertuples():
                 mark = marks.get((key, r.case_number))
                 if mark == "substantive":
-                    nxt = f"{int(data['ref'].loc[r.hearing_type].gap_days)} days, next purpose"
+                    outcome_text[r.case_number] = (OUTCOME[mark], f"{int(data['ref'].loc[r.hearing_type].gap_days)} days, next purpose")
                 elif mark:
-                    nxt = f"{gaps[mark]} days" + (", or when process returns" if mark == "process" else "")
-                else:
-                    nxt = ""
-                rows.append({"Time": r.start, "Sitting": r.block, "Case": r.case_number,
-                             "Hearing": hearing_label(r.hearing_type), "Listing": LISTING[r.listing],
-                             "Advocate": advocate_of.get(r.case_number, ""),
-                             "Outcome": OUTCOME.get(mark, "") if mark else "", "Next date": nxt})
-            st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True, height=560)
+                    outcome_text[r.case_number] = (OUTCOME[mark], f"{gaps[mark]} days" + (", or when process returns" if mark == "process" else ""))
+            st.markdown(hearing_table(todays, advocate_of, height=560, show_why=False, show_outcome=outcome_text),
+                        unsafe_allow_html=True)
 
 # ---------------------------------------------------------------- new complaint
 with tabs[3]:

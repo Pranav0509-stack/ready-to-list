@@ -1,5 +1,11 @@
 """Shared pieces for Samay's pages: styling, the sidebar, the judges and their dockets, the plans."""
+import io
+import json
+import shutil
+import tempfile
+import zipfile
 from datetime import date
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
@@ -15,23 +21,49 @@ LISTING = {"first": "1st listing", "second": "2nd listing", "deferred": "Deferre
 OUTCOME = {"substantive": "Moved forward", "absence": "A party absent", "unready": "Not ready",
            "process": "Summons or warrant not back", "court": "Court could not reach it", "unclear": "Adjourned"}
 BLUE, ORANGE, INK, MUTED = "#1E3A8A", "#B45309", "#0F172A", "#64748B"
-LISTING_COLOR = {"first": "#1E3A8A", "second": "#3B82F6", "deferred": "#B45309"}
+LISTING_COLOR = {"first": "#1E3A8A", "second": "#2563EB", "deferred": "#B45309"}
+REFERENCE_FILES = ["hearing_type_reference.csv", "substantiveness_by_hearing_type.csv", "hearing_failure_reasons.csv",
+                   "court_calendar.csv", "sample_causelist_2026-09-22.csv"]
 
 CSS = """
 <style>
-section.stMain > div.block-container {padding-top: 1.1rem; padding-bottom: 0.4rem; height: 100vh; overflow: hidden;}
+section.stMain > div.block-container {padding-top: 1rem; padding-bottom: 0.4rem; height: 100vh; overflow: hidden;}
 section.stMain {overflow: hidden;}
-section.stSidebar div.block-container {padding-top: 1rem;}
-h1 {margin-bottom: 0; font-size: 2rem;}
-div[data-testid="stMetric"] {background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;}
-div[data-testid="stMetricLabel"] p {font-size: 12.5px; color: #475569;}
-div[data-testid="stMetricValue"] {font-size: 1.6rem;}
-div[data-testid="stTabs"] button p {font-size: 15px;}
-.samay-logo {font-family: 'Times New Roman', Times, serif; font-size: 42px; font-weight: 700; color: #B45309;
+section.stSidebar div.block-container {padding-top: 0.6rem;}
+h1 {margin-bottom: 0; font-size: 2rem; letter-spacing: -0.01em;}
+div[data-testid="stMetric"] {background: #FFFFFF; border: 1px solid #DCE3EE; border-radius: 8px; padding: 10px 14px;}
+div[data-testid="stMetricLabel"] p {font-size: 12.5px; color: #64748B; letter-spacing: 0.01em;}
+div[data-testid="stMetricValue"] {font-size: 1.7rem; font-family: 'Playfair Display', Georgia, serif; font-weight: 600;}
+div[data-testid="stTabs"] button p {font-size: 15px; font-weight: 500;}
+div[data-testid="stTabs"] button[aria-selected="true"] p {color: #B45309;}
+div[data-testid="stTabs"] div[data-baseweb="tab-highlight"] {background-color: #B45309;}
+.samay-logo {font-family: 'Playfair Display', Georgia, serif; font-size: 40px; font-weight: 600; color: #B45309;
              line-height: 1; letter-spacing: -0.01em; margin: 0;}
-.samay-sub {font-size: 12.5px; color: #475569; margin: 4px 0 10px 0;}
-.who {font-size: 15px; color: #0F172A; margin-bottom: 2px;}
+.samay-sub {font-size: 12.5px; color: #64748B; margin: 4px 0 12px 0;}
+.who {font-size: 15px; color: #0F172A; margin-bottom: 0;}
 .role {font-size: 12.5px; color: #64748B; margin-bottom: 10px;}
+.eyebrow {font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #64748B; font-weight: 600; margin-bottom: 2px;}
+.sub {color: #64748B; font-size: 14px; margin-top: -4px;}
+.list {height: 400px; overflow-y: auto; border: 1px solid #DCE3EE; border-radius: 8px; background: #FFFFFF;}
+.list table {width: 100%; border-collapse: collapse; font-size: 14px;}
+.list th {position: sticky; top: 0; background: #F1F5F9; color: #64748B; font-weight: 600; font-size: 12px;
+          letter-spacing: 0.04em; text-transform: uppercase; text-align: left; padding: 9px 12px; border-bottom: 1px solid #DCE3EE;}
+.list td {padding: 9px 12px; border-bottom: 1px solid #EEF2F7; vertical-align: top; color: #0F172A;}
+.list tr:hover td {background: #F8FAFC;}
+.list .time {font-family: 'Playfair Display', Georgia, serif; font-size: 16px; font-weight: 600; white-space: nowrap;}
+.list .case {font-weight: 600; white-space: nowrap;}
+.list .why {color: #64748B; font-size: 13px;}
+.list .sitting td {background: #F8FAFC; color: #B45309; font-weight: 600; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;}
+.chip {display: inline-block; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap;}
+.chip.first {background: #E8EEF7; color: #1E3A8A;} .chip.second {background: #DBEAFE; color: #1D4ED8;}
+.chip.deferred {background: #FEF3C7; color: #92400E;} .chip.bail {background: #DCFCE7; color: #166534;}
+.chip.score {background: #F1F5F9; color: #0F172A;}
+.card {background: #FFFFFF; border: 1px solid #DCE3EE; border-radius: 10px; padding: 14px 16px; height: 100%;}
+.card h3 {font-family: 'Playfair Display', Georgia, serif; font-size: 20px; margin: 0 0 2px 0; font-weight: 600;}
+.card .muted {color: #64748B; font-size: 13px; margin-bottom: 10px;}
+.card .kv {display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px;}
+.card .k {font-size: 12px; color: #64748B;} .card .v {font-family: 'Playfair Display', Georgia, serif; font-size: 22px; font-weight: 600;}
+.card .empty {color: #94A3B8; font-size: 14px; padding: 18px 0;}
 </style>
 """
 
@@ -40,9 +72,8 @@ def page_setup():
     st.markdown(CSS, unsafe_allow_html=True)
 
 
-def logo(size=42):
-    return (f"<div class='samay-logo' style='font-family:\"Times New Roman\", Times, serif; color:#B45309; "
-            f"font-size:{size}px; font-weight:700; line-height:1'>Samay</div>")
+def logo(size=40):
+    return (f"<div class='samay-logo' style='font-size:{size}px'>Samay</div>")
 
 
 def user():
@@ -70,21 +101,90 @@ def require(role):
     return u
 
 
+# ---------------------------------------------------------------- dockets and reference files
+
 def dockets() -> dict:
-    return st.session_state.setdefault("dockets", {})
+    """Dockets by judge. Justice Sehgal's is pre-loaded from the hackathon repository's roster."""
+    d = st.session_state.get("dockets")
+    if d is None:
+        roster = E.default_data_dir() / "roster_sample_100.csv"
+        d = {"Justice Sehgal": pd.read_csv(roster)}
+        st.session_state.dockets = d
+        st.session_state["docket_name_Justice Sehgal"] = "roster_sample_100.csv (hackathon repository)"
+    return d
 
 
 def docket(judge):
     return dockets().get(judge)
 
 
+def reference_dir() -> str:
+    """Folder the engine reads its reference tables from: the defaults, with any uploaded replacements."""
+    if "ref_dir" not in st.session_state:
+        tmp = Path(tempfile.mkdtemp(prefix="samay_ref_"))
+        for f in REFERENCE_FILES + ["roster_sample_100.csv"]:
+            src = E.default_data_dir() / f
+            if src.exists():
+                shutil.copy(src, tmp / f)
+        st.session_state.ref_dir = str(tmp)
+    return st.session_state.ref_dir
+
+
+def read_any(name: str, raw: bytes) -> list:
+    """Read an uploaded file of any common type into (filename, DataFrame) pairs. ZIPs and folders
+    expand to their files."""
+    low = name.lower()
+    out = []
+    if low.endswith(".zip"):
+        with zipfile.ZipFile(io.BytesIO(raw)) as z:
+            for info in z.infolist():
+                if info.is_dir() or "__MACOSX" in info.filename:
+                    continue
+                out += read_any(Path(info.filename).name, z.read(info))
+        return out
+    try:
+        if low.endswith((".xlsx", ".xls")):
+            for sheet, df in pd.read_excel(io.BytesIO(raw), sheet_name=None).items():
+                out.append((f"{name}:{sheet}", df))
+        elif low.endswith(".json"):
+            data = json.loads(raw.decode("utf-8"))
+            out.append((name, pd.DataFrame(data if isinstance(data, list) else data.get("cases", data))))
+        elif low.endswith((".csv", ".txt", ".tsv")):
+            sep = "\t" if low.endswith(".tsv") else ","
+            out.append((name, pd.read_csv(io.BytesIO(raw), sep=sep)))
+    except Exception as e:
+        out.append((name, e))
+    return out
+
+
+def classify(name: str, df: pd.DataFrame) -> str:
+    """What an uploaded table is: a docket, one of the reference tables, or unknown."""
+    cols = set(df.columns)
+    if set(E.REQUIRED_COLUMNS) <= cols:
+        return "docket"
+    base = Path(name.split(":")[0]).name.lower()
+    for ref in REFERENCE_FILES:
+        if ref.replace(".csv", "") in base:
+            return ref
+    if {"Hearing Purpose", "Time it takes for hearing (mins) - estimated"} <= cols:
+        return "hearing_type_reference.csv"
+    if {"hearingType", "Substantive Hearings (percentage probability)"} <= cols:
+        return "substantiveness_by_hearing_type.csv"
+    if {"hearingType", "total_no"} <= cols:
+        return "hearing_failure_reasons.csv"
+    if {"date", "is_working_day"} <= cols:
+        return "court_calendar.csv"
+    return "unknown"
+
+
 @st.cache_data(show_spinner="Planning the quarter")
-def plans(df: pd.DataFrame, judge: str):
-    data = E.with_roster(E.load(), df)
+def plans(df: pd.DataFrame, judge: str, ref_dir: str):
+    data = E.with_roster(E.load(ref_dir), df)
     data = E.judge_docket(data, 3000)
     out = {}
+    seed = 7 + (JUDGES.index(judge) if judge in JUDGES else 0)
     for label, kw in {"Today's rules": dict(rtl=False), "Samay": dict(rtl=True)}.items():
-        m, _ = E.simulate(data, START, days=DAYS, seed=7 + JUDGES.index(judge) if judge in JUDGES else 7, **kw)
+        m, _ = E.simulate(data, START, days=DAYS, seed=seed, **kw)
         out[label] = m
     real = data["roster"][data["roster"]["sample"]]
     scores = PRIO.score_roster(real, data["ref"], START)
@@ -100,9 +200,41 @@ def why(row):
     if row.hearing_type == "BAIL":
         return "Liberty lane: bail is always listed"
     if row.listing == "deferred":
-        return f"Deferred case, score {row.score:.0f}: priority and a fixed slot"
-    return f"Score {row.score:.0f}, ready, fits the sitting"
+        return "Deferred case: held until cured, now with priority and a fixed slot"
+    if row.listing == "second":
+        return "Second listing: readiness checked, priority raised"
+    return "Ready, fits the sitting"
 
 
 def hearing_label(t):
     return str(t).replace("_", " ").title().replace("S351 Bnss", "s.351 BNSS")
+
+
+def chip(listing, hearing_type=None):
+    if hearing_type == "BAIL":
+        return "<span class='chip bail'>Bail</span>"
+    return f"<span class='chip {listing}'>{LISTING[listing]}</span>"
+
+
+def hearing_table(rows: pd.DataFrame, advocate_of: dict, height=400, show_why=True, show_outcome=None):
+    """The cause list as a styled table with sitting headers and chips. `show_outcome` maps case -> text."""
+    html = [f"<div class='list' style='height:{height}px'><table><thead><tr><th>Time</th><th>Case</th><th>Hearing</th>"
+            f"<th>Listing</th><th>Score</th><th>Advocate</th>" + ("<th>Why today</th>" if show_why else "")
+            + ("<th>Outcome</th><th>Next date</th>" if show_outcome is not None else "") + "</tr></thead><tbody>"]
+    ncol = 6 + int(show_why) + (2 if show_outcome is not None else 0)
+    for block, g in rows.groupby("block", sort=False):
+        blk = next(b for b in E.DAY["blocks"] if b["name"] == block)
+        html.append(f"<tr class='sitting'><td colspan='{ncol}'>{block} sitting, {blk['start']} to {blk['end']}, "
+                    f"{len(g)} matters</td></tr>")
+        for r in g.itertuples():
+            cells = [f"<td class='time'>{r.start}</td>", f"<td class='case'>{r.case_number}</td>",
+                     f"<td>{hearing_label(r.hearing_type)}</td>", f"<td>{chip(r.listing, r.hearing_type)}</td>",
+                     f"<td><span class='chip score'>{r.score:.0f}</span></td>", f"<td>{advocate_of.get(r.case_number, '')}</td>"]
+            if show_why:
+                cells.append(f"<td class='why'>{why(r)}</td>")
+            if show_outcome is not None:
+                o = show_outcome.get(r.case_number, ("", ""))
+                cells.append(f"<td>{o[0]}</td><td class='why'>{o[1]}</td>")
+            html.append("<tr>" + "".join(cells) + "</tr>")
+    html.append("</tbody></table></div>")
+    return "".join(html)

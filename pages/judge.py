@@ -7,7 +7,7 @@ import streamlit as st
 from core import priority as PRIO
 from core import pucar_engine as E
 from pages.shared import (BLUE, COURT_OF, LISTING, LISTING_COLOR, ORANGE, OUTCOME, START, day_list, docket,
-                          hearing_label, page_setup, plans, require, sidebar, why)
+                          hearing_label, hearing_table, page_setup, plans, reference_dir, require, sidebar, why)
 
 page_setup()
 u = require("Judge")
@@ -15,6 +15,7 @@ sidebar()
 name = u["name"]
 
 head = st.columns([3, 1])
+head[0].markdown(f"<div class='eyebrow'>{COURT_OF.get(name, '')}</div>", unsafe_allow_html=True)
 head[0].markdown(f"# {name}")
 head[1].markdown(f"<div style='text-align:right;color:#64748B;padding-top:14px'>{COURT_OF.get(name, '')}, "
                  f"sitting 10:30 to 12:30 and 13:30 to 17:00</div>", unsafe_allow_html=True)
@@ -22,7 +23,7 @@ if docket(name) is None:
     st.info("The court master has not uploaded your docket yet.")
     st.stop()
 
-R, real, data, scores = plans(docket(name), name)
+R, real, data, scores = plans(docket(name), name, reference_dir())
 rtl, base = R["Samay"], R["Today's rules"]
 real_ids = set(real.case_number)
 j = rtl["journey"].assign(real=lambda d: d.case_number.isin(real_ids))
@@ -80,11 +81,7 @@ with tabs[0]:
         st.plotly_chart(fig, width="stretch")
     left, right = st.columns([2.6, 1])
     with left:
-        st.dataframe(pd.DataFrame({
-            "Time": shown.start, "Sitting": shown.block, "Case": shown.case_number,
-            "Hearing": shown.hearing_type.map(hearing_label), "Listing": shown.listing.map(LISTING),
-            "Score": shown.score, "Advocate": shown.case_number.map(advocate_of),
-            "Why today": [why(r) for r in shown.itertuples()]}), width="stretch", hide_index=True, height=380)
+        st.markdown(hearing_table(shown, advocate_of, height=380), unsafe_allow_html=True)
     with right:
         drop = st.selectbox("Remove a case from today", ["None"] + shown.case_number.tolist())
         b1, b2 = st.columns(2)
