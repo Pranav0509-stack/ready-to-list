@@ -23,7 +23,7 @@ or as Court master.
 |---|---|
 | `app.py` | Entry. `st.navigation` with three hidden pages: login, judge, court master |
 | `pages/login.py` | Role and name, then `st.switch_page` |
-| `pages/judge.py` | Tabs: Today, Calendar, Cases, Priority, Insight, How Samay decides |
+| `pages/judge.py` | Side-panel menu: Today, Calendar, Cases, Priority, Insight. The judge can mark a hearing Heard or the case Disposed, which fixes it |
 | `pages/court_master.py` | Tabs: Judges, Files, Run a day, New complaint |
 | `pages/shared.py` | CSS, sidebar, dockets per judge, file reading (CSV, Excel, JSON, ZIP), `plans()` cache, cause-list table |
 | `core/pucar_engine.py` | Loads the data, calibrates the truth model, simulates days, packs each sitting with CP-SAT |
