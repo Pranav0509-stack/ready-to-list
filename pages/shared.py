@@ -58,6 +58,23 @@ div[data-testid="stTabs"] div[data-baseweb="tab-highlight"] {background-color: #
 .chip.first {background: #E5E9EF; color: #1B2A41;} .chip.second {background: #DBEAFE; color: #1D4ED8;}
 .chip.deferred {background: #F7ECD9; color: #9A6212;} .chip.bail {background: #E1F0E8; color: #2F7454;}
 .chip.score {background: #ECEEEA; color: #111925;}
+.chip.done {background: #E1F0E8; color: #2F7454; margin-left: 4px;}
+.list tr.locked td {background: #F3F8F5; color: #56627A;}
+section.stSidebar div[role="radiogroup"] {gap: 2px; margin: 6px 0 14px 0;}
+section.stSidebar div[role="radiogroup"] {flex-direction: column; width: 100%;}
+section.stSidebar div[role="radiogroup"] label {padding: 8px 12px; border-radius: 8px; width: 100%; max-width: 100%; cursor: pointer; margin: 0;}
+section.stSidebar div[role="radiogroup"] label > div > div:first-child:not([data-testid]) {display: none;}
+section.stSidebar div[role="radiogroup"] label p {font-size: 15px; font-weight: 500; color: #1B2A41;}
+section.stSidebar div[role="radiogroup"] label:hover {background: #E5E9EF;}
+section.stSidebar div[role="radiogroup"] label[data-selected="true"] {background: #1B2A41;}
+section.stSidebar div[role="radiogroup"] label[data-selected="true"] p {color: #FFFFFF;}
+.factor {border: 1px solid #C9D3E3; border-radius: 8px; background: #FFFFFF; padding: 10px 12px; margin-bottom: 8px;}
+.factor .top {display: flex; justify-content: space-between; align-items: baseline;}
+.factor .name {font-weight: 600; font-size: 14px;}
+.factor .pts {font-family: 'Spectral', Georgia, serif; font-size: 20px; font-weight: 600;}
+.factor .bar {height: 5px; background: #E5E9EF; border-radius: 3px; margin: 6px 0;}
+.factor .bar div {height: 5px; background: #C08A2D; border-radius: 3px;}
+.factor .ev {font-size: 13px; color: #56627A; line-height: 1.45;}
 .card {background: #FFFFFF; border: 1px solid #C9D3E3; border-radius: 10px; padding: 14px 16px; height: 100%;}
 .card h3 {font-family: 'Spectral', Georgia, serif; font-size: 20px; margin: 0 0 2px 0; font-weight: 600;}
 .card .muted {color: #56627A; font-size: 13px; margin-bottom: 10px;}
@@ -86,16 +103,23 @@ def user():
     return st.session_state.get("user")
 
 
-def sidebar():
+def sidebar(nav=None):
+    """Mark, who is signed in, the page menu (when given), sign out. Returns the chosen page."""
     u = user()
+    choice = None
     with st.sidebar:
         st.markdown(logo() + "<div class='samay-sub'>Court scheduling</div>", unsafe_allow_html=True)
         if u:
             st.markdown(f"<div class='who'><b>{u['name']}</b></div><div class='role'>{u['role']}</div>",
                         unsafe_allow_html=True)
+            if nav:
+                st.markdown("<div class='nav-wrap'>", unsafe_allow_html=True)
+                choice = st.radio("Go to", nav, key="nav", label_visibility="collapsed")
+                st.markdown("</div>", unsafe_allow_html=True)
             if st.button("Sign out", width="stretch"):
                 st.session_state.pop("user", None)
                 st.switch_page("pages/login.py")
+    return choice
 
 
 def require(role):
@@ -222,7 +246,7 @@ def chip(listing, hearing_type=None):
     return f"<span class='chip {listing}'>{LISTING[listing]}</span>"
 
 
-def hearing_table(rows: pd.DataFrame, advocate_of: dict, height=400, show_why=True, show_outcome=None):
+def hearing_table(rows: pd.DataFrame, advocate_of: dict, height=400, show_why=True, show_outcome=None, done=None):
     """The cause list as a styled table with sitting headers and chips. `show_outcome` maps case -> text."""
     html = [f"<div class='list' style='height:{height}px'><table><thead><tr><th>Time</th><th>Case</th><th>Hearing</th>"
             f"<th>Listing</th><th>Score</th><th>Advocate</th>" + ("<th>Why today</th>" if show_why else "")
@@ -233,7 +257,9 @@ def hearing_table(rows: pd.DataFrame, advocate_of: dict, height=400, show_why=Tr
         html.append(f"<tr class='sitting'><td colspan='{ncol}'>{block} sitting, {blk['start']} to {blk['end']}, "
                     f"{len(g)} matters</td></tr>")
         for r in g.itertuples():
-            cells = [f"<td class='time'>{r.start}</td>", f"<td class='case'>{r.case_number}</td>",
+            cells = [f"<td class='time'>{r.start}</td>", f"<td class='case'>{r.case_number}"
+                     + (f" <span class='chip done'>{done[r.case_number]}</span>" if done and r.case_number in done else "")
+                     + "</td>",
                      f"<td>{hearing_label(r.hearing_type)}</td>", f"<td>{chip(r.listing, r.hearing_type)}</td>",
                      f"<td><span class='chip score'>{r.score:.0f}</span></td>", f"<td>{advocate_of.get(r.case_number, '')}</td>"]
             if show_why:
@@ -241,6 +267,6 @@ def hearing_table(rows: pd.DataFrame, advocate_of: dict, height=400, show_why=Tr
             if show_outcome is not None:
                 o = show_outcome.get(r.case_number, ("", ""))
                 cells.append(f"<td>{o[0]}</td><td class='why'>{o[1]}</td>")
-            html.append("<tr>" + "".join(cells) + "</tr>")
+            html.append(("<tr class='locked'>" if done and r.case_number in done else "<tr>") + "".join(cells) + "</tr>")
     html.append("</tbody></table></div>")
     return "".join(html)

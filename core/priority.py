@@ -129,3 +129,37 @@ def rescale_weights(w: dict) -> dict:
     w["age"] = max(MIN_AGE_WEIGHT, w["age"])
     total = sum(w.values())
     return {k: v * 100 / total for k, v in w.items()}
+
+
+def explain(*, filing_date, current_stage, next_purpose, summary, total_hearings, as_of: date,
+            progress_rate: dict, ref_median: dict, fp_age: int, weights=None) -> list:
+    """Each factor as (name, points, max points, the evidence behind it), for the judge's view.
+    Uses the same arithmetic as score_case."""
+    w = weights or WEIGHTS
+    purpose, stage = norm(next_purpose), norm(current_stage)
+    label = lambda t: t.replace("_", " ").title()
+    age_years = (pd.Timestamp(as_of) - pd.Timestamp(filing_date)).days / 365.25
+    rate = progress_rate.get(purpose, 0.5)
+    need = REQUIRED_PEOPLE.get(purpose, DEFAULT_PEOPLE)
+    present = present_people(summary)
+    came = [p for p in need if p in present]
+    attendance = ATTENDANCE_FLOOR + (1 - ATTENDANCE_FLOOR) * len(came) / len(need)
+    stage_no = STAGES.index(stage) if stage in STAGES else 0
+    exp = expected_hearings(ref_median).get(stage, 1) or 1
+    churn = float(np.clip(total_hearings / exp - 1, 0, 1))
+    text = str(summary).lower()
+    hit = next(((k, v) for k, v in URGENCY if k in text), (None, 0.0))
+    missing = [p for p in need if p not in present]
+    return [
+        ("Case age", w["age"] * min(1.0, age_years / fp_age), w["age"],
+         f"Filed {pd.Timestamp(filing_date):%d %b %Y}, {age_years:.1f} years ago. Full points at {fp_age} years."),
+        ("Hearing readiness", w["readiness"] * min(1.0, rate * attendance), w["readiness"],
+         f"{label(purpose)} hearings move the case {rate:.0%} of the time. Needs: {', '.join(need)}. "
+         + (f"All present last time." if not missing else f"Absent last time: {', '.join(missing)}.")),
+        ("Disposal proximity", w["disposal"] * stage_no / (len(STAGES) - 1), w["disposal"],
+         f"Stage {stage_no + 1} of {len(STAGES)}: {label(stage)}."),
+        ("Hearing churn", w["churn"] * churn, w["churn"],
+         f"{int(total_hearings)} hearings held; about {exp:.0f} expected by this stage."),
+        ("Court-set urgency", w["urgency"] * hit[1], w["urgency"],
+         f'Last order says "{hit[0]}".' if hit[0] else "No urgency set in the last order."),
+    ]
